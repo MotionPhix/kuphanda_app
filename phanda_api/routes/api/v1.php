@@ -52,6 +52,7 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
     Route::get('plans', [BillingController::class, 'plans'])->name('api.v1.plans.index');
     Route::get('billing/status', [BillingController::class, 'status'])->name('api.v1.billing.status');
     Route::post('billing/checkout', [BillingController::class, 'checkout'])->name('api.v1.billing.checkout');
+    Route::get('billing/payments', [BillingController::class, 'payments'])->name('api.v1.billing.payments');
     Route::get('billing/payments/{txRef}', [BillingController::class, 'payment'])->name('api.v1.billing.payment');
 
     // Email verification

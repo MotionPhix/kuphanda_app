@@ -344,3 +344,45 @@ class PaymentStatus {
     );
   }
 }
+
+/// A subscription or single-document purchase, as shown in receipts.
+class PaymentRecord {
+  const PaymentRecord({
+    required this.txRef,
+    required this.kind,
+    required this.title,
+    required this.amountMwk,
+    required this.status,
+    this.createdAt,
+    this.paidAt,
+    this.endsAt,
+    this.documentId,
+  });
+
+  final String txRef;
+  final String kind;
+  final String title;
+  final int amountMwk;
+  final String status;
+  final DateTime? createdAt;
+  final DateTime? paidAt;
+  final DateTime? endsAt;
+  final String? documentId;
+
+  bool get isSubscription => kind == 'subscription';
+  bool get isSettled => status == 'paid' || status == 'active';
+
+  static PaymentRecord fromJson(Map<String, Object?> json) {
+    return PaymentRecord(
+      txRef: (json['tx_ref'] as String?) ?? '',
+      kind: (json['kind'] as String?) ?? 'subscription',
+      title: (json['title'] as String?) ?? 'Payment',
+      amountMwk: (json['amount_mwk'] as num?)?.toInt() ?? 0,
+      status: (json['status'] as String?) ?? 'pending',
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+      paidAt: DateTime.tryParse(json['paid_at'] as String? ?? ''),
+      endsAt: DateTime.tryParse(json['ends_at'] as String? ?? ''),
+      documentId: json['document_id'] as String?,
+    );
+  }
+}

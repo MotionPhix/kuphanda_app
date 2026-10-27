@@ -236,6 +236,17 @@ class ApiClient {
     return CheckoutSession.fromJson(_dataMap(body));
   }
 
+  Future<List<PaymentRecord>> fetchPayments() async {
+    final body = await _send(
+      () => _http.get(_uri('/billing/payments'), headers: _headers),
+    );
+    final rows = body['data'];
+    return (rows is List ? rows : const <Object?>[])
+        .whereType<Map<String, Object?>>()
+        .map(PaymentRecord.fromJson)
+        .toList();
+  }
+
   Future<PaymentStatus> paymentStatus(String txRef) async {
     final body = await _send(
       () => _http.get(_uri('/billing/payments/$txRef'), headers: _headers),

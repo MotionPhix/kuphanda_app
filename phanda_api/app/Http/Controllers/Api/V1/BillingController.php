@@ -44,6 +44,61 @@ final class BillingController extends ApiController
         return $this->success($this->billing->statusFor($user));
     }
 
+    /**
+     * Receipts and pending attempts, newest first. Only the learner's own
+     * records are returned; references are never sequential or guessable.
+     */
+    public function payments(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $subscriptions = Subscription::query()
+            ->where('user_id', $user->id)
+            ->with('plan')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->map(fn (Subscription $subscription): array => [
+                'tx_ref' => $subscription->tx_ref,
+                'kind' => 'subscription',
+                'title' => $subscription->plan->name,
+                'amount_mwk' => $subscription->amount_mwk,
+                'status' => $subscription->status->value,
+                'created_at' => $subscription->created_at?->toIso8601String(),
+                'paid_at' => $subscription->paid_at?->toIso8601String(),
+                'ends_at' => $subscription->ends_at?->toIso8601String(),
+                'document_id' => null,
+            ]);
+
+        $purchases = DocumentPurchase::query()
+            ->where('user_id', $user->id)
+            ->with('document')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->map(fn (DocumentPurchase $purchase): array => [
+                'tx_ref' => $purchase->tx_ref,
+                'kind' => 'document',
+                'title' => $purchase->document?->title ?? 'Document',
+                'amount_mwk' => $purchase->amount_mwk,
+                'status' => $purchase->status,
+                'created_at' => $purchase->created_at?->toIso8601String(),
+                'paid_at' => $purchase->purchased_at?->toIso8601String(),
+                'ends_at' => $purchase->expires_at?->toIso8601String(),
+                'document_id' => $purchase->document_id,
+            ]);
+
+        $items = $subscriptions
+            ->concat($purchases)
+            ->sortByDesc('created_at')
+            ->values()
+            ->take(50)
+            ->values();
+
+        return $this->success($items);
+    }
+
     public function checkout(CheckoutRequest $request): JsonResponse
     {
         /** @var User $user */

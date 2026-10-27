@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app.dart';
@@ -93,7 +94,33 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 ),
                 const SizedBox(height: 10),
               ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Text('Payment history', style: theme.textTheme.titleMedium),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Refresh receipts',
+                  onPressed: () => state.loadBilling(),
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                ),
+              ],
+            ),
+            if (state.payments.isEmpty)
+              Text(
+                'No payments yet. Receipts for subscriptions and single-document '
+                'purchases appear here once PayChangu confirms them.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              )
+            else
+              for (final record in state.payments) ...[
+                _PaymentRow(record: record, onTap: () => _showReceipt(record)),
+                const SizedBox(height: 8),
+              ],
+            const SizedBox(height: 16),
             Text(
               'School licences are not sold in the app. If your school has a licence, '
               'sign in with the account your teacher gave you and the same content is unlocked.',
@@ -380,6 +407,69 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
   }
 
+  void _showReceipt(PaymentRecord record) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return SheetBody(
+          title: 'Receipt',
+          subtitle: record.title,
+          actions: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: record.txRef));
+                  if (sheetContext.mounted) {
+                    showSnack(sheetContext, 'Reference copied.');
+                  }
+                },
+                icon: const Icon(Icons.copy_rounded, size: 16),
+                label: const Text('Copy reference'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Close'),
+              ),
+            ),
+          ],
+          child: Column(
+            children: [
+              _ReceiptLine(label: 'Reference', value: record.txRef),
+              _ReceiptLine(
+                label: 'Type',
+                value: record.isSubscription ? 'Subscription' : 'Single document',
+              ),
+              _ReceiptLine(label: 'Amount', value: 'MWK ${record.amountMwk}'),
+              _ReceiptLine(label: 'Status', value: record.status),
+              if (record.paidAt != null)
+                _ReceiptLine(label: 'Paid', value: formatDate(record.paidAt!)),
+              if (record.endsAt != null)
+                _ReceiptLine(
+                  label: record.isSubscription ? 'Access until' : 'Expires',
+                  value: formatDate(record.endsAt!),
+                ),
+              if (record.createdAt != null)
+                _ReceiptLine(label: 'Started', value: formatDate(record.createdAt!)),
+              const SizedBox(height: 10),
+              Text(
+                'Keep this reference if you need to raise a payment query with your '
+                'school or PayChangu.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _confirmSignOut(AppState state) async {
     final confirmed = await confirmAction(
       context,
@@ -594,6 +684,112 @@ class _PaymentWaiterState extends State<_PaymentWaiter> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaymentRow extends StatelessWidget {
+  const _PaymentRow({required this.record, required this.onTap});
+
+  final PaymentRecord record;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = switch (record.status) {
+      'active' || 'paid' => AppColors.green,
+      'pending' => AppColors.sun,
+      'expired' || 'cancelled' => theme.colorScheme.error,
+      _ => theme.colorScheme.onSurfaceVariant,
+    };
+
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            record.isSubscription ? Icons.card_membership_outlined : Icons.menu_book_outlined,
+            size: 20,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(record.title, style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 2),
+                Text(
+                  record.paidAt != null
+                      ? formatDate(record.paidAt!)
+                      : record.createdAt != null
+                          ? formatDate(record.createdAt!)
+                          : record.txRef,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'MWK ${record.amountMwk}',
+                style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                record.status,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          const Icon(Icons.chevron_right_rounded, size: 18),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReceiptLine extends StatelessWidget {
+  const _ReceiptLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }

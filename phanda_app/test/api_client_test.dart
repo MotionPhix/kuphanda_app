@@ -145,6 +145,45 @@ void main() {
     expect(status.isComplete, isTrue);
   });
 
+  test('parses subscription and document receipts', () async {
+    final client = _client((request) async {
+      return http.Response(
+        jsonEncode({
+          'success': true,
+          'data': [
+            {
+              'tx_ref': 'SUB-1',
+              'kind': 'subscription',
+              'title': 'Weekly pass',
+              'amount_mwk': 1500,
+              'status': 'active',
+              'paid_at': '2026-10-20T10:00:00+00:00',
+              'ends_at': '2026-10-27T10:00:00+00:00',
+            },
+            {
+              'tx_ref': 'DOC-1',
+              'kind': 'document',
+              'title': 'Chemistry masterclass',
+              'amount_mwk': 2500,
+              'status': 'paid',
+              'paid_at': '2026-10-21T10:00:00+00:00',
+              'document_id': 'chem',
+            },
+          ],
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    final receipts = await client.fetchPayments();
+
+    expect(receipts, hasLength(2));
+    expect(receipts.first.isSubscription, isTrue);
+    expect(receipts.first.isSettled, isTrue);
+    expect(receipts.last.documentId, 'chem');
+  });
+
   test('reports a network failure without leaking internals', () async {
     final client = _client((request) async => throw Exception('socket closed'));
 

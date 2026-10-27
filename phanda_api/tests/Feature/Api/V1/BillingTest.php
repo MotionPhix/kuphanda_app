@@ -247,6 +247,50 @@ it('accepts a signed PayChangu webhook and rejects an unsigned one', function ()
         ->toBe(\App\Enums\SubscriptionStatus::Active);
 });
 
+it('lists receipts for subscriptions and purchases without leaking other learners', function (): void {
+    $plan = Plan::query()->where('slug', 'week')->firstOrFail();
+    $document = premiumDocument();
+
+    Subscription::query()->create([
+        'user_id' => $this->user->id,
+        'plan_id' => $plan->id,
+        'status' => 'active',
+        'tx_ref' => 'SUB-RECEIPT',
+        'amount_mwk' => 1500,
+        'starts_at' => now(),
+        'ends_at' => now()->addWeek(),
+        'paid_at' => now(),
+    ]);
+
+    \App\Models\DocumentPurchase::query()->create([
+        'user_id' => $this->user->id,
+        'document_id' => $document->id,
+        'status' => 'paid',
+        'tx_ref' => 'DOC-RECEIPT',
+        'amount_mwk' => 2500,
+        'purchased_at' => now(),
+    ]);
+
+    $other = User::factory()->create(['plan' => LibraryPlan::Free]);
+    \App\Models\DocumentPurchase::query()->create([
+        'user_id' => $other->id,
+        'document_id' => $document->id,
+        'status' => 'paid',
+        'tx_ref' => 'DOC-OTHER',
+        'amount_mwk' => 2500,
+        'purchased_at' => now(),
+    ]);
+
+    $response = $this->getJson('/api/v1/billing/payments')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    $refs = collect($response->json('data'))->pluck('tx_ref')->all();
+
+    expect($refs)->toContain('SUB-RECEIPT')->toContain('DOC-RECEIPT')
+        ->not->toContain('DOC-OTHER');
+});
+
 it('refuses a second checkout while a subscription is active', function (): void {
     $plan = Plan::query()->where('slug', 'week')->firstOrFail();
     $checkout = $this->postJson('/api/v1/billing/checkout', ['plan_id' => $plan->id])->json('data');

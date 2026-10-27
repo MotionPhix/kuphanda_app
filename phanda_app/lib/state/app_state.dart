@@ -106,6 +106,7 @@ class AppState extends ChangeNotifier {
   final Map<String, String> _downloadErrors = <String, String>{};
   final Map<String, bool> _entitled = <String, bool>{};
   List<RemotePlan> _plans = const <RemotePlan>[];
+  List<PaymentRecord> _payments = const <PaymentRecord>[];
   BillingStatus? _billing;
   String? _token;
   AuthSession? _account;
@@ -136,6 +137,7 @@ class AppState extends ChangeNotifier {
   int get pendingRemovalCount => _snapshot.pendingRemovals.length;
 
   List<RemotePlan> get plans => _plans;
+  List<PaymentRecord> get payments => _payments;
   BillingStatus? get billing => _billing;
   AccessTier get entitlementTier => _billing?.tier ?? AccessTier.fromName(profile.plan.name);
   bool get hasPaidAccess => _billing?.hasPaidAccess ?? false;
@@ -1042,8 +1044,10 @@ class AppState extends ChangeNotifier {
     try {
       final plans = await _api!.fetchPlans();
       final status = await _api!.fetchBillingStatus();
+      final payments = await _api!.fetchPayments();
       _plans = plans;
       _billing = status;
+      _payments = payments;
       notifyListeners();
     } on ApiException catch (error) {
       _syncError = error.message;
