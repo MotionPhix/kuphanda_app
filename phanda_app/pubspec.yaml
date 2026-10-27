@@ -1,0 +1,25 @@
+name: kuphanda
+description: "Kuphanda — an offline-first document library and study manager for Malawian secondary schools (Forms 1–4, JCE and MSCE)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  file_picker: ^10.3.3
+  intl: ^0.20.2
+  path_provider: ^2.1.6
+  pdfx: ^2.9.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/samples/

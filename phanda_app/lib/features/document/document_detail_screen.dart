@@ -1,0 +1,903 @@
+import 'package:flutter/material.dart';
+
+import '../../app.dart';
+import '../../core/format.dart';
+import '../../core/navigation.dart';
+import '../../core/theme.dart';
+import '../../core/widgets/common.dart';
+import '../../core/widgets/document_card.dart';
+import '../../data/models/document.dart';
+import '../../data/models/reading.dart';
+import '../../data/models/study_guide.dart';
+import '../../data/models/subject.dart';
+import '../../state/app_state.dart';
+import '../profile/library_pass_screen.dart';
+import '../reader/guide_reader_screen.dart';
+import '../reader/pdf_reader_screen.dart';
+
+class DocumentDetailScreen extends StatefulWidget {
+  const DocumentDetailScreen({super.key, required this.documentId});
+
+  final String documentId;
+
+  @override
+  State<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
+}
+
+class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
+  int _tab = 0;
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final document = state.documentById(widget.documentId);
+
+    if (document == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: Text('This document is no longer in your library.')),
+      );
+    }
+
+    final entry = state.entryFor(document.id)!;
+    final subject = entry.subject;
+    final theme = Theme.of(context);
+    final guide = state.guideFor(document);
+    final progress = state.progressOrDefault(document);
+    final locked = state.isLocked(document);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(document.kind.label),
+        actions: [
+          IconButton(
+            tooltip: entry.saved ? 'Remove from saved' : 'Save',
+            onPressed: () => state.toggleSaved(document.id),
+            icon: Icon(
+              entry.saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+            ),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) => _handleMenu(context, state, document, value),
+            itemBuilder: (context) => [
+              if (document.personal) const PopupMenuItem(value: 'edit', child: Text('Edit details')),
+              if (entry.onDevice && !(entry.asset?.isBundled ?? false))
+                const PopupMenuItem(value: 'remove-file', child: Text('Remove file from device')),
+              if (document.personal)
+                const PopupMenuItem(value: 'delete', child: Text('Delete document')),
+              const PopupMenuItem(value: 'pass', child: Text('About the library pass')),
+            ],
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          ResponsivePage(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth > 620;
+                    final coverWidth = wide ? 120.0 : 92.0;
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DocumentCover(
+                          document: document,
+                          subject: subject,
+                          width: coverWidth,
+                          height: coverWidth * 1.33,
+                          borderRadius: 12,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                document.title,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontSize: wide ? 25 : 20,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  Pill(
+                                    label: subject.name,
+                                    icon: Icons.menu_book_outlined,
+                                    color: subject.color,
+                                  ),
+                                  Pill(
+                                    label: 'Form ${document.form} · ${document.qualification}',
+                                    compact: true,
+                                  ),
+                                  if (document.year != null)
+                                    Pill(label: '${document.year}', compact: true),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  for (var index = 1; index <= 5; index++)
+                                    Icon(
+                                      index <= state.averageRating(document).round()
+                                          ? Icons.star_rounded
+                                          : Icons.star_border_rounded,
+                                      size: 16,
+                                      color: AppColors.sun,
+                                    ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${state.averageRating(document).toStringAsFixed(1)} '
+                                    '(${document.ratingCount + (entry.rating == null ? 0 : 1)})',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${document.pages} pages · ${document.author}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                if (locked) ...[
+                  InfoBanner(
+                    tone: BannerTone.locked,
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Included in the ${document.accessTier.label}',
+                    message:
+                        'Your free tier covers the core library. This document needs a library '
+                        'pass — most learners get one through their school.',
+                    actionLabel: 'See library passes',
+                    onAction: () => _openPass(context),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (!entry.onDevice && guide == null && !locked) ...[
+                  InfoBanner(
+                    tone: BannerTone.warning,
+                    icon: Icons.attach_file_rounded,
+                    title: 'Catalogue record — no file attached',
+                    message:
+                        'Kuphanda stores the details so you can find the paper. Attach the official '
+                        'PDF from this device to read it offline.',
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                _PrimaryActions(
+                  document: document,
+                  entry: entry,
+                  guide: guide,
+                  progress: progress,
+                  locked: locked,
+                  busy: _busy,
+                  onRead: () => _openReader(context, state, document, entry, guide),
+                  onAttach: () => _attach(context, state, document),
+                  onPass: () => _openPass(context),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => state.toggleSaved(document.id),
+                        icon: Icon(
+                          entry.saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                          size: 18,
+                        ),
+                        label: Text(entry.saved ? 'Saved' : 'Save'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _addNote(context, state, document),
+                        icon: const Icon(Icons.edit_note_rounded, size: 18),
+                        label: Text(
+                          state.notesFor(document.id).isEmpty
+                              ? 'Add note'
+                              : 'Notes (${state.notesFor(document.id).length})',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(() => _tab = 1),
+                        icon: const Icon(Icons.bookmarks_outlined, size: 18),
+                        label: Text('Marks (${state.bookmarksFor(document.id).length})'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _Tabs(value: _tab, onChanged: (value) => setState(() => _tab = value)),
+                const SizedBox(height: 18),
+                switch (_tab) {
+                  0 => _Overview(
+                      state: state,
+                      document: document,
+                      subject: subject,
+                      guide: guide,
+                      entry: entry,
+                      onOpenSection: (index) => _openGuide(context, document, index),
+                      onRate: (stars) => state.rateDocument(document.id, stars),
+                    ),
+                  1 => _MarksTab(
+                      state: state,
+                      document: document,
+                      onAddNote: () => _addNote(context, state, document),
+                    ),
+                  _ => _RelatedTab(state: state, document: document),
+                },
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleMenu(
+    BuildContext context,
+    AppState state,
+    Document document,
+    String value,
+  ) async {
+    switch (value) {
+      case 'pass':
+        _openPass(context);
+      case 'remove-file':
+        final confirmed = await confirmAction(
+          context,
+          title: 'Remove the file?',
+          message: 'The document stays in your catalogue and your progress is kept. '
+              'You can attach the PDF again later.',
+          confirmLabel: 'Remove',
+        );
+        if (confirmed) {
+          await state.removeFile(document.id);
+          if (context.mounted) showSnack(context, 'File removed from this device.');
+        }
+      case 'delete':
+        final confirmed = await confirmAction(
+          context,
+          title: 'Delete this document?',
+          message: 'The imported file, its progress and your notes will be deleted from this phone.',
+          confirmLabel: 'Delete',
+        );
+        if (confirmed) {
+          await state.deletePersonalDocument(document.id);
+          if (context.mounted) Navigator.of(context).pop();
+        }
+      case 'edit':
+        if (context.mounted) await _editDetails(context, state, document);
+    }
+  }
+
+  Future<void> _editDetails(BuildContext context, AppState state, Document document) async {
+    final titleController = TextEditingController(text: document.title);
+    var subjectId = document.subjectId;
+    var form = document.form;
+    var kind = document.kind;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => SheetBody(
+          title: 'Edit document',
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton(
+                onPressed: () async {
+                  await state.updatePersonalDocument(
+                    document.id,
+                    title: titleController.text,
+                    subjectId: subjectId,
+                    form: form,
+                    kind: kind,
+                  );
+                  if (sheetContext.mounted) Navigator.pop(sheetContext);
+                },
+                child: const Text('Save'),
+              ),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(height: 16),
+              Text('Subject', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final subject in kSubjects)
+                    ChoiceChip(
+                      label: Text(subject.shortName),
+                      selected: subjectId == subject.id,
+                      onSelected: (_) => setSheetState(() => subjectId = subject.id),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Form', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final option in <int>[1, 2, 3, 4])
+                    ChoiceChip(
+                      label: Text('Form $option'),
+                      selected: form == option,
+                      onSelected: (_) => setSheetState(() => form = option),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Type', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in DocumentKind.values)
+                    ChoiceChip(
+                      label: Text(option.label),
+                      selected: kind == option,
+                      onSelected: (_) => setSheetState(() => kind = option),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    titleController.dispose();
+  }
+
+  Future<void> _attach(BuildContext context, AppState state, Document document) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final picked = await state.pickPdf();
+      if (picked == null) return;
+      await state.attachPdf(document.id, picked);
+      if (context.mounted) {
+        showSnack(context, '${picked.fileName} is now available offline.');
+      }
+    } on FormatException catch (error) {
+      if (context.mounted) showSnack(context, error.message, error: true);
+    } catch (error) {
+      if (context.mounted) showSnack(context, 'Could not attach the file: $error', error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _openPass(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const LibraryPassScreen()),
+    );
+  }
+
+  void _openReader(
+    BuildContext context,
+    AppState state,
+    Document document,
+    LibraryEntry entry,
+    StudyGuide? guide,
+  ) {
+    if (entry.locked) {
+      _openPass(context);
+      return;
+    }
+    if (guide != null) {
+      _openGuide(context, document, 0);
+      return;
+    }
+    final asset = entry.asset;
+    if (asset == null) {
+      _attach(context, state, document);
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PdfReaderScreen(documentId: document.id),
+      ),
+    );
+  }
+
+  void _openGuide(BuildContext context, Document document, int page) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => GuideReaderScreen(documentId: document.id, initialSection: page),
+      ),
+    );
+  }
+
+  Future<void> _addNote(BuildContext context, AppState state, Document document) async {
+    final controller = TextEditingController();
+    final progress = state.progressOrDefault(document);
+    final pageController = TextEditingController(text: '${progress.currentPage}');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
+        child: SheetBody(
+          title: 'Add a note',
+          subtitle: 'Notes stay on this phone and are listed with the document.',
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Cancel'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton(
+                onPressed: () async {
+                  final page = int.tryParse(pageController.text) ?? progress.currentPage;
+                  await state.addNote(document.id, page, controller.text);
+                  if (sheetContext.mounted) Navigator.pop(sheetContext);
+                },
+                child: const Text('Save note'),
+              ),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 120,
+                child: TextField(
+                  controller: pageController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Page'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 5,
+                minLines: 3,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'What do you want to remember?',
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    controller.dispose();
+    pageController.dispose();
+  }
+}
+
+class _PrimaryActions extends StatelessWidget {
+  const _PrimaryActions({
+    required this.document,
+    required this.entry,
+    required this.guide,
+    required this.progress,
+    required this.locked,
+    required this.busy,
+    required this.onRead,
+    required this.onAttach,
+    required this.onPass,
+  });
+
+  final Document document;
+  final LibraryEntry entry;
+  final StudyGuide? guide;
+  final ReadingProgress progress;
+  final bool locked;
+  final bool busy;
+  final VoidCallback onRead;
+  final VoidCallback onAttach;
+  final VoidCallback onPass;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFile = entry.onDevice;
+    final isGuide = guide != null;
+
+    final label = locked
+        ? 'Unlock with a library pass'
+        : isGuide
+            ? (progress.percent > 0 ? 'Continue guide · ${progress.percent.round()}%' : 'Read study guide')
+            : hasFile
+                ? (progress.percent > 0 ? 'Continue reading · page ${progress.currentPage}' : 'Read now')
+                : 'Attach the PDF';
+
+    final icon = locked
+        ? Icons.lock_open_rounded
+        : isGuide
+            ? Icons.auto_stories_rounded
+            : hasFile
+                ? Icons.menu_book_rounded
+                : Icons.attach_file_rounded;
+
+    return FilledButton.icon(
+      onPressed: busy ? null : (locked ? onPass : (hasFile || isGuide ? onRead : onAttach)),
+      icon: busy
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          : Icon(icon, size: 19),
+      label: Text(label),
+    );
+  }
+}
+
+class _Tabs extends StatelessWidget {
+  const _Tabs({required this.value, required this.onChanged});
+
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          for (final (index, label) in <String>['Overview', 'Marks', 'Related'].indexed)
+            Expanded(
+              child: TextButton(
+                onPressed: () => onChanged(index),
+                style: TextButton.styleFrom(
+                  backgroundColor: value == index
+                      ? Theme.of(context).colorScheme.surfaceContainerLowest
+                      : Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                  minimumSize: const Size(0, 38),
+                ),
+                child: Text(label),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Overview extends StatelessWidget {
+  const _Overview({
+    required this.state,
+    required this.document,
+    required this.subject,
+    required this.guide,
+    required this.entry,
+    required this.onOpenSection,
+    required this.onRate,
+  });
+
+  final AppState state;
+  final Document document;
+  final Subject subject;
+  final StudyGuide? guide;
+  final LibraryEntry entry;
+  final ValueChanged<int> onOpenSection;
+  final ValueChanged<int> onRate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final progress = state.progressOrDefault(document);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(document.description, style: theme.textTheme.bodyMedium?.copyWith(height: 1.55)),
+        const SizedBox(height: 20),
+        if (guide != null) ...[
+          Row(
+            children: [
+              Text('Contents', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              Text(
+                '${guide!.pageCount} sections · ${formatMinutes(guide!.estimatedMinutes)}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (var index = 0; index < guide!.sections.length; index++) ...[
+                  ListTile(
+                    onTap: () => onOpenSection(index),
+                    leading: CircleAvatar(
+                      radius: 13,
+                      backgroundColor: subject.color.withValues(alpha: 0.12),
+                      child: Text(
+                        '${index + 1}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: subject.color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    title: Text(guide!.sections[index].title, style: theme.textTheme.bodyMedium),
+                    subtitle: Text(
+                      '${guide!.sections[index].minutes} min · '
+                      '${guide!.sections[index].difficultyLabel}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: index == progress.currentPage - 1
+                        ? const Icon(Icons.play_circle_outline_rounded, size: 20)
+                        : null,
+                    dense: true,
+                  ),
+                  if (index < guide!.sections.length - 1)
+                    Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+        Row(
+          children: [
+            Text('Details', style: theme.textTheme.titleSmall),
+            const Spacer(),
+            Text(
+              entry.onDevice ? 'Available offline' : 'File not attached',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: entry.onDevice ? AppColors.green : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        AppCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            children: [
+              KeyValueRow(label: 'Subject', value: subject.name),
+              KeyValueRow(label: 'Form / level', value: 'Form ${document.form} · ${document.qualification}'),
+              KeyValueRow(label: 'Type', value: document.kind.label),
+              if (document.year != null) KeyValueRow(label: 'Year', value: '${document.year}'),
+              if (document.paperNumber != null)
+                KeyValueRow(label: 'Paper', value: 'Paper ${document.paperNumber}'),
+              if (document.session != null) KeyValueRow(label: 'Session', value: document.session!),
+              if (document.totalMarks != null)
+                KeyValueRow(label: 'Total marks', value: '${document.totalMarks}'),
+              if (document.durationMinutes != null)
+                KeyValueRow(label: 'Duration', value: formatMinutes(document.durationMinutes!)),
+              KeyValueRow(label: 'Pages', value: '${document.pages}'),
+              KeyValueRow(label: 'Language', value: document.language),
+              if (document.publisher != null) KeyValueRow(label: 'Publisher', value: document.publisher!),
+              KeyValueRow(label: 'Added', value: formatDate(document.addedAt)),
+              if (entry.asset != null)
+                KeyValueRow(
+                  label: 'File',
+                  value: '${entry.asset!.fileName} · ${formatBytes(entry.asset!.sizeBytes)}',
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text('Rate this document', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            for (var star = 1; star <= 5; star++)
+              IconButton(
+                onPressed: () => onRate(star),
+                tooltip: '$star star${star == 1 ? '' : 's'}',
+                icon: Icon(
+                  star <= (entry.rating ?? 0) ? Icons.star_rounded : Icons.star_border_rounded,
+                  color: AppColors.sun,
+                ),
+              ),
+            if (entry.rating != null)
+              Text(
+                'You rated this ${entry.rating}/5',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _MarksTab extends StatelessWidget {
+  const _MarksTab({
+    required this.state,
+    required this.document,
+    required this.onAddNote,
+  });
+
+  final AppState state;
+  final Document document;
+  final VoidCallback onAddNote;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bookmarks = state.bookmarksFor(document.id);
+    final notes = state.notesFor(document.id);
+
+    if (bookmarks.isEmpty && notes.isEmpty) {
+      return EmptyState(
+        icon: Icons.bookmark_border_rounded,
+        title: 'No marks yet',
+        message: 'Bookmark a page while reading, or write a note against a question you want to revisit.',
+        actionLabel: 'Add a note',
+        onAction: onAddNote,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (bookmarks.isNotEmpty) ...[
+          Text('Bookmarks', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (var index = 0; index < bookmarks.length; index++) ...[
+                  ListTile(
+                    leading: const Icon(Icons.bookmark_rounded, size: 20),
+                    title: Text(bookmarks[index].label ?? 'Page ${bookmarks[index].page}'),
+                    subtitle: Text(
+                      'Page ${bookmarks[index].page} · ${formatRelative(bookmarks[index].createdAt)}',
+                      style: theme.textTheme.labelSmall,
+                    ),
+                    trailing: IconButton(
+                      tooltip: 'Remove bookmark',
+                      onPressed: () => state.removeBookmark(bookmarks[index].id),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                    ),
+                    dense: true,
+                  ),
+                  if (index < bookmarks.length - 1) const Divider(height: 1),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+        if (notes.isNotEmpty) ...[
+          Row(
+            children: [
+              Text('Notes', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              TextButton(onPressed: onAddNote, child: const Text('Add note')),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final note in notes) ...[
+            AppCard(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Pill(label: 'Page ${note.page}', compact: true),
+                      const Spacer(),
+                      Text(
+                        formatRelative(note.createdAt),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => state.removeNote(note.id),
+                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'Delete note',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(note.text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _RelatedTab extends StatelessWidget {
+  const _RelatedTab({required this.state, required this.document});
+
+  final AppState state;
+  final Document document;
+
+  @override
+  Widget build(BuildContext context) {
+    final related = state.entries
+        .where((entry) =>
+            entry.document.id != document.id &&
+            (entry.document.subjectId == document.subjectId ||
+                entry.document.form == document.form))
+        .take(6)
+        .toList();
+
+    if (related.isEmpty) {
+      return const EmptyState(
+        icon: Icons.library_books_outlined,
+        title: 'Nothing related yet',
+        message: 'Documents from the same subject or form will appear here.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final entry in related) ...[
+          DocumentTile(
+            entry: entry,
+            dense: true,
+            onTap: () => openDocument(context, entry.document.id),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}

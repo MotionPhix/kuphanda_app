@@ -1,0 +1,499 @@
+import 'package:flutter/material.dart';
+
+import '../../app.dart';
+import '../../core/format.dart';
+import '../../core/theme.dart';
+import '../../core/widgets/common.dart';
+import '../../data/models/profile.dart';
+import '../../data/models/subject.dart';
+import '../../state/app_state.dart';
+import 'library_pass_screen.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final theme = Theme.of(context);
+    final profile = state.profile;
+    final stats = state.stats;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          ResponsivePage(
+            maxWidth: 760,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      child: Text(
+                        profile.initials,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            profile.name.isEmpty ? 'Your profile' : profile.name,
+                            style: theme.textTheme.headlineSmall?.copyWith(fontSize: 22),
+                          ),
+                          if (profile.school.isNotEmpty)
+                            Text(
+                              profile.school,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              Pill(
+                                label: 'Form ${profile.form} · ${profile.examTarget} '
+                                    '${profile.examYear}',
+                                compact: true,
+                              ),
+                              Pill(
+                                label: profile.role.label,
+                                color: AppColors.sun,
+                                compact: true,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => showEditProfile(context, state),
+                      child: const Text('Edit'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: StatTile(
+                        label: 'Streak',
+                        value: '${stats.currentStreak} days',
+                        icon: Icons.local_fire_department_outlined,
+                        tint: const Color(0xFFB45309),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: StatTile(
+                        label: 'This week',
+                        value: formatMinutes(stats.weekMinutes),
+                        icon: Icons.timer_outlined,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Text('Your library', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _ProfileItem(
+                        icon: Icons.badge_outlined,
+                        title: 'Library pass',
+                        subtitle: profile.plan.label,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(builder: (_) => const LibraryPassScreen()),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      _ProfileItem(
+                        icon: Icons.menu_book_outlined,
+                        title: 'Subjects',
+                        subtitle: profile.subjects.map((subject) => subject.shortName).join(', '),
+                        onTap: () => showEditProfile(context, state),
+                      ),
+                      const Divider(height: 1),
+                      _ProfileItem(
+                        icon: Icons.flag_outlined,
+                        title: 'Exam year',
+                        subtitle: '${profile.examTarget} in ${profile.examYear}',
+                        onTap: () => showEditProfile(context, state),
+                      ),
+                      const Divider(height: 1),
+                      _ProfileItem(
+                        icon: Icons.timer_outlined,
+                        title: 'Weekly study goal',
+                        subtitle: formatMinutes(profile.weeklyGoalMinutes),
+                        onTap: () => showEditProfile(context, state),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Text('Preferences', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Appearance', style: theme.textTheme.bodySmall),
+                      const SizedBox(height: 8),
+                      SegmentedButton<AppThemePreference>(
+                        showSelectedIcon: false,
+                        segments: [
+                          for (final preference in AppThemePreference.values)
+                            ButtonSegment(
+                              value: preference,
+                              icon: Icon(preference.icon, size: 16),
+                              label: Text(preference.label),
+                            ),
+                        ],
+                        selected: <AppThemePreference>{profile.theme},
+                        onSelectionChanged: (selection) =>
+                            state.setTheme(selection.first),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Icon(Icons.co_present_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Teacher mode', style: theme.textTheme.bodyMedium),
+                                Text(
+                                  'Create classes and set reading.',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: profile.role == StudentRole.teacher,
+                            onChanged: (value) => state.updateProfile(
+                              profile.copyWith(
+                                role: value ? StudentRole.teacher : StudentRole.student,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Text('Data on this phone', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _ProfileItem(
+                        icon: Icons.sd_storage_outlined,
+                        title: 'Storage used',
+                        subtitle:
+                            '${state.importedFileCount} imported files · ${formatBytes(state.storageBytes)}',
+                        onTap: null,
+                      ),
+                      const Divider(height: 1),
+                      _ProfileItem(
+                        icon: Icons.restart_alt_rounded,
+                        title: 'Reset app data',
+                        subtitle: 'Remove imported files, progress, notes and classes',
+                        destructive: true,
+                        onTap: () async {
+                          final confirmed = await confirmAction(
+                            context,
+                            title: 'Reset Kuphanda?',
+                            message: 'This deletes every imported PDF, your reading progress, '
+                                'bookmarks, notes and classes from this phone. The bundled '
+                                'catalogue stays.',
+                            confirmLabel: 'Reset everything',
+                          );
+                          if (confirmed) {
+                            await state.resetEverything();
+                            if (context.mounted) showSnack(context, 'App reset.');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Text('About', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const BrandMark(size: 36),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Kuphanda', style: theme.textTheme.titleSmall),
+                                Text(
+                                  'Version 1.0.0 · offline library',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Kuphanda is a document library and study manager for Malawian '
+                        'secondary schools, covering Forms 1–4 and the JCE and MSCE '
+                        'examinations. It works without an account or a connection.',
+                        style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Catalogue records are sample metadata. No past papers or textbooks '
+                        'are bundled: attach files you are allowed to use. Past papers and '
+                        'textbooks remain the property of MANEB and their publishers.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileItem extends StatelessWidget {
+  const _ProfileItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(
+        icon,
+        size: 20,
+        color: destructive ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+      ),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: destructive ? theme.colorScheme.error : null,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      trailing: onTap == null ? null : const Icon(Icons.chevron_right_rounded, size: 18),
+    );
+  }
+}
+
+Future<void> showEditProfile(BuildContext context, AppState state) async {
+  final profile = state.profile;
+  final nameController = TextEditingController(text: profile.name);
+  final schoolController = TextEditingController(text: profile.school);
+  var form = profile.form;
+  var examYear = profile.examYear;
+  var role = profile.role;
+  var weeklyGoal = profile.weeklyGoalMinutes;
+  final subjects = <String>{...profile.subjectIds};
+
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheetContext) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
+      child: StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final available = subjectsForForm(form);
+          return SheetBody(
+            title: 'Edit profile',
+            maxHeightFactor: 0.92,
+            actions: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  onPressed: () async {
+                    final cleaned = subjects
+                        .where((id) => available.any((subject) => subject.id == id))
+                        .toList();
+                    await state.updateProfile(
+                      profile.copyWith(
+                        name: nameController.text.trim(),
+                        school: schoolController.text.trim(),
+                        form: form,
+                        examYear: examYear,
+                        role: role,
+                        subjectIds: cleaned.isEmpty
+                            ? available.take(4).map((subject) => subject.id).toList()
+                            : cleaned,
+                        weeklyGoalMinutes: weeklyGoal,
+                      ),
+                    );
+                    if (sheetContext.mounted) Navigator.pop(sheetContext);
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: schoolController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'School'),
+                ),
+                const SizedBox(height: 16),
+                Text('Form', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final option in <int>[1, 2, 3, 4])
+                      ChoiceChip(
+                        label: Text('Form $option'),
+                        selected: form == option,
+                        onSelected: (_) => setSheetState(() {
+                          form = option;
+                          subjects.removeWhere(
+                            (id) => !subjectsForForm(form).any((subject) => subject.id == id),
+                          );
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('Exam year', style: Theme.of(context).textTheme.titleSmall),
+                    ),
+                    DropdownButton<int>(
+                      value: examYear,
+                      items: [
+                        for (var year = DateTime.now().year;
+                            year <= DateTime.now().year + 6;
+                            year++)
+                          DropdownMenuItem(value: year, child: Text('$year')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) setSheetState(() => examYear = value);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SegmentedButton<StudentRole>(
+                  segments: const [
+                    ButtonSegment(value: StudentRole.student, label: Text('Student')),
+                    ButtonSegment(value: StudentRole.teacher, label: Text('Teacher')),
+                  ],
+                  selected: <StudentRole>{role},
+                  onSelectionChanged: (selection) => setSheetState(() => role = selection.first),
+                ),
+                const SizedBox(height: 16),
+                Text('Subjects', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final subject in available)
+                      FilterChip(
+                        label: Text(subject.shortName),
+                        selected: subjects.contains(subject.id),
+                        onSelected: (selected) => setSheetState(() {
+                          if (selected) {
+                            subjects.add(subject.id);
+                          } else if (subjects.length > 1) {
+                            subjects.remove(subject.id);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Weekly goal · ${formatMinutes(weeklyGoal)}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                Slider(
+                  value: weeklyGoal.toDouble(),
+                  min: 60,
+                  max: 900,
+                  divisions: 28,
+                  label: formatMinutes(weeklyGoal),
+                  onChanged: (value) => setSheetState(() => weeklyGoal = value.round()),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    ),
+  );
+  nameController.dispose();
+  schoolController.dispose();
+}

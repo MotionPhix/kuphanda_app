@@ -1,0 +1,80 @@
+# ---------------------------------------------------------------------------
+# Kuphanda monorepo — only source, configuration and seed assets are tracked.
+# Generated output, dependencies, secrets and machine-specific files stay out.
+# ---------------------------------------------------------------------------
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Local logs and screenshots
+*.log
+/screenshots/
+phanda_app/screenshots/
+
+# --------------------------- Flutter app -----------------------------------
+phanda_app/.dart_tool/
+phanda_app/.flutter-plugins
+phanda_app/.flutter-plugins-dependencies
+phanda_app/.packages
+phanda_app/build/
+phanda_app/coverage/
+phanda_app/app.*.symbols
+phanda_app/app.*.map.json
+phanda_app/.widget_preview/
+
+# Android
+phanda_app/android/.gradle/
+phanda_app/android/local.properties
+phanda_app/android/key.properties
+phanda_app/**/*.jks
+phanda_app/**/*.keystore
+phanda_app/android/app/debug/
+phanda_app/android/app/profile/
+phanda_app/android/app/release/
+
+# iOS / macOS
+phanda_app/ios/Pods/
+phanda_app/ios/.symlinks/
+phanda_app/ios/Flutter/ephemeral/
+phanda_app/ios/Flutter/Generated.xcconfig
+phanda_app/ios/Flutter/flutter_export_environment.sh
+phanda_app/macos/Pods/
+phanda_app/macos/Flutter/ephemeral/
+
+# Desktop
+phanda_app/windows/flutter/ephemeral/
+phanda_app/linux/flutter/ephemeral/
+
+# --------------------------- Laravel API -----------------------------------
+phanda_api/vendor/
+phanda_api/node_modules/
+phanda_api/.env
+phanda_api/.env.*
+!phanda_api/.env.example
+phanda_api/auth.json
+phanda_api/*.log
+phanda_api/storage/*.key
+phanda_api/storage/logs/*.log
+phanda_api/storage/framework/cache/data/*
+phanda_api/storage/framework/sessions/*
+phanda_api/storage/framework/views/*
+phanda_api/storage/pail/
+phanda_api/database/*.sqlite
+phanda_api/database/*.sqlite-journal
+phanda_api/public/build/
+phanda_api/public/hot
+phanda_api/public/storage
+phanda_api/.phpunit.cache/
+phanda_api/.phpunit.result.cache
+phanda_api/.phpunit.cache
+phanda_api/.qodo/
+phanda_api/.claude/
+phanda_api/CLAUDE.md
+phanda_api/backlog/
