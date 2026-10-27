@@ -16,6 +16,13 @@ return [
     |
     */
 
+    'paychangu' => [
+        'base_url' => env('PAYCHANGU_BASE_URL', 'https://api.paychangu.com'),
+        'secret_key' => env('PAYCHANGU_SECRET_KEY'),
+        'webhook_secret' => env('PAYCHANGU_WEBHOOK_SECRET'),
+        'currency' => env('PAYCHANGU_CURRENCY', 'MWK'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 
@@ -18,6 +19,14 @@ class PickedPdf {
 abstract class DocumentFiles {
   Future<PickedPdf?> pickPdf();
   Future<DocumentAsset> store({required String documentId, required PickedPdf picked});
+  Future<DocumentAsset> storeBytes({
+    required String documentId,
+    required String fileName,
+    required Uint8List bytes,
+    required int version,
+    required String checksum,
+    required int pageCount,
+  });
   Future<void> delete(DocumentAsset asset);
 }
 
@@ -25,6 +34,9 @@ class LocalDocumentFiles implements DocumentFiles {
   LocalDocumentFiles(this._store);
 
   final FileStateStore _store;
+
+  String _safeId(String documentId) =>
+      documentId.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
 
   @override
   Future<PickedPdf?> pickPdf() async {
@@ -64,8 +76,7 @@ class LocalDocumentFiles implements DocumentFiles {
   @override
   Future<DocumentAsset> store({required String documentId, required PickedPdf picked}) async {
     final directory = await _store.filesDirectory();
-    final safeId = documentId.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    final target = File('${directory.path}${Platform.pathSeparator}$safeId.pdf');
+    final target = File('${directory.path}${Platform.pathSeparator}${_safeId(documentId)}.pdf');
     if (await target.exists()) {
       await target.delete();
     }
@@ -77,6 +88,34 @@ class LocalDocumentFiles implements DocumentFiles {
       sizeBytes: await target.length(),
       addedAt: DateTime.now(),
       path: target.path,
+    );
+  }
+
+  @override
+  Future<DocumentAsset> storeBytes({
+    required String documentId,
+    required String fileName,
+    required Uint8List bytes,
+    required int version,
+    required String checksum,
+    required int pageCount,
+  }) async {
+    final directory = await _store.filesDirectory();
+    final target = File(
+      '${directory.path}${Platform.pathSeparator}${_safeId(documentId)}.v$version.pdf',
+    );
+    await target.writeAsBytes(bytes, flush: true);
+
+    return DocumentAsset(
+      documentId: documentId,
+      fileName: fileName,
+      sizeBytes: await target.length(),
+      addedAt: DateTime.now(),
+      path: target.path,
+      pageCount: pageCount,
+      version: version,
+      checksum: checksum,
+      remote: true,
     );
   }
 
@@ -109,6 +148,31 @@ class FakeDocumentFiles implements DocumentFiles {
       addedAt: DateTime.now(),
       path: '/memory/$documentId-$_sequence.pdf',
       pageCount: 4,
+    );
+    stored[documentId] = asset;
+    return asset;
+  }
+
+  @override
+  Future<DocumentAsset> storeBytes({
+    required String documentId,
+    required String fileName,
+    required Uint8List bytes,
+    required int version,
+    required String checksum,
+    required int pageCount,
+  }) async {
+    _sequence++;
+    final asset = DocumentAsset(
+      documentId: documentId,
+      fileName: fileName,
+      sizeBytes: bytes.length,
+      addedAt: DateTime.now(),
+      path: '/memory/$documentId-v$version-$_sequence.pdf',
+      pageCount: pageCount,
+      version: version,
+      checksum: checksum,
+      remote: true,
     );
     stored[documentId] = asset;
     return asset;

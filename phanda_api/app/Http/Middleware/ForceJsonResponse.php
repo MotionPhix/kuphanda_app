@@ -7,7 +7,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class ForceJsonResponse
 {
@@ -24,7 +26,17 @@ final class ForceJsonResponse
             return $response;
         }
 
-        // Convert non-JSON responses to JSON
+        // File downloads, empty responses and 304s must keep their headers and
+        // body; wrapping them in JSON would corrupt the download.
+        if ($response instanceof StreamedResponse || $response instanceof BinaryFileResponse) {
+            return $response;
+        }
+
+        if (in_array($response->getStatusCode(), [204, 304], true)) {
+            return $response;
+        }
+
+        // Convert other non-JSON responses to JSON
         if ($response instanceof Response) {
             return response()->json([
                 'success' => false,

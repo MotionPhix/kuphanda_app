@@ -6,12 +6,12 @@ import '../../core/navigation.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/document_card.dart';
+import '../../data/api/api_models.dart';
 import '../../data/models/document.dart';
 import '../../data/models/reading.dart';
 import '../../data/models/study_guide.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
-import '../profile/library_pass_screen.dart';
 import '../reader/guide_reader_screen.dart';
 import '../reader/pdf_reader_screen.dart';
 
@@ -118,6 +118,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                     label: 'Form ${document.form} · ${document.qualification}',
                                     compact: true,
                                   ),
+                                  if (state.priceFor(document.id) > 0 && locked)
+                                    Pill(
+                                      label: 'MWK ${state.priceFor(document.id)}',
+                                      icon: Icons.sell_outlined,
+                                      color: AppColors.red,
+                                      compact: true,
+                                    ),
                                   if (document.year != null)
                                     Pill(label: '${document.year}', compact: true),
                                 ],
@@ -162,11 +169,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   InfoBanner(
                     tone: BannerTone.locked,
                     icon: Icons.lock_outline_rounded,
-                    title: 'Included in the ${document.accessTier.label}',
-                    message:
-                        'Your free tier covers the core library. This document needs a library '
-                        'pass — most learners get one through their school.',
-                    actionLabel: 'See library passes',
+                    title: 'Premium document · ${document.accessTier.label}',
+                    message: state.priceFor(document.id) > 0
+                        ? 'Subscribe for full access, or buy this document alone for '
+                            'MWK ${state.priceFor(document.id)}. Payment is handled by PayChangu.'
+                        : 'This document is included in a paid subscription. Free papers and '
+                            'guides stay open without an account.',
+                    actionLabel: 'View plans & prices',
                     onAction: () => _openPass(context),
                   ),
                   const SizedBox(height: 12),
@@ -183,6 +192,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   const SizedBox(height: 12),
                 ],
                 _PrimaryActions(
+                  state: state,
                   document: document,
                   entry: entry,
                   guide: guide,
@@ -191,8 +201,18 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   busy: _busy,
                   onRead: () => _openReader(context, state, document, entry, guide),
                   onAttach: () => _attach(context, state, document),
+                  onDownload: () => _download(context, state, document),
                   onPass: () => _openPass(context),
                 ),
+                if (state.hasRemoteFile(document.id)) ...[
+                  const SizedBox(height: 10),
+                  _OfflineStatusCard(
+                    state: state,
+                    document: document,
+                    onDownload: () => _download(context, state, document),
+                    onRemove: () => _removeDownload(context, state, document),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -408,10 +428,40 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     }
   }
 
-  void _openPass(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const LibraryPassScreen()),
+  Future<void> _download(BuildContext context, AppState state, Document document) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await state.markForOffline(document.id);
+      if (context.mounted) showSnack(context, 'Downloaded. You can read it without internet.');
+    } on ApiException catch (error) {
+      if (context.mounted) showSnack(context, error.message, error: true);
+    } catch (error) {
+      if (context.mounted) showSnack(context, 'Download failed: $error', error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _removeDownload(
+    BuildContext context,
+    AppState state,
+    Document document,
+  ) async {
+    final confirmed = await confirmAction(
+      context,
+      title: 'Remove the offline copy?',
+      message: 'The document stays in the catalogue. Your reading progress and notes are kept. '
+          'You can download it again while your subscription is active.',
+      confirmLabel: 'Remove download',
     );
+    if (!confirmed) return;
+    await state.removeOffline(document.id);
+    if (context.mounted) showSnack(context, 'Offline copy removed.');
+  }
+
+  void _openPass(BuildContext context) {
+    openSubscription(context, documentId: widget.documentId);
   }
 
   void _openReader(
@@ -431,7 +481,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     }
     final asset = entry.asset;
     if (asset == null) {
-      _attach(context, state, document);
+      if (state.hasRemoteFile(document.id)) {
+        _download(context, state, document);
+      } else {
+        _attach(context, state, document);
+      }
       return;
     }
     Navigator.of(context).push(
@@ -515,6 +569,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
 class _PrimaryActions extends StatelessWidget {
   const _PrimaryActions({
+    required this.state,
     required this.document,
     required this.entry,
     required this.guide,
@@ -523,9 +578,11 @@ class _PrimaryActions extends StatelessWidget {
     required this.busy,
     required this.onRead,
     required this.onAttach,
+    required this.onDownload,
     required this.onPass,
   });
 
+  final AppState state;
   final Document document;
   final LibraryEntry entry;
   final StudyGuide? guide;
@@ -534,39 +591,204 @@ class _PrimaryActions extends StatelessWidget {
   final bool busy;
   final VoidCallback onRead;
   final VoidCallback onAttach;
+  final VoidCallback onDownload;
   final VoidCallback onPass;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final hasFile = entry.onDevice;
     final isGuide = guide != null;
+    final remote = state.hasRemoteFile(document.id);
+    final offline = state.offlineStateFor(document.id);
+    final downloading = offline == OfflineState.downloading;
 
-    final label = locked
-        ? 'Unlock with a library pass'
-        : isGuide
-            ? (progress.percent > 0 ? 'Continue guide · ${progress.percent.round()}%' : 'Read study guide')
-            : hasFile
-                ? (progress.percent > 0 ? 'Continue reading · page ${progress.currentPage}' : 'Read now')
-                : 'Attach the PDF';
+    final String label;
+    final IconData icon;
+    final VoidCallback? action;
 
-    final icon = locked
-        ? Icons.lock_open_rounded
-        : isGuide
-            ? Icons.auto_stories_rounded
-            : hasFile
-                ? Icons.menu_book_rounded
-                : Icons.attach_file_rounded;
+    if (locked) {
+      label = 'Subscribe or buy';
+      icon = Icons.lock_open_rounded;
+      action = onPass;
+    } else if (downloading) {
+      label = 'Downloading ${(state.downloadProgressFor(document.id) * 100).round()}%';
+      icon = Icons.downloading_rounded;
+      action = null;
+    } else if (isGuide) {
+      label = progress.percent > 0
+          ? 'Continue guide · ${progress.percent.round()}%'
+          : 'Read study guide';
+      icon = Icons.auto_stories_rounded;
+      action = onRead;
+    } else if (hasFile) {
+      label = progress.percent > 0
+          ? 'Continue reading · page ${progress.currentPage}'
+          : 'Read now';
+      icon = Icons.menu_book_rounded;
+      action = onRead;
+    } else if (remote) {
+      label = 'Download for offline reading';
+      icon = Icons.download_rounded;
+      action = onDownload;
+    } else {
+      label = 'Attach the PDF';
+      icon = Icons.attach_file_rounded;
+      action = onAttach;
+    }
 
-    return FilledButton.icon(
-      onPressed: busy ? null : (locked ? onPass : (hasFile || isGuide ? onRead : onAttach)),
-      icon: busy
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-          : Icon(icon, size: 19),
-      label: Text(label),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          onPressed: busy ? null : action,
+          icon: busy || downloading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Icon(icon, size: 19),
+          label: Text(label),
+        ),
+        if (downloading) ...[
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: state.downloadProgressFor(document.id).clamp(0, 1),
+              minHeight: 4,
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Shows the offline lifecycle for a server-managed document: not downloaded,
+/// queued, downloading, up to date, update available, or failed.
+class _OfflineStatusCard extends StatelessWidget {
+  const _OfflineStatusCard({
+    required this.state,
+    required this.document,
+    required this.onDownload,
+    required this.onRemove,
+  });
+
+  final AppState state;
+  final Document document;
+  final VoidCallback onDownload;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final offline = state.offlineStateFor(document.id);
+    final asset = state.assetFor(document.id);
+    final version = state.remoteVersionFor(document.id);
+    final locked = state.isLocked(document);
+    final error = state.downloadErrorFor(document.id);
+
+    final String title;
+    final String subtitle;
+    final Widget? action;
+
+    switch (offline) {
+      case OfflineState.downloading:
+        title = 'Downloading';
+        subtitle = '${(state.downloadProgressFor(document.id) * 100).round()}% · '
+            'keeps the previous copy until this one is verified';
+        action = null;
+        break;
+      case OfflineState.downloaded:
+        title = 'Available offline · v${asset?.version}';
+        subtitle = '${asset?.fileName ?? ''} · stored on this phone';
+        action = OutlinedButton(onPressed: onRemove, child: const Text('Remove'));
+        break;
+      case OfflineState.updateAvailable:
+        title = 'Update available · v$version';
+        subtitle = 'You are reading v${asset?.version}. The updated file downloads when you refresh.';
+        action = FilledButton(
+          onPressed: onDownload,
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+          child: const Text('Update'),
+        );
+        break;
+      case OfflineState.queued:
+        title = 'Queued for download';
+        subtitle = 'Marked for offline reading. Download it now to use it without internet.';
+        action = FilledButton(
+          onPressed: onDownload,
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+          child: const Text('Download'),
+        );
+        break;
+      case OfflineState.failed:
+        title = 'Download failed';
+        subtitle = error ?? 'The file could not be saved. Your previous copy is untouched.';
+        action = OutlinedButton(onPressed: onDownload, child: const Text('Retry'));
+        break;
+      case OfflineState.none:
+        if (locked) {
+          title = 'Premium · online only';
+          subtitle = 'Subscribe or buy this document to download it for offline reading.';
+          action = null;
+        } else {
+          title = 'Online only';
+          subtitle = 'Download it to keep reading when the connection drops.';
+          action = OutlinedButton(onPressed: onDownload, child: const Text('Download'));
+        }
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            switch (offline) {
+              OfflineState.downloaded => Icons.offline_pin_rounded,
+              OfflineState.updateAvailable => Icons.system_update_alt_rounded,
+              OfflineState.failed => Icons.error_outline_rounded,
+              OfflineState.downloading => Icons.downloading_rounded,
+              _ => Icons.cloud_download_outlined,
+            },
+            size: 20,
+            color: offline == OfflineState.failed
+                ? theme.colorScheme.error
+                : theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.labelLarge),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (action != null) ...[
+            const SizedBox(width: 8),
+            action,
+          ],
+        ],
+      ),
     );
   }
 }

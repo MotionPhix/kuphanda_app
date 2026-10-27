@@ -1,4 +1,4 @@
-﻿/// Reading telemetry and the learner's own marks on a document.
+/// Reading telemetry and the learner's own marks on a document.
 ///
 /// Kuphanda tracked `pages_read`, `total_pages`, `time_spent_seconds`,
 /// `last_read_at` and a per-page seconds map. Geli tracked mastery and daily

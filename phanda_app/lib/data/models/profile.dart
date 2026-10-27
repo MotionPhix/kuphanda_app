@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'document.dart';
 import 'subject.dart';
@@ -55,7 +55,7 @@ class Profile {
     this.examYear = 2027,
     this.role = StudentRole.student,
     this.subjectIds = const <String>[],
-    this.plan = LibraryPlan.school,
+    this.plan = LibraryPlan.free,
     this.weeklyGoalMinutes = 300,
     this.theme = AppThemePreference.system,
     this.onboardingComplete = false,

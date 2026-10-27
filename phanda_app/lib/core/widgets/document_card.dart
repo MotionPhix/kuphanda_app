@@ -209,8 +209,10 @@ class DocumentTile extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (entry.locked)
-                          const Pill(
-                            label: 'Library pass',
+                          Pill(
+                            label: entry.priceMwk > 0
+                                ? 'MWK ${entry.priceMwk}'
+                                : 'Premium',
                             icon: Icons.lock_outline_rounded,
                             color: AppColors.red,
                             compact: true,
@@ -358,9 +360,30 @@ class DocumentGridCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   if (entry.locked)
-                    const Icon(Icons.lock_outline_rounded, size: 13, color: AppColors.red)
-                  else if (entry.onDevice)
-                    const Icon(Icons.offline_pin_outlined, size: 13, color: AppColors.green),
+                    Text(
+                      entry.priceMwk > 0 ? 'MWK ${entry.priceMwk}' : 'Premium',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                        color: AppColors.red,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else if (document.accessTier == AccessTier.free)
+                    Text(
+                      'Free',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                        color: AppColors.green,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else
+                    const Icon(Icons.lock_open_rounded, size: 13, color: AppColors.green),
+                  if (entry.onDevice)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 5),
+                      child: Icon(Icons.offline_pin_outlined, size: 13, color: AppColors.green),
+                    ),
                   const Spacer(),
                   if (entry.progressPercent > 0)
                     Text(

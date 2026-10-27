@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\PaymentGateway;
+use App\Services\EntitlementService;
+use App\Services\PayChanguGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,7 +19,8 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PaymentGateway::class, PayChanguGateway::class);
+        $this->app->singleton(EntitlementService::class);
     }
 
     /**

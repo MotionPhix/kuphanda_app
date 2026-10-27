@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/billing/subscription_screen.dart';
 import '../features/classes/class_detail_screen.dart';
 import '../features/document/document_detail_screen.dart';
 import '../features/exam/exam_hub_screen.dart';
@@ -22,6 +23,14 @@ Future<void> openProfile(BuildContext context) {
 Future<void> openExamHub(BuildContext context) {
   return Navigator.of(context).push(
     MaterialPageRoute<void>(builder: (_) => const ExamHubScreen()),
+  );
+}
+
+Future<void> openSubscription(BuildContext context, {String? documentId}) {
+  return Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => SubscriptionScreen(documentId: documentId),
+    ),
   );
 }
 

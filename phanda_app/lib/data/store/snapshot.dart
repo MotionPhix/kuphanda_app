@@ -24,6 +24,15 @@ class AppSnapshot {
     List<ClassGroup>? classes,
     List<Assignment>? assignments,
     List<StudyDay>? studyDays,
+    List<Document>? remoteDocuments,
+    Set<String>? offlineMarked,
+    List<String>? pendingRemovals,
+    this.lastSyncAt,
+    this.accountId,
+    this.accountName,
+    this.accountEmail,
+    this.accountPlan,
+    this.accountSchool,
     this.version = 1,
   })  : profile = profile ?? const Profile(),
         personalDocuments = personalDocuments ?? <Document>[],
@@ -35,7 +44,10 @@ class AppSnapshot {
         savedIds = savedIds ?? <String>{},
         classes = classes ?? <ClassGroup>[],
         assignments = assignments ?? <Assignment>[],
-        studyDays = studyDays ?? <StudyDay>[];
+        studyDays = studyDays ?? <StudyDay>[],
+        remoteDocuments = remoteDocuments ?? <Document>[],
+        offlineMarked = offlineMarked ?? <String>{},
+        pendingRemovals = pendingRemovals ?? <String>[];
 
   Profile profile;
   final List<Document> personalDocuments;
@@ -48,6 +60,24 @@ class AppSnapshot {
   final List<ClassGroup> classes;
   final List<Assignment> assignments;
   final List<StudyDay> studyDays;
+
+  /// Catalogue snapshot fetched from the API. Kept so the library opens with
+  /// the last known catalogue even when the phone is offline.
+  final List<Document> remoteDocuments;
+
+  /// Server-side marks. Only files that carry the remote flag are removed by
+  /// sync; bundled and imported files are untouched.
+  final Set<String> offlineMarked;
+
+  /// Marks removed while offline; retried on the next sync.
+  final List<String> pendingRemovals;
+
+  DateTime? lastSyncAt;
+  int? accountId;
+  String? accountName;
+  String? accountEmail;
+  String? accountPlan;
+  String? accountSchool;
   final int version;
 
   String encode() => jsonEncode(toJson());
@@ -70,6 +100,15 @@ class AppSnapshot {
         'classes': classes.map((group) => group.toJson()).toList(),
         'assignments': assignments.map((assignment) => assignment.toJson()).toList(),
         'studyDays': studyDays.map((day) => day.toJson()).toList(),
+        'remoteDocuments': remoteDocuments.map((doc) => doc.toJson()).toList(),
+        'offlineMarked': offlineMarked.toList(),
+        'pendingRemovals': pendingRemovals,
+        'lastSyncAt': lastSyncAt?.toIso8601String(),
+        'accountId': accountId,
+        'accountName': accountName,
+        'accountEmail': accountEmail,
+        'accountPlan': accountPlan,
+        'accountSchool': accountSchool,
       };
 
   static AppSnapshot fromJson(Map<String, Object?> json) {
@@ -114,6 +153,18 @@ class AppSnapshot {
           .whereType<Map<String, Object?>>()
           .map(StudyDay.fromJson)
           .toList(),
+      remoteDocuments: _list(json['remoteDocuments'])
+          .whereType<Map<String, Object?>>()
+          .map(Document.fromJson)
+          .toList(),
+      offlineMarked: _list(json['offlineMarked']).map((id) => id.toString()).toSet(),
+      pendingRemovals: _list(json['pendingRemovals']).map((id) => id.toString()).toList(),
+      lastSyncAt: DateTime.tryParse(json['lastSyncAt'] as String? ?? ''),
+      accountId: (json['accountId'] as num?)?.toInt(),
+      accountName: json['accountName'] as String?,
+      accountEmail: json['accountEmail'] as String?,
+      accountPlan: json['accountPlan'] as String?,
+      accountSchool: json['accountSchool'] as String?,
       version: (json['version'] as num?)?.toInt() ?? 1,
     );
   }

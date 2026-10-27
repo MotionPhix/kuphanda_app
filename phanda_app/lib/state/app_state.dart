@@ -2,8 +2,13 @@
 
 import 'dart:async';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
+import '../data/api/api_client.dart';
+import '../data/api/api_config.dart';
+import '../data/api/api_models.dart';
+import '../data/api/token_store.dart';
 import '../data/models/classroom.dart';
 import '../data/models/document.dart';
 import '../data/models/profile.dart';
@@ -16,6 +21,7 @@ import '../data/seed/library_seed.dart';
 import '../data/store/document_files.dart';
 import '../data/store/snapshot.dart';
 import '../data/store/state_store.dart';
+import '../data/sync/offline_plan.dart';
 
 /// Result of a class action, shaped so the UI never has to catch exceptions
 /// for ordinary validation failures.
@@ -40,6 +46,8 @@ class DayStat {
   final bool isToday;
   final String label;
 }
+
+enum OfflineState { none, queued, downloading, downloaded, updateAvailable, failed }
 
 class StudyStats {
   const StudyStats({
@@ -74,24 +82,138 @@ class AppState extends ChangeNotifier {
     required StateStore store,
     required DocumentFiles files,
     DateTime Function()? clock,
+    ApiClient? api,
+    TokenStore? tokenStore,
   })  : _store = store,
         _files = files,
-        _clock = clock ?? DateTime.now;
+        _clock = clock ?? DateTime.now,
+        _api = api,
+        _tokenStore = tokenStore ?? SecureTokenStore();
 
   final StateStore _store;
   final DocumentFiles _files;
   final DateTime Function() _clock;
+  final TokenStore _tokenStore;
+  ApiClient? _api;
 
   AppSnapshot _snapshot = AppSnapshot();
   List<Document> _seedCatalogue = const <Document>[];
   List<Document> _allDocuments = const <Document>[];
+  List<RemoteDocument> _remoteCatalogue = const <RemoteDocument>[];
+  final Map<String, int> _remoteVersions = <String, int>{};
+  final Map<String, double> _downloadProgress = <String, double>{};
+  final Set<String> _downloading = <String>{};
+  final Map<String, String> _downloadErrors = <String, String>{};
+  final Map<String, bool> _entitled = <String, bool>{};
+  List<RemotePlan> _plans = const <RemotePlan>[];
+  BillingStatus? _billing;
+  String? _token;
+  AuthSession? _account;
+  bool _syncing = false;
+  String? _syncError;
   bool _ready = false;
   String? _lastError;
   Timer? _persistTimer;
+  Timer? _autoSyncTimer;
 
   bool get isReady => _ready;
   String? get lastError => _lastError;
   Profile get profile => _snapshot.profile;
+
+  // ---------------------------------------------------------------------------
+  // Account and sync surface
+  // ---------------------------------------------------------------------------
+
+  bool get isSignedIn => _token != null && _token!.isNotEmpty;
+  AuthSession? get account => _account;
+  String? get accountName => _snapshot.accountName;
+  String? get accountEmail => _snapshot.accountEmail;
+  String? get accountPlan => _snapshot.accountPlan;
+  bool get isSyncing => _syncing;
+  String? get syncError => _syncError;
+  DateTime? get lastSyncAt => _snapshot.lastSyncAt;
+  int get offlineMarkCount => _snapshot.offlineMarked.length;
+  int get pendingRemovalCount => _snapshot.pendingRemovals.length;
+
+  List<RemotePlan> get plans => _plans;
+  BillingStatus? get billing => _billing;
+  AccessTier get entitlementTier => _billing?.tier ?? AccessTier.fromName(profile.plan.name);
+  bool get hasPaidAccess => _billing?.hasPaidAccess ?? false;
+
+  int priceFor(String documentId) {
+    for (final item in _remoteCatalogue) {
+      if (item.document.id == documentId) return item.priceMwk;
+    }
+    return 0;
+  }
+
+  /// Server entitlement wins; without a loaded catalogue, fall back to the
+  /// locally cached plan.
+  bool canAccess(Document document) {
+    if (document.accessTier == AccessTier.free) return true;
+
+    final override = _entitled[document.id];
+    if (override != null) return override;
+
+    // Paid content requires an account. Bundled free material stays readable.
+    if (!isSignedIn) return false;
+
+    if (profile.plan == LibraryPlan.school) return true;
+
+    final billing = _billing;
+    if (billing != null) {
+      if (billing.tier.rank >= document.accessTier.rank) return true;
+      if (billing.purchases.contains(document.id)) return true;
+      return false;
+    }
+
+    return profile.plan.covers(document.accessTier);
+  }
+
+  /// A document has a server file and can therefore be downloaded or updated.
+  bool hasRemoteFile(String documentId) =>
+      _remoteCatalogue.any((item) => item.document.id == documentId && item.file != null);
+
+  int? remoteVersionFor(String documentId) => _remoteVersions[documentId];
+
+  bool isMarkedOffline(String documentId) =>
+      _snapshot.offlineMarked.contains(documentId);
+
+  bool updateAvailable(String documentId) {
+    final asset = _snapshot.assets[documentId];
+    final latest = _remoteVersions[documentId];
+    return asset != null && asset.remote && latest != null && asset.version < latest;
+  }
+
+  OfflineState offlineStateFor(String documentId) {
+    if (_downloading.contains(documentId)) return OfflineState.downloading;
+    final error = _downloadErrors[documentId];
+    if (error != null) return OfflineState.failed;
+
+    final asset = _snapshot.assets[documentId];
+    if (asset != null && asset.remote) {
+      return updateAvailable(documentId) ? OfflineState.updateAvailable : OfflineState.downloaded;
+    }
+    if (isMarkedOffline(documentId)) return OfflineState.queued;
+    return OfflineState.none;
+  }
+
+  double downloadProgressFor(String documentId) => _downloadProgress[documentId] ?? 0;
+  String? downloadErrorFor(String documentId) => _downloadErrors[documentId];
+
+  /// Starts the periodic refresh. Safe to call more than once.
+  void startAutoSync({Duration interval = const Duration(minutes: 15)}) {
+    _autoSyncTimer?.cancel();
+    if (!isSignedIn) return;
+    _autoSyncTimer = Timer.periodic(interval, (_) {
+      unawaited(syncNow(silent: true));
+    });
+  }
+
+  void stopAutoSync() {
+    _autoSyncTimer?.cancel();
+    _autoSyncTimer = null;
+  }
 
   // ---------------------------------------------------------------------------
   // Lifecycle
@@ -126,12 +248,52 @@ class AppState extends ChangeNotifier {
 
     _snapshot = snapshot;
     _seedCatalogue = buildCatalogue(now: now);
+    final restoredCatalogue = <RemoteDocument>[];
+    for (final document in snapshot.remoteDocuments) {
+      final asset = snapshot.assets[document.id];
+      RemoteFile? file;
+      if (asset != null && asset.remote) {
+        file = RemoteFile(
+          version: asset.version,
+          fileName: asset.fileName,
+          sizeBytes: asset.sizeBytes,
+          pageCount: asset.pageCount ?? document.pages,
+          checksum: asset.checksum ?? '',
+          publishedAt: asset.addedAt,
+        );
+      }
+      restoredCatalogue.add(RemoteDocument(document: document, file: file));
+    }
+    _remoteCatalogue = restoredCatalogue;
+    for (final entry in snapshot.assets.entries) {
+      if (entry.value.remote) {
+        _remoteVersions[entry.key] = entry.value.version;
+      }
+    }
+
+    _token = await _tokenStore.read();
+    if (_token != null && _token!.isNotEmpty) {
+      _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
+      _api!.token = _token;
+      _account = AuthSession(
+        token: _token!,
+        userId: snapshot.accountId ?? 0,
+        name: snapshot.accountName ?? '',
+        email: snapshot.accountEmail ?? '',
+        plan: snapshot.accountPlan ?? 'school',
+        school: snapshot.accountSchool,
+      );
+    } else {
+      _token = null;
+    }
+
     _allDocuments = _mergeDocuments();
     _ready = true;
     if (isFirstRun) {
       await _persistNow();
     }
     notifyListeners();
+    startAutoSync();
   }
 
   /// A little history so the weekly chart and streak are not empty on a brand
@@ -157,11 +319,19 @@ class AppState extends ChangeNotifier {
 
   List<Document> _mergeDocuments() {
     final merged = <String, Document>{};
+    // Online-first: once a server catalogue has been synced it becomes the
+    // catalogue. The bundled seed is only a first-run / signed-out fallback,
+    // so learners never see stale records the library has already removed.
+    if (_remoteCatalogue.isEmpty) {
+      for (final document in _seedCatalogue) {
+        merged[document.id] = document;
+      }
+    }
+    for (final document in _remoteCatalogue) {
+      merged[document.document.id] = document.document;
+    }
     for (final document in _snapshot.personalDocuments) {
       merged[document.id] = document;
-    }
-    for (final document in _seedCatalogue) {
-      merged.putIfAbsent(document.id, () => document);
     }
     final list = merged.values.toList()
       ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
@@ -198,7 +368,7 @@ class AppState extends ChangeNotifier {
 
   bool isSaved(String documentId) => _snapshot.savedIds.contains(documentId);
 
-  bool isLocked(Document document) => !profile.plan.covers(document.accessTier);
+  bool isLocked(Document document) => !canAccess(document);
 
   LibraryEntry _entryFor(Document document) {
     final progress = _snapshot.progress[document.id];
@@ -210,6 +380,7 @@ class AppState extends ChangeNotifier {
       saved: _snapshot.savedIds.contains(document.id),
       locked: isLocked(document),
       rating: _snapshot.ratings[document.id],
+      priceMwk: priceFor(document.id),
     );
   }
 
@@ -782,10 +953,384 @@ class AppState extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Authentication
+  // ---------------------------------------------------------------------------
+
+  Future<void> signIn({required String email, required String password}) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
+    final session = await api.login(email: email.trim(), password: password);
+    await _adoptSession(session);
+    await loadBilling();
+    await syncNow();
+  }
+
+  Future<void> registerAccount({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
+    final session = await api.register(
+      name: name.trim(),
+      email: email.trim(),
+      password: password,
+    );
+    await _adoptSession(session);
+    await loadBilling();
+    await syncNow();
+  }
+
+  Future<void> _adoptSession(AuthSession session) async {
+    _token = session.token;
+    _account = session;
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: session.token);
+    api.token = session.token;
+    await _tokenStore.write(session.token);
+
+    _snapshot
+      ..accountId = session.userId
+      ..accountName = session.name
+      ..accountEmail = session.email
+      ..accountPlan = session.plan
+      ..accountSchool = session.school;
+
+    // The server is authoritative about entitlement. Mirror it locally so the
+    // lock badges and the API's 403 responses agree.
+    _snapshot.profile = profile.copyWith(
+      plan: session.plan == 'school' ? LibraryPlan.school : LibraryPlan.free,
+    );
+
+    await _persistNow();
+    startAutoSync();
+    notifyListeners();
+  }
+
+  Future<void> signOut() async {
+    if (isSignedIn) {
+      try {
+        await _api?.logout();
+      } catch (_) {
+        // Signing out must work offline; the token is discarded locally.
+      }
+    }
+
+    _token = null;
+    _account = null;
+    _api?.token = null;
+    await _tokenStore.clear();
+    stopAutoSync();
+
+    _snapshot
+      ..accountId = null
+      ..accountName = null
+      ..accountEmail = null
+      ..accountPlan = null
+      ..accountSchool = null;
+    _syncError = null;
+
+    notifyListeners();
+    await _persistNow();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Billing and subscriptions
+  // ---------------------------------------------------------------------------
+
+  Future<void> loadBilling() async {
+    if (!isSignedIn) return;
+    try {
+      final plans = await _api!.fetchPlans();
+      final status = await _api!.fetchBillingStatus();
+      _plans = plans;
+      _billing = status;
+      notifyListeners();
+    } on ApiException catch (error) {
+      _syncError = error.message;
+      notifyListeners();
+    }
+  }
+
+  Future<CheckoutSession> startPlanCheckout(RemotePlan plan) async {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to subscribe.');
+    }
+    return _api!.checkoutPlan(plan.id);
+  }
+
+  Future<CheckoutSession> startDocumentCheckout(String documentId) async {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to buy this document.');
+    }
+    return _api!.checkoutDocument(documentId);
+  }
+
+  Future<PaymentStatus> verifyPayment(String txRef) async {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to check the payment.');
+    }
+    final status = await _api!.paymentStatus(txRef);
+    if (status.isComplete) {
+      await loadBilling();
+      await syncNow();
+    }
+    return status;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Offline library sync
+  // ---------------------------------------------------------------------------
+
+  /// Refreshes the catalogue, then makes every marked document match the
+  /// server: new marks download, newer versions replace older ones, and marks
+  /// removed elsewhere delete their local file. A failed item never removes a
+  /// working copy.
+  Future<void> syncNow({bool silent = false}) async {
+    if (_syncing) return;
+
+    if (!isSignedIn) {
+      if (!silent) {
+        _syncError = 'Sign in to sync the library.';
+        notifyListeners();
+      }
+      return;
+    }
+
+    _syncing = true;
+    _syncError = null;
+    notifyListeners();
+
+    final api = _api!;
+    var failed = 0;
+
+    try {
+      await _flushPendingRemovals(api);
+
+      final catalogue = await api.fetchDocuments();
+      _remoteCatalogue = catalogue;
+      _entitled.clear();
+      for (final item in catalogue) {
+        _entitled[item.document.id] = item.isEntitled;
+      }
+      _snapshot.remoteDocuments
+        ..clear()
+        ..addAll(catalogue.map((item) => item.document));
+      for (final item in catalogue) {
+        if (item.file != null) _remoteVersions[item.document.id] = item.file!.version;
+      }
+      _recomputeDocuments();
+      notifyListeners();
+
+      final offline = await api.fetchOffline();
+      _snapshot.offlineMarked
+        ..clear()
+        ..addAll(offline.map((item) => item.documentId));
+
+      for (final item in offline) {
+        if (item.file != null) _remoteVersions[item.documentId] = item.file!.version;
+        _entitled[item.documentId] = item.isEntitled;
+      }
+
+      final actions = planOfflineSync(remote: offline, local: _snapshot.assets);
+
+      for (final action in actions) {
+        try {
+          if (action.isDownload) {
+            await _downloadAction(api, action);
+          } else {
+            await _removeLocalOnly(action.documentId);
+          }
+        } on ApiException catch (error) {
+          failed++;
+          _downloadErrors[action.documentId] = error.message;
+        } catch (error) {
+          failed++;
+          _downloadErrors[action.documentId] = 'Sync failed: $error';
+        }
+      }
+
+      _snapshot.lastSyncAt = _clock();
+      if (failed > 0) {
+        _syncError = '$failed document${failed == 1 ? '' : 's'} could not be downloaded.';
+      }
+    } on ApiException catch (error) {
+      _syncError = error.message;
+      if (error.isUnauthorized) {
+        // Keep downloaded files: losing a session must not lose reading access.
+        _token = null;
+        _account = null;
+        _api?.token = null;
+        await _tokenStore.clear();
+        stopAutoSync();
+      }
+    } catch (error) {
+      _syncError = 'Sync failed: $error';
+    } finally {
+      _syncing = false;
+      await _persistNow();
+      notifyListeners();
+    }
+  }
+
+  Future<void> _flushPendingRemovals(ApiClient api) async {
+    if (_snapshot.pendingRemovals.isEmpty) return;
+    final pending = List<String>.from(_snapshot.pendingRemovals);
+    for (final id in pending) {
+      try {
+        await api.removeOffline(id);
+        _snapshot.pendingRemovals.remove(id);
+      } on ApiException catch (error) {
+        if (error.statusCode == 404) {
+          _snapshot.pendingRemovals.remove(id);
+        } else if (error.isNetworkError) {
+          break;
+        }
+      }
+    }
+  }
+
+  Future<void> _downloadAction(ApiClient api, OfflineAction action) async {
+    final file = action.file;
+    final url = action.downloadUrl;
+    if (file == null || url == null || url.isEmpty) return;
+
+    final id = action.documentId;
+    _downloading.add(id);
+    _downloadProgress[id] = 0;
+    _downloadErrors.remove(id);
+    notifyListeners();
+
+    try {
+      final bytes = await api.download(
+        url,
+        onProgress: (progress) {
+          final previous = _downloadProgress[id] ?? 0;
+          if (progress >= 1 || progress - previous >= 0.02) {
+            _downloadProgress[id] = progress;
+            notifyListeners();
+          }
+        },
+      );
+
+      if (file.sizeBytes > 0 && bytes.length != file.sizeBytes) {
+        throw const ApiException('The download was incomplete. Try again.');
+      }
+
+      final digest = sha256.convert(bytes).toString();
+      if (file.checksum.isNotEmpty && digest != file.checksum) {
+        throw const ApiException('The downloaded file failed its integrity check.');
+      }
+
+      final previous = _snapshot.assets[id];
+      final asset = await _files.storeBytes(
+        documentId: id,
+        fileName: file.fileName,
+        bytes: bytes,
+        version: file.version,
+        checksum: file.checksum,
+        pageCount: file.pageCount,
+      );
+
+      // Only replace the working copy after the new bytes are safely stored.
+      if (previous != null && previous.path != null && previous.path != asset.path) {
+        await _files.delete(previous);
+      }
+
+      _snapshot.assets[id] = asset;
+      _snapshot.offlineMarked.add(id);
+      _remoteVersions[id] = file.version;
+
+      try {
+        await api.acknowledge(id, file.version);
+      } on ApiException {
+        // The local copy is valid; the acknowledgement will retry next sync.
+      }
+
+      await _persistNow();
+    } finally {
+      _downloading.remove(id);
+      _downloadProgress.remove(id);
+      notifyListeners();
+    }
+  }
+
+  Future<void> _removeLocalOnly(String documentId) async {
+    final asset = _snapshot.assets[documentId];
+    if (asset != null && asset.remote) {
+      await _files.delete(asset);
+      _snapshot.assets.remove(documentId);
+    }
+    _snapshot.offlineMarked.remove(documentId);
+    _remoteVersions.remove(documentId);
+  }
+
+  /// Explicitly marks a document for offline reading and downloads it now.
+  Future<void> markForOffline(String documentId) async {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to download documents for offline reading.');
+    }
+    final api = _api!;
+    final item = await api.markOffline(documentId);
+
+    _snapshot.offlineMarked.add(documentId);
+    final file = item.file;
+    if (file == null) {
+      throw const ApiException(
+        'The library has no file for this document yet. It will download when one is published.',
+        statusCode: 409,
+      );
+    }
+
+    _remoteVersions[documentId] = file.version;
+    await _downloadAction(
+      api,
+      OfflineAction(
+        type: OfflineActionType.download,
+        documentId: documentId,
+        version: file.version,
+        downloadUrl: item.downloadUrl,
+        file: file,
+      ),
+    );
+    await _persistNow();
+    notifyListeners();
+  }
+
+  /// Re-downloads a marked document, keeping the old copy until verification.
+  Future<void> refreshOffline(String documentId) => markForOffline(documentId);
+
+  /// Removes the file and the mark. Works offline by queueing the server call.
+  Future<void> removeOffline(String documentId, {bool removeFromServer = true}) async {
+    await _removeLocalOnly(documentId);
+
+    if (removeFromServer && isSignedIn) {
+      try {
+        await _api!.removeOffline(documentId);
+      } on ApiException catch (error) {
+        if (error.isNetworkError) {
+          if (!_snapshot.pendingRemovals.contains(documentId)) {
+            _snapshot.pendingRemovals.add(documentId);
+          }
+          _syncError = 'Removal saved. It will reach the library on the next sync.';
+        } else if (error.statusCode != 404) {
+          _downloadErrors[documentId] = error.message;
+        }
+      }
+    }
+
+    await _persistNow();
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
   // Reset
   // ---------------------------------------------------------------------------
 
   Future<void> resetEverything() async {
+    await _tokenStore.clear();
+    _token = null;
+    _account = null;
+    _api?.token = null;
+    stopAutoSync();
     for (final asset in _snapshot.assets.values) {
       if (!asset.isBundled) {
         try {
@@ -827,6 +1372,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _persistTimer?.cancel();
+    _autoSyncTimer?.cancel();
     super.dispose();
   }
 }

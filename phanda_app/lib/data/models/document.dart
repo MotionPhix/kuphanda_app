@@ -227,6 +227,9 @@ class DocumentAsset {
     this.path,
     this.assetPath,
     this.pageCount,
+    this.version = 1,
+    this.checksum,
+    this.remote = false,
   });
 
   final String documentId;
@@ -237,9 +240,28 @@ class DocumentAsset {
   final String? assetPath;
   final int? pageCount;
 
+  /// Version published by the library API. Bundled and imported files are
+  /// version 1; server downloads carry the server's version number.
+  final int version;
+
+  /// SHA-256 of the stored bytes, used to verify a download before it replaces
+  /// a working copy.
+  final String? checksum;
+
+  /// True when the file came from the API and can be refreshed or removed by
+  /// sync. Bundled and imported files are never touched by sync.
+  final bool remote;
+
   bool get isBundled => assetPath != null;
 
-  DocumentAsset copyWith({String? fileName, String? path, int? pageCount}) {
+  DocumentAsset copyWith({
+    String? fileName,
+    String? path,
+    int? pageCount,
+    int? version,
+    String? checksum,
+    bool? remote,
+  }) {
     return DocumentAsset(
       documentId: documentId,
       fileName: fileName ?? this.fileName,
@@ -248,6 +270,9 @@ class DocumentAsset {
       path: path ?? this.path,
       assetPath: assetPath,
       pageCount: pageCount ?? this.pageCount,
+      version: version ?? this.version,
+      checksum: checksum ?? this.checksum,
+      remote: remote ?? this.remote,
     );
   }
 
@@ -259,6 +284,9 @@ class DocumentAsset {
         'path': path,
         'assetPath': assetPath,
         'pageCount': pageCount,
+        'version': version,
+        'checksum': checksum,
+        'remote': remote,
       };
 
   static DocumentAsset fromJson(Map<String, Object?> json) {
@@ -270,6 +298,9 @@ class DocumentAsset {
       path: json['path'] as String?,
       assetPath: json['assetPath'] as String?,
       pageCount: (json['pageCount'] as num?)?.toInt(),
+      version: (json['version'] as num?)?.toInt() ?? 1,
+      checksum: json['checksum'] as String?,
+      remote: json['remote'] as bool? ?? false,
     );
   }
 }
@@ -284,6 +315,7 @@ class LibraryEntry {
     this.saved = false,
     this.locked = false,
     this.rating,
+    this.priceMwk = 0,
   });
 
   final Document document;
@@ -297,6 +329,10 @@ class LibraryEntry {
 
   /// The learner's own rating, when they have given one.
   final int? rating;
+
+  /// Single-document price in MWK from the server; zero means free or
+  /// subscription-only.
+  final int priceMwk;
 
   bool get onDevice => asset != null;
   bool get hasFile => asset != null || document.guideId != null;

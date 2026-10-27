@@ -11,6 +11,7 @@ import '../../data/models/document.dart';
 import '../../data/models/subject.dart';
 import '../../data/store/document_files.dart';
 import '../../state/app_state.dart';
+import 'sync_card.dart';
 
 enum _DocumentsFilter {
   offline('On this device'),
@@ -86,7 +87,9 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
+              SyncCard(state: state, onSignIn: () => openSubscription(context)),
+              const SizedBox(height: 14),
               _StorageCard(state: state),
               const SizedBox(height: 16),
               TextField(

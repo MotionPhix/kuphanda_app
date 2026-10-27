@@ -28,6 +28,7 @@ final class AuthController extends ApiController
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'plan' => 'free',
         ]);
 
         $user->sendEmailVerificationNotification();

@@ -7,7 +7,7 @@ import '../../core/widgets/common.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
-import 'library_pass_screen.dart';
+import '../billing/subscription_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -112,11 +112,15 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _ProfileItem(
-                        icon: Icons.badge_outlined,
-                        title: 'Library pass',
-                        subtitle: profile.plan.label,
+                        icon: Icons.card_membership_outlined,
+                        title: 'Subscription & access',
+                        subtitle: state.isSignedIn
+                            ? '${state.entitlementTier.label} · ${state.accountEmail ?? ''}'
+                            : 'Sign in to subscribe or buy documents',
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(builder: (_) => const LibraryPassScreen()),
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SubscriptionScreen(),
+                          ),
                         ),
                       ),
                       const Divider(height: 1),
