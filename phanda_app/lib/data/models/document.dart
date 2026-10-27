@@ -316,6 +316,7 @@ class LibraryEntry {
     this.locked = false,
     this.rating,
     this.priceMwk = 0,
+    this.hasRemoteFile = false,
   });
 
   final Document document;
@@ -333,6 +334,10 @@ class LibraryEntry {
   /// Single-document price in MWK from the server; zero means free or
   /// subscription-only.
   final int priceMwk;
+
+  /// True when the library API holds a file for this document, so it can be
+  /// downloaded rather than expecting the learner to attach one.
+  final bool hasRemoteFile;
 
   bool get onDevice => asset != null;
   bool get hasFile => asset != null || document.guideId != null;

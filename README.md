@@ -123,10 +123,35 @@ flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
 For an Android emulator use `http://10.0.2.2:8000/api/v1`; for a physical device
 use the machine's LAN address and add it to the Android network security config.
 
+## Publishing content
+
+The library team owns the catalogue; students never upload material. Publish a
+new immutable version from a PDF on the server:
+
+```bash
+php artisan library:publish sample-howto /srv/library/quick-start-v3.pdf \
+  --pages=6 --notes="Adds the revision planner"
+```
+
+The command validates the PDF, hashes it, stores it under
+`storage/app/private/library/documents/{id}/`, and bumps `latest_version`.
+Existing readers keep their old copy until the app syncs; the next sync offers
+the update. Files are limited to 50 MB.
+
+To withdraw a document:
+
+```bash
+php artisan library:unpublish sample-howto
+```
+
+It disappears from the catalogue and `is_entitled` becomes false for every
+offline mark, so clients delete downloaded copies on the next sync. Versions are
+kept, so publishing again restores access without learners re-marking anything.
+
 ## Tests and builds
 
 ```bash
-cd phanda_api && php artisan test        # 45 tests
+cd phanda_api && php artisan test        # 50 tests
 cd phanda_app && flutter analyze         # no issues
 cd phanda_app && flutter test            # 14 tests
 cd phanda_app && flutter build windows --debug

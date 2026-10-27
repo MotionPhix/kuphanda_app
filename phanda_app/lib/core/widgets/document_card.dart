@@ -231,6 +231,13 @@ class DocumentTile extends StatelessWidget {
                             color: AppColors.green,
                             compact: true,
                           )
+                        else if (entry.hasRemoteFile)
+                          const Pill(
+                            label: 'Download',
+                            icon: Icons.cloud_download_outlined,
+                            color: AppColors.green,
+                            compact: true,
+                          )
                         else
                           Pill(
                             label: 'Add PDF',

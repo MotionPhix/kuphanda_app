@@ -381,6 +381,7 @@ class AppState extends ChangeNotifier {
       locked: isLocked(document),
       rating: _snapshot.ratings[document.id],
       priceMwk: priceFor(document.id),
+      hasRemoteFile: hasRemoteFile(document.id),
     );
   }
 
