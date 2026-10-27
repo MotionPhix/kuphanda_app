@@ -33,6 +33,9 @@ class AppSnapshot {
     this.accountEmail,
     this.accountPlan,
     this.accountSchool,
+    this.pendingPaymentTxRef,
+    this.pendingPaymentKind,
+    this.pendingPaymentAt,
     this.version = 1,
   })  : profile = profile ?? const Profile(),
         personalDocuments = personalDocuments ?? <Document>[],
@@ -78,6 +81,12 @@ class AppSnapshot {
   String? accountEmail;
   String? accountPlan;
   String? accountSchool;
+
+  /// Checkout started but not confirmed. Kept so closing the app while paying
+  /// in the browser does not lose the reference.
+  String? pendingPaymentTxRef;
+  String? pendingPaymentKind;
+  DateTime? pendingPaymentAt;
   final int version;
 
   String encode() => jsonEncode(toJson());
@@ -109,6 +118,9 @@ class AppSnapshot {
         'accountEmail': accountEmail,
         'accountPlan': accountPlan,
         'accountSchool': accountSchool,
+        'pendingPaymentTxRef': pendingPaymentTxRef,
+        'pendingPaymentKind': pendingPaymentKind,
+        'pendingPaymentAt': pendingPaymentAt?.toIso8601String(),
       };
 
   static AppSnapshot fromJson(Map<String, Object?> json) {
@@ -165,6 +177,9 @@ class AppSnapshot {
       accountEmail: json['accountEmail'] as String?,
       accountPlan: json['accountPlan'] as String?,
       accountSchool: json['accountSchool'] as String?,
+      pendingPaymentTxRef: json['pendingPaymentTxRef'] as String?,
+      pendingPaymentKind: json['pendingPaymentKind'] as String?,
+      pendingPaymentAt: DateTime.tryParse(json['pendingPaymentAt'] as String? ?? ''),
       version: (json['version'] as num?)?.toInt() ?? 1,
     );
   }

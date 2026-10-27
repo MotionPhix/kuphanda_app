@@ -136,6 +136,10 @@ class AppState extends ChangeNotifier {
   int get offlineMarkCount => _snapshot.offlineMarked.length;
   int get pendingRemovalCount => _snapshot.pendingRemovals.length;
 
+  String? get pendingPaymentTxRef => _snapshot.pendingPaymentTxRef;
+  String? get pendingPaymentKind => _snapshot.pendingPaymentKind;
+  bool get hasPendingPayment => _snapshot.pendingPaymentTxRef != null;
+
   List<RemotePlan> get plans => _plans;
   List<PaymentRecord> get payments => _payments;
   BillingStatus? get billing => _billing;
@@ -1028,7 +1032,10 @@ class AppState extends ChangeNotifier {
       ..accountName = null
       ..accountEmail = null
       ..accountPlan = null
-      ..accountSchool = null;
+      ..accountSchool = null
+      ..pendingPaymentTxRef = null
+      ..pendingPaymentKind = null
+      ..pendingPaymentAt = null;
     _syncError = null;
 
     notifyListeners();
@@ -1059,14 +1066,18 @@ class AppState extends ChangeNotifier {
     if (!isSignedIn) {
       throw const ApiException('Sign in to subscribe.');
     }
-    return _api!.checkoutPlan(plan.id);
+    final session = await _api!.checkoutPlan(plan.id);
+    await _rememberPending(session);
+    return session;
   }
 
   Future<CheckoutSession> startDocumentCheckout(String documentId) async {
     if (!isSignedIn) {
       throw const ApiException('Sign in to buy this document.');
     }
-    return _api!.checkoutDocument(documentId);
+    final session = await _api!.checkoutDocument(documentId);
+    await _rememberPending(session);
+    return session;
   }
 
   Future<PaymentStatus> verifyPayment(String txRef) async {
@@ -1075,10 +1086,63 @@ class AppState extends ChangeNotifier {
     }
     final status = await _api!.paymentStatus(txRef);
     if (status.isComplete) {
+      await _clearPendingPayment(txRef);
       await loadBilling();
       await syncNow();
     }
     return status;
+  }
+
+  /// Called when the app returns to the foreground. A learner may have paid in
+  /// the browser after closing the payment sheet; the reference survives a
+  /// restart, so the entitlement can still be confirmed.
+  Future<PaymentStatus?> resumePendingPayment() async {
+    if (!isSignedIn) return null;
+    final txRef = _snapshot.pendingPaymentTxRef;
+    if (txRef == null || txRef.isEmpty) return null;
+
+    final startedAt = _snapshot.pendingPaymentAt;
+    if (startedAt != null && _clock().difference(startedAt) > const Duration(hours: 48)) {
+      await clearPendingPayment();
+      return null;
+    }
+
+    try {
+      final status = await _api!.paymentStatus(txRef);
+      if (status.isComplete) {
+        await _clearPendingPayment(txRef);
+        await loadBilling();
+        await syncNow();
+      }
+      return status;
+    } on ApiException {
+      // Offline or provider unavailable: keep the reference and retry later.
+      return null;
+    }
+  }
+
+  Future<void> clearPendingPayment() async {
+    _snapshot
+      ..pendingPaymentTxRef = null
+      ..pendingPaymentKind = null
+      ..pendingPaymentAt = null;
+    notifyListeners();
+    await _persistNow();
+  }
+
+  Future<void> _rememberPending(CheckoutSession session) async {
+    _snapshot
+      ..pendingPaymentTxRef = session.txRef
+      ..pendingPaymentKind = session.kind
+      ..pendingPaymentAt = _clock();
+    notifyListeners();
+    await _persistNow();
+  }
+
+  Future<void> _clearPendingPayment(String txRef) async {
+    if (_snapshot.pendingPaymentTxRef == txRef) {
+      await clearPendingPayment();
+    }
   }
 
   // ---------------------------------------------------------------------------

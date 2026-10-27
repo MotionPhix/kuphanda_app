@@ -1,5 +1,7 @@
 import 'dart:ui' show PointerDeviceKind;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'core/theme.dart';
@@ -27,13 +29,40 @@ class AppScope extends InheritedNotifier<AppState> {
   }
 }
 
-class KuphandaApp extends StatelessWidget {
+class KuphandaApp extends StatefulWidget {
   const KuphandaApp({super.key, required this.state});
 
   final AppState state;
 
   @override
+  State<KuphandaApp> createState() => _KuphandaAppState();
+}
+
+class _KuphandaAppState extends State<KuphandaApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Returning from the browser checkout: confirm a pending payment if one
+      // is stored, without blocking the UI.
+      unawaited(widget.state.resumePendingPayment());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     return AppScope(
       state: state,
       child: AnimatedBuilder(

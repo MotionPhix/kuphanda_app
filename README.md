@@ -85,7 +85,8 @@ GET    /api/v1/documents/{id}
 GET    /api/v1/plans
 GET    /api/v1/billing/status
 POST   /api/v1/billing/checkout        {plan_id} | {document_id}
-GET    /api/v1/billing/payments/{tx_ref}
+GET    /api/v1/billing/payments        receipts (subscriptions + purchases)
+GET    /api/v1/billing/payments/{tx_ref}  payment status / verification
 GET    /api/v1/library/offline
 POST   /api/v1/library/offline         {document_id}
 DELETE /api/v1/library/offline/{id}
@@ -153,7 +154,7 @@ kept, so publishing again restores access without learners re-marking anything.
 ```bash
 cd phanda_api && php artisan test        # 51 tests
 cd phanda_app && flutter analyze         # no issues
-cd phanda_app && flutter test            # 15 tests
+cd phanda_app && flutter test            # 17 tests
 cd phanda_app && flutter build windows --debug
 ```
 

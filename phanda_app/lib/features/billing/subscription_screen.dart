@@ -40,7 +40,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = AppScope.read(context);
-      if (state.isSignedIn) state.loadBilling();
+      if (!state.isSignedIn) return;
+      state.loadBilling();
+      state.resumePendingPayment();
     });
   }
 
@@ -65,6 +67,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           if (!state.isSignedIn)
             _authCard(theme, state)
           else ...[
+            if (state.hasPendingPayment) ...[
+              _pendingBanner(theme, state),
+              const SizedBox(height: 14),
+            ],
             _statusCard(theme, state),
             const SizedBox(height: 18),
             if (widget.documentId != null) ...[
@@ -201,6 +207,75 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         ),
       ],
     );
+  }
+
+  Widget _pendingBanner(ThemeData theme, AppState state) {
+    return AppCard(
+      color: AppColors.sun.withValues(alpha: 0.1),
+      borderColor: AppColors.sun.withValues(alpha: 0.35),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.schedule_rounded, size: 18, color: Color(0xFF7A5200)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Payment pending',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFF7A5200),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'We are waiting for PayChangu to confirm '
+            '${state.pendingPaymentKind == 'document' ? 'your document purchase' : 'your subscription'}. '
+            'Reference ${state.pendingPaymentTxRef}.',
+            style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              FilledButton(
+                onPressed: _busy ? null : () => _checkPending(state),
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+                child: const Text('Check now'),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _busy ? null : () => state.clearPendingPayment(),
+                child: const Text('Dismiss'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _checkPending(AppState state) async {
+    setState(() => _busy = true);
+    try {
+      final status = await state.resumePendingPayment();
+      if (!mounted) return;
+      if (status?.isComplete == true) {
+        showSnack(context, 'Payment confirmed. Your access is unlocked.');
+      } else {
+        showSnack(
+          context,
+          status == null
+              ? 'Could not reach the library. Try again in a moment.'
+              : 'PayChangu has not confirmed the payment yet.',
+          error: status == null,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Widget _statusCard(ThemeData theme, AppState state) {
