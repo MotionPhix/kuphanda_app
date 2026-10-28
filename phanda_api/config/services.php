@@ -16,6 +16,11 @@ return [
     |
     */
 
+    'google' => [
+        // Web/client ID used as the expected audience for Google ID tokens.
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+    ],
+
     'paychangu' => [
         'base_url' => env('PAYCHANGU_BASE_URL', 'https://api.paychangu.com'),
         'secret_key' => env('PAYCHANGU_SECRET_KEY'),

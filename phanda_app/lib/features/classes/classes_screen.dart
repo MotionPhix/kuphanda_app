@@ -7,6 +7,7 @@ import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/models/classroom.dart';
+import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
 
@@ -19,6 +20,7 @@ class ClassesScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final gutter = pageGutter(context);
     final classes = state.classes;
+    final isTeacher = state.profile.role == StudentRole.teacher;
 
     return ListView(
       padding: EdgeInsets.zero,
@@ -31,13 +33,23 @@ class ClassesScreen extends StatelessWidget {
               ScreenHeader(
                 eyebrow: 'Your teachers',
                 title: 'Classes',
-                subtitle: 'Reading set by your teachers, and the classes you run.',
+                subtitle: isTeacher
+                    ? 'Reading you set, and the classes you run.'
+                    : 'Reading set by your teachers.',
                 actions: [
                   OutlinedButton.icon(
                     onPressed: () => _joinClass(context, state),
                     icon: const Icon(Icons.login_rounded, size: 17),
                     label: const Text('Join'),
                   ),
+                  if (isTeacher) ...[
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: () => _createClass(context, state),
+                      icon: const Icon(Icons.add_rounded, size: 17),
+                      label: const Text('Create'),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 16),
@@ -45,16 +57,17 @@ class ClassesScreen extends StatelessWidget {
                 message: 'A class code is six characters, like KPH4A2. Codes work without '
                     'email, which is what most schools need.',
                 icon: Icons.tag_rounded,
-                actionLabel: 'Create a class',
-                onAction: () => _createClass(context, state),
+                actionLabel: isTeacher ? 'Create a class' : null,
+                onAction: isTeacher ? () => _createClass(context, state) : null,
               ),
               const SizedBox(height: 20),
               if (classes.isEmpty)
                 EmptyState(
                   icon: Icons.groups_outlined,
                   title: 'No classes yet',
-                  message: 'Join with the code your teacher gave you, or create a class if you '
-                      'teach one.',
+                  message: isTeacher
+                      ? 'Join with a code, or create a class and share its code with your learners.'
+                      : 'Join with the six-character code your teacher gave you.',
                   actionLabel: 'Join a class',
                   onAction: () => _joinClass(context, state),
                 )
@@ -179,6 +192,10 @@ class ClassesScreen extends StatelessWidget {
   }
 
   Future<void> _createClass(BuildContext context, AppState state) async {
+    if (state.profile.role != StudentRole.teacher) {
+      showSnack(context, 'Only teachers can create classes.', error: true);
+      return;
+    }
     final nameController = TextEditingController();
     var form = state.profile.form;
     var subjectId = state.profile.subjectIds.isEmpty

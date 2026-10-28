@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../core/theme.dart';
+import '../../data/api/api_models.dart';
+import '../../data/auth/google_sign_in_service.dart';
 import '../../core/widgets/common.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
@@ -14,7 +16,8 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _nameController = TextEditingController();
+  final _firstController = TextEditingController();
+  final _lastController = TextEditingController();
   final _schoolController = TextEditingController();
   final _subjects = <String>{};
   int _step = 0;
@@ -22,6 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _examYear = DateTime.now().year + 1;
   StudentRole _role = StudentRole.student;
   String? _nameError;
+  bool _googleBusy = false;
   bool _saving = false;
 
   @override
@@ -32,9 +36,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstController.dispose();
+    _lastController.dispose();
     _schoolController.dispose();
     super.dispose();
+  }
+
+  Future<void> _useGoogle() async {
+    setState(() => _googleBusy = true);
+    final state = AppScope.read(context);
+    try {
+      final token = await GoogleSignInService().idToken();
+      await state.signInWithGoogle(token, sync: false);
+      final profile = state.profile;
+      _firstController.text = profile.firstName == 'learner' ? '' : profile.firstName;
+      _lastController.text = profile.lastName;
+      if (mounted) {
+        setState(() => _nameError = null);
+        showSnack(context, 'Google account connected. Check your name, then continue.');
+      }
+    } on ApiException catch (error) {
+      if (mounted) showSnack(context, error.message, error: true);
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
   }
 
   void _selectForm(int form) {
@@ -52,8 +77,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _next() {
-    if (_step == 1 && _nameController.text.trim().isEmpty) {
-      setState(() => _nameError = 'Tell us what to call you.');
+    if (_step == 1 &&
+        (_firstController.text.trim().isEmpty || _lastController.text.trim().isEmpty)) {
+      setState(() => _nameError = 'Add both your first and last name.');
       return;
     }
     setState(() {
@@ -64,10 +90,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _finish({bool preview = false}) async {
     if (_saving) return;
-    if (!preview && _nameController.text.trim().isEmpty) {
+    if (!preview &&
+        (_firstController.text.trim().isEmpty || _lastController.text.trim().isEmpty)) {
       setState(() {
         _step = 1;
-        _nameError = 'Tell us what to call you.';
+        _nameError = 'Add both your first and last name.';
       });
       return;
     }
@@ -75,7 +102,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     setState(() => _saving = true);
     final state = AppScope.read(context);
     await state.completeOnboarding(
-      name: preview ? 'Chisomo Banda' : _nameController.text,
+      name: preview
+          ? 'Chisomo Banda'
+          : [_firstController.text.trim(), _lastController.text.trim()]
+              .where((part) => part.isNotEmpty)
+              .join(' '),
+      givenName: preview ? 'Chisomo' : _firstController.text,
+      familyName: preview ? 'Banda' : _lastController.text,
       school: preview ? 'Bwaila Secondary School' : _schoolController.text,
       form: preview ? 4 : _form,
       examYear: preview ? DateTime.now().year + 1 : _examYear,
@@ -149,29 +182,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Let’s set up your shelf', style: theme.textTheme.headlineMedium),
+          Text('Who should we call you?', style: theme.textTheme.headlineMedium),
           const SizedBox(height: 6),
           Text(
-            'Your answers stay on this phone. They decide which papers and notes '
-            'appear first — you can change them later.',
+            'Use the name you want your teachers and classmates to see. '
+            'You can edit it later.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _nameController,
-            textInputAction: TextInputAction.next,
-            textCapitalization: TextCapitalization.words,
-            onChanged: (_) {
-              if (_nameError != null) setState(() => _nameError = null);
-            },
-            decoration: InputDecoration(
-              labelText: 'What should we call you?',
-              hintText: 'e.g. Chisomo Banda',
-              errorText: _nameError,
-              prefixIcon: const Icon(Icons.person_outline_rounded),
+          const SizedBox(height: 18),
+          OutlinedButton.icon(
+            onPressed: _googleBusy ? null : _useGoogle,
+            icon: _googleBusy
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('G', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: const Text('Continue with Google'),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: Text(
+              'or enter your name',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _firstController,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  onChanged: (_) {
+                    if (_nameError != null) setState(() => _nameError = null);
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'First name',
+                    hintText: 'Chisomo',
+                    errorText: _nameError,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _lastController,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  onChanged: (_) {
+                    if (_nameError != null) setState(() => _nameError = null);
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Last name',
+                    hintText: 'Banda',
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           TextField(

@@ -57,7 +57,29 @@ PAYCHANGU_BASE_URL=https://api.paychangu.com
 PAYCHANGU_SECRET_KEY=...
 PAYCHANGU_WEBHOOK_SECRET=...
 PAYCHANGU_CURRENCY=MWK
+GOOGLE_CLIENT_ID=...apps.googleusercontent.com
 ```
+
+### Google sign-in
+
+The API verifies Google ID tokens against the tokeninfo endpoint, including the
+audience and `email_verified`, then links by `google_id` or by verified email.
+Linking fills blank profile fields only; names the learner has confirmed are
+never overwritten.
+
+1. Create a Web OAuth client and put its ID in `GOOGLE_CLIENT_ID`.
+2. Create an Android OAuth client for the app package (`com.example.kuphanda`)
+   and the signing certificate's SHA-1, then add `google-services.json` to
+   `android/app/` (do not commit it).
+3. Build the app with the same web client ID:
+   `--dart-define=GOOGLE_SERVER_CLIENT_ID=...apps.googleusercontent.com`.
+
+Onboarding asks for first and last name separately and offers
+**Continue with Google** to prefill them; both stay editable.
+
+Students cannot create classes. The role is chosen at setup, and the
+create-class actions are hidden (and guarded) for students; only teachers see
+them.
 
 Without keys, checkout returns a clear 502 and no access is granted. Webhooks
 must be sent over HTTPS with the `Signature` header.
@@ -166,9 +188,9 @@ kept, so publishing again restores access without learners re-marking anything.
 ## Tests and builds
 
 ```bash
-cd phanda_api && php artisan test        # 51 tests
+cd phanda_api && php artisan test        # 56 tests
 cd phanda_app && flutter analyze         # no issues
-cd phanda_app && flutter test            # 17 tests
+cd phanda_app && flutter test            # 20 tests
 cd phanda_app && flutter build windows --debug
 ```
 
@@ -187,8 +209,8 @@ expiry removal, bundled-file protection) and API client parsing/error mapping.
   `PAYCHANGU_WEBHOOK_SECRET`.
 - iOS build verification. Android has been built and run on both an emulator and
   a physical phone; iOS has not been opened in Xcode.
-- The bundled “How to use Kuphanda” PDF still uses the old offline-only wording.
-  The app copy is current; publish a v3 file when the content is revised.
+- The bundled “How to use Kuphanda” guide is now v3 and matches the online-first
+  model; refresh it with `library:publish` whenever the flow changes.
 
 Catalogue records are sample metadata. Only two Kuphanda-authored PDFs ship as
 files (`phanda_api/database/seeders/files/`). No MANEB papers or textbooks are

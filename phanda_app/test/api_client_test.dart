@@ -145,6 +145,40 @@ void main() {
     expect(status.isComplete, isTrue);
   });
 
+  test('exchanges a Google ID token for a session and names', () async {
+    late http.Request captured;
+    final client = _client((request) async {
+      captured = request;
+      return http.Response(
+        jsonEncode({
+          'success': true,
+          'data': {
+            'token': 'google-token',
+            'user': {
+              'id': 12,
+              'name': 'Chisomo Banda',
+              'first_name': 'Chisomo',
+              'last_name': 'Banda',
+              'email': 'chisomo@example.com',
+              'plan': 'free',
+              'google_linked': true,
+            },
+          },
+        }),
+        200,
+      );
+    });
+
+    final session = await client.googleAuth('google-id-token');
+
+    expect(captured.url.path, endsWith('/auth/google'));
+    expect(jsonDecode(captured.body)['id_token'], 'google-id-token');
+    expect(session.token, 'google-token');
+    expect(session.firstName, 'Chisomo');
+    expect(session.lastName, 'Banda');
+    expect(session.googleLinked, isTrue);
+  });
+
   test('parses subscription and document receipts', () async {
     final client = _client((request) async {
       return http.Response(

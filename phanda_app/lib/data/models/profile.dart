@@ -50,6 +50,8 @@ enum AppThemePreference {
 class Profile {
   const Profile({
     this.name = '',
+    this.givenName = '',
+    this.familyName = '',
     this.school = '',
     this.form = 4,
     this.examYear = 2027,
@@ -62,6 +64,8 @@ class Profile {
   });
 
   final String name;
+  final String givenName;
+  final String familyName;
   final String school;
   final int form;
   final int examYear;
@@ -75,9 +79,17 @@ class Profile {
   String get examTarget => Subject.qualificationForForm(form);
 
   String get firstName {
+    if (givenName.trim().isNotEmpty) return givenName.trim();
     final trimmed = name.trim();
     if (trimmed.isEmpty) return 'learner';
     return trimmed.split(RegExp(r'\s+')).first;
+  }
+
+  String get lastName {
+    if (familyName.trim().isNotEmpty) return familyName.trim();
+    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.length < 2) return '';
+    return parts.sublist(1).join(' ');
   }
 
   String get initials {
@@ -94,6 +106,8 @@ class Profile {
 
   Profile copyWith({
     String? name,
+    String? givenName,
+    String? familyName,
     String? school,
     int? form,
     int? examYear,
@@ -106,6 +120,8 @@ class Profile {
   }) {
     return Profile(
       name: name ?? this.name,
+      givenName: givenName ?? this.givenName,
+      familyName: familyName ?? this.familyName,
       school: school ?? this.school,
       form: form ?? this.form,
       examYear: examYear ?? this.examYear,
@@ -120,6 +136,8 @@ class Profile {
 
   Map<String, Object?> toJson() => <String, Object?>{
         'name': name,
+        'givenName': givenName,
+        'familyName': familyName,
         'school': school,
         'form': form,
         'examYear': examYear,
@@ -134,6 +152,8 @@ class Profile {
   static Profile fromJson(Map<String, Object?> json) {
     return Profile(
       name: (json['name'] as String?) ?? '',
+      givenName: (json['givenName'] as String?) ?? '',
+      familyName: (json['familyName'] as String?) ?? '',
       school: (json['school'] as String?) ?? '',
       form: (json['form'] as num?)?.toInt() ?? 4,
       examYear: (json['examYear'] as num?)?.toInt() ?? DateTime.now().year + 1,
@@ -147,7 +167,7 @@ class Profile {
           const <String>[],
       plan: LibraryPlan.values.firstWhere(
         (plan) => plan.name == json['plan'],
-        orElse: () => LibraryPlan.school,
+        orElse: () => LibraryPlan.free,
       ),
       weeklyGoalMinutes: (json['weeklyGoalMinutes'] as num?)?.toInt() ?? 300,
       theme: AppThemePreference.values.firstWhere(

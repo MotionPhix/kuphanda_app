@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app.dart';
 import '../../core/format.dart';
+import '../../data/auth/google_sign_in_service.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/api/api_models.dart';
@@ -194,6 +195,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : Text(_registering ? 'Create account' : 'Sign in'),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
+                'or',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: _busy ? null : () => _google(state),
+          icon: const Text('G', style: TextStyle(fontWeight: FontWeight.w700)),
+          label: const Text('Continue with Google'),
         ),
         const SizedBox(height: 6),
         Center(
@@ -398,6 +421,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _google(AppState state) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final token = await GoogleSignInService().idToken();
+      await state.signInWithGoogle(token);
+      if (mounted) showSnack(context, 'Signed in with Google.');
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _submit(AppState state) async {

@@ -1,0 +1,96 @@
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:kuphanda/app.dart';
+import 'package:kuphanda/core/theme.dart';
+import 'package:kuphanda/data/api/token_store.dart';
+import 'package:kuphanda/data/models/document.dart';
+import 'package:kuphanda/data/store/document_files.dart';
+import 'package:kuphanda/data/store/state_store.dart';
+import 'package:kuphanda/features/classes/classes_screen.dart';
+import 'package:kuphanda/features/onboarding/onboarding_screen.dart';
+import 'package:kuphanda/state/app_state.dart';
+
+class _NoFiles implements DocumentFiles {
+  @override
+  Future<PickedPdf?> pickPdf() async => null;
+
+  @override
+  Future<DocumentAsset> store({
+    required String documentId,
+    required PickedPdf picked,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<DocumentAsset> storeBytes({
+    required String documentId,
+    required String fileName,
+    required Uint8List bytes,
+    required int version,
+    required String checksum,
+    required int pageCount,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> delete(DocumentAsset asset) async {}
+}
+
+Future<AppState> _readyState() async {
+  final state = AppState(
+    store: MemoryStateStore(),
+    files: _NoFiles(),
+    tokenStore: MemoryTokenStore(),
+  );
+  await state.initialize();
+  return state;
+}
+
+void main() {
+  testWidgets('onboarding asks for and confirms first and last name', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final state = await _readyState();
+    await tester.pumpWidget(
+      AppScope(
+        state: state,
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const OnboardingScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Get started'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Who should we call you?'), findsOneWidget);
+    expect(find.text('First name'), findsOneWidget);
+    expect(find.text('Last name'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
+  });
+
+  testWidgets('students do not get a create-class action', (tester) async {
+    final state = await _readyState();
+    await tester.pumpWidget(
+      AppScope(
+        state: state,
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: const Scaffold(body: ClassesScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Create'), findsNothing);
+    expect(find.text('Create a class'), findsNothing);
+    expect(find.text('Join'), findsOneWidget);
+  });
+}
+

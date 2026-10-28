@@ -171,33 +171,12 @@ class ProfileScreen extends StatelessWidget {
                             state.setTheme(selection.first),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          const Icon(Icons.co_present_outlined, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Teacher mode', style: theme.textTheme.bodyMedium),
-                                Text(
-                                  'Create classes and set reading.',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Switch(
-                            value: profile.role == StudentRole.teacher,
-                            onChanged: (value) => state.updateProfile(
-                              profile.copyWith(
-                                role: value ? StudentRole.teacher : StudentRole.student,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Your role is set during setup. Students join classes; teachers '
+                        'create them.',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -347,7 +326,6 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
   final schoolController = TextEditingController(text: profile.school);
   var form = profile.form;
   var examYear = profile.examYear;
-  var role = profile.role;
   var weeklyGoal = profile.weeklyGoalMinutes;
   final subjects = <String>{...profile.subjectIds};
 
@@ -383,7 +361,6 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
                         school: schoolController.text.trim(),
                         form: form,
                         examYear: examYear,
-                        role: role,
                         subjectIds: cleaned.isEmpty
                             ? available.take(4).map((subject) => subject.id).toList()
                             : cleaned,
@@ -450,15 +427,7 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
                   ],
                 ),
                 const SizedBox(height: 12),
-                SegmentedButton<StudentRole>(
-                  segments: const [
-                    ButtonSegment(value: StudentRole.student, label: Text('Student')),
-                    ButtonSegment(value: StudentRole.teacher, label: Text('Teacher')),
-                  ],
-                  selected: <StudentRole>{role},
-                  onSelectionChanged: (selection) => setSheetState(() => role = selection.first),
-                ),
-                const SizedBox(height: 16),
+
                 Text('Subjects', style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
                 Wrap(

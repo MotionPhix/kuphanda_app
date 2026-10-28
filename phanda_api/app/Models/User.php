@@ -29,10 +29,14 @@ use Laravel\Sanctum\HasApiTokens;
  */
 #[Fillable([
     'name',
+    'first_name',
+    'last_name',
     'school',
     'email',
     'password',
     'plan',
+    'google_id',
+    'avatar_url',
 ])]
 #[Hidden([
     'password',

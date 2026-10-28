@@ -200,6 +200,17 @@ class ApiClient {
     }
   }
 
+  Future<AuthSession> googleAuth(String idToken) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/auth/google'),
+        headers: _headers,
+        body: jsonEncode(<String, String>{'id_token': idToken}),
+      ),
+    );
+    return _sessionFrom(_dataMap(body));
+  }
+
   Future<List<RemotePlan>> fetchPlans() async {
     final body = await _send(() => _http.get(_uri('/plans'), headers: _headers));
     final rows = body['data'];

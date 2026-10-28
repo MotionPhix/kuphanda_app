@@ -171,6 +171,10 @@ class AuthSession {
     required this.email,
     required this.plan,
     this.school,
+    this.firstName = '',
+    this.lastName = '',
+    this.avatarUrl,
+    this.googleLinked = false,
   });
 
   final String token;
@@ -179,6 +183,10 @@ class AuthSession {
   final String email;
   final String plan;
   final String? school;
+  final String firstName;
+  final String lastName;
+  final String? avatarUrl;
+  final bool googleLinked;
 
   bool get isSchoolPlan => plan == 'school';
 
@@ -188,6 +196,10 @@ class AuthSession {
         'email': email,
         'plan': plan,
         'school': school,
+        'first_name': firstName,
+        'last_name': lastName,
+        'avatar_url': avatarUrl,
+        'google_linked': googleLinked,
       };
 
   static AuthSession fromJson(Map<String, Object?> json, {required String token}) {
@@ -198,6 +210,10 @@ class AuthSession {
       email: (json['email'] as String?) ?? '',
       plan: (json['plan'] as String?) ?? 'free',
       school: json['school'] as String?,
+      firstName: (json['first_name'] as String?) ?? '',
+      lastName: (json['last_name'] as String?) ?? '',
+      avatarUrl: json['avatar_url'] as String?,
+      googleLinked: json['google_linked'] as bool? ?? false,
     );
   }
 }

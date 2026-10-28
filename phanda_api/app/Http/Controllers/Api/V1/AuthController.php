@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Requests\Api\V1\ForgotPasswordRequest;
+use App\Http\Requests\Api\V1\GoogleSignInRequest;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Requests\Api\V1\ResendVerificationRequest;
@@ -13,12 +14,16 @@ use App\Http\Requests\Api\V1\ResetPasswordRequest;
 use App\Http\Requests\Api\V1\VerifyEmailRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\GoogleTokenVerifier;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 final class AuthController extends ApiController
 {
@@ -55,6 +60,76 @@ final class AuthController extends ApiController
             'user' => new UserResource($user),
             'token' => $token,
         ], 'Login successful');
+    }
+
+    /**
+     * Signs in (or links) a Google account.
+     *
+     * A verified Google email may match an existing password account: the
+     * Google identity is then linked to that user rather than creating a
+     * duplicate. Existing names are never overwritten — only blank profile
+     * fields are filled from Google.
+     */
+    public function google(GoogleSignInRequest $request, GoogleTokenVerifier $verifier): JsonResponse
+    {
+        try {
+            $profile = $verifier->verify((string) $request->input('id_token'));
+        } catch (RuntimeException $exception) {
+            return $this->error($exception->getMessage(), $exception->getCode() ?: 401);
+        }
+
+        $current = Auth::guard('sanctum')->user();
+        $linked = User::query()->where('google_id', $profile['sub'])->first();
+
+        if ($current !== null && $linked !== null && $linked->id !== $current->id) {
+            return $this->error('This Google account is already linked to another user.', 409);
+        }
+
+        $user = $current
+            ?? $linked
+            ?? User::query()->where('email', $profile['email'])->first();
+
+        if ($user === null) {
+            $user = User::query()->create([
+                'name' => $profile['name'] !== '' ? $profile['name'] : Str::before($profile['email'], '@'),
+                'first_name' => $profile['given_name'] !== '' ? $profile['given_name'] : null,
+                'last_name' => $profile['family_name'] !== '' ? $profile['family_name'] : null,
+                'email' => $profile['email'],
+                'password' => Hash::make(Str::random(40)),
+                'plan' => 'free',
+                'google_id' => $profile['sub'],
+                'avatar_url' => $profile['picture'],
+            ]);
+            $user->forceFill(['email_verified_at' => now()])->save();
+        } else {
+            $user->google_id ??= $profile['sub'];
+            $user->avatar_url ??= $profile['picture'];
+
+            if (blank($user->first_name) && $profile['given_name'] !== '') {
+                $user->first_name = $profile['given_name'];
+            }
+
+            if (blank($user->last_name) && $profile['family_name'] !== '') {
+                $user->last_name = $profile['family_name'];
+            }
+
+            if (blank($user->name) && $profile['name'] !== '') {
+                $user->name = $profile['name'];
+            }
+
+            if ($user->email_verified_at === null) {
+                $user->email_verified_at = now();
+            }
+
+            $user->save();
+        }
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return $this->success([
+            'user' => new UserResource($user->fresh()),
+            'token' => $token,
+        ], $current !== null ? 'Google account linked' : 'Signed in with Google');
     }
 
     public function logout(Request $request): JsonResponse

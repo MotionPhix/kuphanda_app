@@ -484,14 +484,21 @@ class AppState extends ChangeNotifier {
 
   Future<void> completeOnboarding({
     required String name,
+    String givenName = '',
+    String familyName = '',
     required String school,
     required int form,
     required int examYear,
     required StudentRole role,
     required List<String> subjectIds,
   }) async {
+    final fullName = name.trim().isEmpty
+        ? '$givenName $familyName'.trim()
+        : name.trim();
     _snapshot.profile = profile.copyWith(
-      name: name.trim(),
+      name: fullName,
+      givenName: givenName.trim(),
+      familyName: familyName.trim(),
       school: school.trim(),
       form: form,
       examYear: examYear,
@@ -968,6 +975,16 @@ class AppState extends ChangeNotifier {
   // Authentication
   // ---------------------------------------------------------------------------
 
+  Future<void> signInWithGoogle(String idToken, {bool sync = true}) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
+    final session = await api.googleAuth(idToken);
+    await _adoptSession(session);
+    if (sync) {
+      await loadBilling();
+      await syncNow();
+    }
+  }
+
   Future<void> signIn({required String email, required String password}) async {
     final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
     final session = await api.login(email: email.trim(), password: password);
@@ -1008,9 +1025,25 @@ class AppState extends ChangeNotifier {
 
     // The server is authoritative about entitlement. Mirror it locally so the
     // lock badges and the API's 403 responses agree.
-    _snapshot.profile = profile.copyWith(
+    var merged = profile.copyWith(
       plan: session.plan == 'school' ? LibraryPlan.school : LibraryPlan.free,
     );
+
+    // Merge Google's profile data only into an empty local profile. Anything
+    // the learner has already confirmed is kept, including edited names.
+    if (profile.name.trim().isEmpty) {
+      final given = session.firstName.trim();
+      final family = session.lastName.trim();
+      merged = merged.copyWith(
+        givenName: given,
+        familyName: family,
+        name: session.name.trim().isNotEmpty
+            ? session.name.trim()
+            : '$given $family'.trim(),
+      );
+    }
+
+    _snapshot.profile = merged;
 
     await _persistNow();
     startAutoSync();
