@@ -12,6 +12,16 @@ enum LibrarySort {
   final String label;
 }
 
+enum AccessFilter {
+  all('All access'),
+  free('Free'),
+  premium('Premium');
+
+  const AccessFilter(this.label);
+
+  final String label;
+}
+
 enum AvailabilityFilter {
   all('Everything'),
   offline('On this device'),
@@ -33,6 +43,7 @@ class LibraryQuery {
     this.forms = const <int>{},
     this.kinds = const <DocumentKind>{},
     this.availability = AvailabilityFilter.all,
+    this.access = AccessFilter.all,
     this.sort = LibrarySort.recent,
     this.onlyFeatured = false,
   });
@@ -42,6 +53,7 @@ class LibraryQuery {
   final Set<int> forms;
   final Set<DocumentKind> kinds;
   final AvailabilityFilter availability;
+  final AccessFilter access;
   final LibrarySort sort;
   final bool onlyFeatured;
 
@@ -51,6 +63,7 @@ class LibraryQuery {
       forms.isNotEmpty ||
       kinds.isNotEmpty ||
       availability != AvailabilityFilter.all ||
+      access != AccessFilter.all ||
       onlyFeatured;
 
   int get activeFilterCount =>
@@ -59,6 +72,7 @@ class LibraryQuery {
       (forms.isEmpty ? 0 : 1) +
       (kinds.isEmpty ? 0 : 1) +
       (availability == AvailabilityFilter.all ? 0 : 1) +
+      (access == AccessFilter.all ? 0 : 1) +
       (onlyFeatured ? 1 : 0);
 
   LibraryQuery copyWith({
@@ -67,6 +81,7 @@ class LibraryQuery {
     Set<int>? forms,
     Set<DocumentKind>? kinds,
     AvailabilityFilter? availability,
+    AccessFilter? access,
     LibrarySort? sort,
     bool? onlyFeatured,
   }) {
@@ -76,6 +91,7 @@ class LibraryQuery {
       forms: forms ?? this.forms,
       kinds: kinds ?? this.kinds,
       availability: availability ?? this.availability,
+      access: access ?? this.access,
       sort: sort ?? this.sort,
       onlyFeatured: onlyFeatured ?? this.onlyFeatured,
     );
@@ -97,6 +113,12 @@ class LibraryQuery {
       if (subjectIds.isNotEmpty && !subjectIds.contains(document.subjectId)) return false;
       if (forms.isNotEmpty && !forms.contains(document.form)) return false;
       if (kinds.isNotEmpty && !kinds.contains(document.kind)) return false;
+      if (access == AccessFilter.free && document.accessTier != AccessTier.free) {
+        return false;
+      }
+      if (access == AccessFilter.premium && document.accessTier == AccessTier.free) {
+        return false;
+      }
 
       switch (availability) {
         case AvailabilityFilter.offline:

@@ -425,6 +425,20 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
             ],
           ),
           const SizedBox(height: 22),
+          Text('Access', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final option in AccessFilter.values)
+                ChoiceChip(
+                  label: Text(option.label),
+                  selected: _draft.access == option,
+                  onSelected: (_) => setState(() => _draft = _draft.copyWith(access: option)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 22),
           Text('Form', style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(

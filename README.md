@@ -193,7 +193,7 @@ kept, so publishing again restores access without learners re-marking anything.
 ```bash
 cd phanda_api && php artisan test        # 60 tests
 cd phanda_app && flutter analyze         # no issues
-cd phanda_app && flutter test            # 21 tests
+cd phanda_app && flutter test            # 24 tests
 cd phanda_app && flutter build windows --debug
 ```
 

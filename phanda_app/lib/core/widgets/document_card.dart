@@ -402,7 +402,14 @@ class DocumentGridCard extends StatelessWidget {
                       ),
                     )
                   else
-                    const Icon(Icons.lock_open_rounded, size: 13, color: AppColors.green),
+                    Text(
+                      'Included',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                        color: AppColors.green,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   if (entry.onDevice)
                     const Padding(
                       padding: EdgeInsets.only(left: 5),

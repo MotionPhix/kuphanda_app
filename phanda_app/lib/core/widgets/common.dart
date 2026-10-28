@@ -596,6 +596,9 @@ class SheetBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final height = MediaQuery.sizeOf(context).height * maxHeightFactor;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomInset = keyboard > safeBottom ? keyboard : safeBottom;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: height),
@@ -603,7 +606,7 @@ class SheetBody extends StatelessWidget {
         padding: EdgeInsets.only(
           left: 20,
           right: 20,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+          bottom: bottomInset + 20,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
