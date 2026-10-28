@@ -17,12 +17,28 @@ use App\Models\User;
  * mark and catalogue response uses it, so the UI and the file endpoint can
  * never disagree about entitlement.
  *
- * Nothing is cached: an expiry or a webhook activation must take effect on the
- * very next request.
+ * Results are memoised for the lifetime of one request (the service is a
+ * container singleton). A catalogue response would otherwise run two queries
+ * per document. Billing invalidates the cache with forget() when it activates
+ * a payment, so the very next request — and the rest of the checkout request —
+ * sees the new entitlement.
  */
 final class EntitlementService
 {
+    /** @var array<string, AccessTier> */
+    private array $tierCache = [];
+
+    /** @var array<string, array<int, string>> */
+    private array $purchaseCache = [];
+
     public function tierFor(User $user): AccessTier
+    {
+        $key = (string) $user->id;
+
+        return $this->tierCache[$key] ??= $this->computeTier($user);
+    }
+
+    private function computeTier(User $user): AccessTier
     {
         $tier = $user->plan === LibraryPlan::School ? AccessTier::School : AccessTier::Free;
 
@@ -65,7 +81,13 @@ final class EntitlementService
      */
     public function purchasedDocumentIds(User $user): array
     {
-        return DocumentPurchase::query()
+        $key = (string) $user->id;
+
+        if (isset($this->purchaseCache[$key])) {
+            return $this->purchaseCache[$key];
+        }
+
+        $ids = DocumentPurchase::query()
             ->where('user_id', $user->id)
             ->where('status', 'paid')
             ->where(function ($query): void {
@@ -73,11 +95,16 @@ final class EntitlementService
             })
             ->pluck('document_id')
             ->all();
+
+        return $this->purchaseCache[$key] = $ids;
     }
 
-    public function forget(User $user): void
+    /**
+     * @param  User|int  $user
+     */
+    public function forget(User|int $user): void
     {
-        // Kept for callers that used the cached implementation; entitlement is
-        // now evaluated per request.
+        $key = (string) ($user instanceof User ? $user->id : $user);
+        unset($this->tierCache[$key], $this->purchaseCache[$key]);
     }
 }

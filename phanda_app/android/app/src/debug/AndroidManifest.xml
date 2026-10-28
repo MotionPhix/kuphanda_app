@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Debug builds talk to a local Laravel server over plain HTTP
+         (10.0.2.2:8000 from the emulator). Release builds must use HTTPS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

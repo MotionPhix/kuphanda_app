@@ -152,9 +152,9 @@ AssignmentStatus assignmentStatus(Assignment assignment, {DateTime? now}) {
     return const AssignmentStatus(label: 'Due tomorrow', daysLeft: 1, urgent: true);
   }
   if (days <= 7) {
-    return AssignmentStatus(label: 'Due in $days days', daysLeft: days, urgent: false);
+    return AssignmentStatus(label: 'Due in $days ${days == 1 ? 'day' : 'days'}', daysLeft: days, urgent: false);
   }
-  return AssignmentStatus(label: 'Due in $days days', daysLeft: days, urgent: false);
+  return AssignmentStatus(label: 'Due in $days ${days == 1 ? 'day' : 'days'}', daysLeft: days, urgent: false);
 }
 
 DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);

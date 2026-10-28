@@ -45,6 +45,9 @@ file download — the app's lock badges are only a reflection of that decision.
    idempotent, so webhook and polling cannot double-grant.
 5. The app polls `GET /api/v1/billing/payments/{tx_ref}` after the learner says
    they have paid, then refreshes the catalogue and offline marks.
+6. The pending reference is stored on the device, so closing the payment sheet
+   or the app does not lose it. It is re-checked when the app resumes or the
+   subscription screen opens, and cleared once confirmed.
 
 Relevant environment variables (see `phanda_api/.env.example`):
 

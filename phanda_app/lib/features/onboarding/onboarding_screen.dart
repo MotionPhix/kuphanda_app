@@ -382,13 +382,13 @@ class _WelcomeStep extends StatelessWidget {
           const BrandMark(size: 64),
           const SizedBox(height: 28),
           Text(
-            'Your school library,\noffline.',
+            'Your school library,\nin your pocket.',
             style: theme.textTheme.displaySmall?.copyWith(fontSize: 36),
           ),
           const SizedBox(height: 12),
           Text(
-            'Kuphanda keeps past papers, notes and study guides for Forms 1–4 in '
-            'your pocket — for JCE and MSCE.',
+            'Browse past papers, notes and study guides for Forms 1–4. Subscribe '
+            'for full access, then keep what you need offline.',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               height: 1.5,
@@ -396,15 +396,15 @@ class _WelcomeStep extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           const _Feature(
-            icon: Icons.wifi_off_rounded,
-            title: 'Built for weak signal',
-            body: 'Everything you add stays on the device. No account, no queue, no loading screen.',
+            icon: Icons.lock_open_rounded,
+            title: 'Free and premium papers',
+            body: 'Free papers stay open. Subscribe or buy a single paper to unlock the rest with PayChangu.',
           ),
           const SizedBox(height: 16),
           const _Feature(
-            icon: Icons.picture_as_pdf_outlined,
-            title: 'Your documents, organised',
-            body: 'Attach official PDFs, file them by form and subject, and pick up where you stopped.',
+            icon: Icons.download_for_offline_outlined,
+            title: 'Offline when you need it',
+            body: 'Download the documents you are entitled to and keep reading when the signal drops.',
           ),
           const SizedBox(height: 16),
           const _Feature(
@@ -413,11 +413,11 @@ class _WelcomeStep extends StatelessWidget {
             body: 'Pages read and minutes studied, not a tick box — for you and your teacher.',
           ),
           const SizedBox(height: 36),
-          FilledButton(onPressed: onStart, child: const Text('Set up my library')),
+          FilledButton(onPressed: onStart, child: const Text('Get started')),
           const SizedBox(height: 10),
           Center(
             child: Text(
-              'Free for every learner · Provided by your school',
+              'Mobile money payments · Powered by PayChangu',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

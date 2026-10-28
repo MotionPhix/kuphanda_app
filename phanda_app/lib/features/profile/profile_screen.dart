@@ -89,7 +89,7 @@ class ProfileScreen extends StatelessWidget {
                     Expanded(
                       child: StatTile(
                         label: 'Streak',
-                        value: '${stats.currentStreak} days',
+                        value: plural(stats.currentStreak, 'day'),
                         icon: Icons.local_fire_department_outlined,
                         tint: const Color(0xFFB45309),
                       ),

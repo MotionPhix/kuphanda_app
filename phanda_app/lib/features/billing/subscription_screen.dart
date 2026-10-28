@@ -381,7 +381,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   unlocked
                       ? 'You have access to this document.'
                       : price > 0
-                          ? 'Buy just this document for MWK ${price.toString()}'
+                          ? 'Buy just this document for ${formatMwk(price)}'
                           : 'This document is included in a subscription.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -518,7 +518,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 label: 'Type',
                 value: record.isSubscription ? 'Subscription' : 'Single document',
               ),
-              _ReceiptLine(label: 'Amount', value: 'MWK ${record.amountMwk}'),
+              _ReceiptLine(label: 'Amount', value: formatMwk(record.amountMwk)),
               _ReceiptLine(label: 'Status', value: record.status),
               if (record.paidAt != null)
                 _ReceiptLine(label: 'Paid', value: formatDate(record.paidAt!)),
@@ -590,7 +590,7 @@ class _PlanCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${plan.durationDays} day${plan.durationDays == 1 ? '' : 's'} · '
-                  '${plan.tier.label} content',
+                  '${_planTierLabel(plan.tier)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -610,7 +610,7 @@ class _PlanCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'MWK ${plan.priceMwk}',
+                formatMwk(plan.priceMwk),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -814,7 +814,7 @@ class _PaymentRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'MWK ${record.amountMwk}',
+                formatMwk(record.amountMwk),
                 style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 3),
@@ -869,3 +869,11 @@ class _ReceiptLine extends StatelessWidget {
     );
   }
 }
+
+String _planTierLabel(AccessTier tier) => switch (tier) {
+      AccessTier.daily => 'Daily access',
+      AccessTier.weekly => 'Weekly access',
+      AccessTier.monthly => 'Monthly access',
+      AccessTier.school => 'School licence',
+      AccessTier.free => 'Free access',
+    };

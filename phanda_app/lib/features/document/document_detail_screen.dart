@@ -120,7 +120,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                   ),
                                   if (state.priceFor(document.id) > 0 && locked)
                                     Pill(
-                                      label: 'MWK ${state.priceFor(document.id)}',
+                                      label: formatMwk(state.priceFor(document.id)),
                                       icon: Icons.sell_outlined,
                                       color: AppColors.red,
                                       compact: true,
@@ -172,7 +172,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     title: 'Premium document · ${document.accessTier.label}',
                     message: state.priceFor(document.id) > 0
                         ? 'Subscribe for full access, or buy this document alone for '
-                            'MWK ${state.priceFor(document.id)}. Payment is handled by PayChangu.'
+                            '${formatMwk(state.priceFor(document.id))}. Payment is handled by PayChangu.'
                         : 'This document is included in a paid subscription. Free papers and '
                             'guides stay open without an account.',
                     actionLabel: 'View plans & prices',

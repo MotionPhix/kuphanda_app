@@ -199,6 +199,7 @@ it('revokes access and flags offline files when a subscription expires', functio
     $this->get("/api/v1/library/offline/{$document->id}/download")->assertOk();
 
     $subscription->update(['ends_at' => now()->subMinute()]);
+    app(\App\Services\EntitlementService::class)->forget($this->user);
 
     $this->getJson('/api/v1/library/offline')
         ->assertOk()

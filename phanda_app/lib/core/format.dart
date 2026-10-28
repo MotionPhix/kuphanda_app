@@ -15,6 +15,10 @@ const List<String> _months = <String>[
   'Dec',
 ];
 
+final NumberFormat _mwk = NumberFormat('#,##0');
+
+String formatMwk(int amount) => 'MWK ${_mwk.format(amount)}';
+
 String formatDate(DateTime date) => '${date.day} ${_months[date.month - 1]} ${date.year}';
 
 String formatMonthYear(DateTime date) => '${_months[date.month - 1]} ${date.year}';

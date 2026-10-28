@@ -407,8 +407,8 @@ class _QuickActions extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _QuickAction(
-            icon: Icons.upload_file_outlined,
-            label: 'Add a PDF',
+            icon: Icons.download_for_offline_outlined,
+            label: 'My downloads',
             onTap: onImport,
           ),
         ),

@@ -192,6 +192,7 @@ it('enforces the learner plan for premium documents', function (): void {
     $document = libraryDocument(['access_tier' => 'weekly']);
 
     $this->user->update(['plan' => LibraryPlan::Free]);
+    app(\App\Services\EntitlementService::class)->forget($this->user);
     $this->postJson('/api/v1/library/offline', ['document_id' => $document->id])
         ->assertStatus(403);
 
@@ -199,6 +200,7 @@ it('enforces the learner plan for premium documents', function (): void {
         ->assertStatus(403);
 
     $this->user->update(['plan' => LibraryPlan::School]);
+    app(\App\Services\EntitlementService::class)->forget($this->user);
     $this->postJson('/api/v1/library/offline', ['document_id' => $document->id])
         ->assertStatus(201);
 });

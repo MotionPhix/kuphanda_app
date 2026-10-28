@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/document.dart';
 import '../../data/models/subject.dart';
+import '../format.dart';
 import '../theme.dart';
 import 'common.dart';
 
@@ -72,56 +73,72 @@ class DocumentCover extends StatelessWidget {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(9),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Thumbnails in lists are only ~76px tall. Keep the mark and
+                // the form badge, drop the kind caption rather than overflow.
+                final compact = constraints.maxHeight < 110;
+                return Padding(
+                  padding: EdgeInsets.all(compact ? 6 : 9),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        subject.emoji,
-                        style: const TextStyle(fontSize: 13),
+                      Row(
+                        children: [
+                          if (!compact)
+                            Text(
+                              subject.emoji,
+                              style: const TextStyle(fontSize: 13),
+                            )
+                          else
+                            Icon(
+                              document.kind.icon,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              size: 13,
+                            ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'F${document.form}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
+                      if (!compact) ...[
+                        Icon(
+                          document.kind.icon,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          size: 20,
                         ),
-                        child: Text(
-                          'F${document.form}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontSize: 8.5,
-                            fontWeight: FontWeight.w700,
+                        const SizedBox(height: 4),
+                        if (showKind)
+                          Text(
+                            view,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
                           ),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
-                  const Spacer(),
-                  Icon(
-                    document.kind.icon,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    size: 20,
-                  ),
-                  const SizedBox(height: 4),
-                  if (showKind)
-                    Text(
-                      view,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -154,7 +171,7 @@ class DocumentTile extends StatelessWidget {
     final meta = <String>[
       entry.subject.name,
       document.kind == DocumentKind.pastPaper ? document.examLabel : document.kind.label,
-    ].join('  Â·  ');
+    ].join('  ·  ');
 
     return Material(
       color: theme.colorScheme.surfaceContainerLowest,
@@ -211,7 +228,7 @@ class DocumentTile extends StatelessWidget {
                         if (entry.locked)
                           Pill(
                             label: entry.priceMwk > 0
-                                ? 'MWK ${entry.priceMwk}'
+                                ? formatMwk(entry.priceMwk)
                                 : 'Premium',
                             icon: Icons.lock_outline_rounded,
                             color: AppColors.red,
@@ -348,7 +365,7 @@ class DocumentGridCard extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '${entry.subject.shortName} Â· ${document.examLabel}',
+                '${entry.subject.shortName} · ${document.examLabel}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -368,7 +385,7 @@ class DocumentGridCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   if (entry.locked)
                     Text(
-                      entry.priceMwk > 0 ? 'MWK ${entry.priceMwk}' : 'Premium',
+                      entry.priceMwk > 0 ? formatMwk(entry.priceMwk) : 'Premium',
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontSize: 10,
                         color: AppColors.red,

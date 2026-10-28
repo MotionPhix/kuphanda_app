@@ -70,9 +70,9 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ScreenHeader(
-                eyebrow: 'Offline first',
+                eyebrow: 'Your files',
                 title: 'My documents',
-                subtitle: 'Files stored on this phone, and the records you saved.',
+                subtitle: 'Library downloads and personal PDFs on this phone.',
                 actions: [
                   FilledButton.icon(
                     onPressed: _busy ? null : () => _importDocument(context, state),
@@ -352,7 +352,7 @@ class _StorageCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Starter guides are built in and do not use storage. Everything works offline.',
+                  'Bundled guides do not use storage. Downloads stay until you remove them.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
