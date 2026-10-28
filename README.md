@@ -74,6 +74,9 @@ never overwritten.
 3. Build the app with the same web client ID:
    `--dart-define=GOOGLE_SERVER_CLIENT_ID=...apps.googleusercontent.com`.
 
+Confirmed names and school are saved to the account with PATCH /api/v1/me.
+Offline edits stay on the device and are retried on the next save.
+
 Onboarding asks for first and last name separately and offers
 **Continue with Google** to prefill them; both stay editable.
 
@@ -188,9 +191,9 @@ kept, so publishing again restores access without learners re-marking anything.
 ## Tests and builds
 
 ```bash
-cd phanda_api && php artisan test        # 56 tests
+cd phanda_api && php artisan test        # 60 tests
 cd phanda_app && flutter analyze         # no issues
-cd phanda_app && flutter test            # 20 tests
+cd phanda_app && flutter test            # 21 tests
 cd phanda_app && flutter build windows --debug
 ```
 

@@ -145,6 +145,33 @@ void main() {
     expect(status.isComplete, isTrue);
   });
 
+  test('sends confirmed names to the profile endpoint', () async {
+    late http.Request captured;
+    final client = _client((request) async {
+      captured = request;
+      return http.Response(
+        jsonEncode({
+          'success': true,
+          'data': {'id': 1, 'name': 'Chisomo Banda', 'email': 'c@example.com'},
+        }),
+        200,
+      );
+    });
+
+    await client.updateProfile(
+      firstName: 'Chisomo',
+      lastName: 'Banda',
+      school: 'Bwaila',
+    );
+
+    expect(captured.method, 'PATCH');
+    expect(captured.url.path, endsWith('/me'));
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(body['first_name'], 'Chisomo');
+    expect(body['last_name'], 'Banda');
+    expect(body['school'], 'Bwaila');
+  });
+
   test('exchanges a Google ID token for a session and names', () async {
     late http.Request captured;
     final client = _client((request) async {

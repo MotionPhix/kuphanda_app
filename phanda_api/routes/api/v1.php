@@ -29,6 +29,7 @@ Route::middleware('throttle:auth')->group(function (): void {
 Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function (): void {
     Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
     Route::get('me', [AuthController::class, 'me'])->name('api.v1.me');
+    Route::patch('me', [AuthController::class, 'updateProfile'])->name('api.v1.me.update');
 
     // Catalogue
     Route::get('subjects', [CatalogController::class, 'subjects'])->name('api.v1.subjects.index');

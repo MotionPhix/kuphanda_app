@@ -322,7 +322,10 @@ class _ProfileItem extends StatelessWidget {
 
 Future<void> showEditProfile(BuildContext context, AppState state) async {
   final profile = state.profile;
-  final nameController = TextEditingController(text: profile.name);
+  final firstController = TextEditingController(
+    text: profile.firstName == 'learner' ? '' : profile.firstName,
+  );
+  final lastController = TextEditingController(text: profile.lastName);
   final schoolController = TextEditingController(text: profile.school);
   var form = profile.form;
   var examYear = profile.examYear;
@@ -357,7 +360,12 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
                         .toList();
                     await state.updateProfile(
                       profile.copyWith(
-                        name: nameController.text.trim(),
+                        givenName: firstController.text.trim(),
+                        familyName: lastController.text.trim(),
+                        name: [
+                          firstController.text.trim(),
+                          lastController.text.trim(),
+                        ].where((part) => part.isNotEmpty).join(' '),
                         school: schoolController.text.trim(),
                         form: form,
                         examYear: examYear,
@@ -376,10 +384,24 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: firstController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration(labelText: 'First name'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: lastController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration(labelText: 'Last name'),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -468,6 +490,7 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
       ),
     ),
   );
-  nameController.dispose();
+  firstController.dispose();
+  lastController.dispose();
   schoolController.dispose();
 }

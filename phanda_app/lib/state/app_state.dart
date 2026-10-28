@@ -480,6 +480,19 @@ class AppState extends ChangeNotifier {
     _snapshot.profile = next;
     notifyListeners();
     _schedulePersist();
+
+    if (isSignedIn) {
+      try {
+        await _api!.updateProfile(
+          firstName: next.firstName == 'learner' ? '' : next.firstName,
+          lastName: next.lastName,
+          school: next.school,
+        );
+      } on ApiException catch (error) {
+        _syncError = 'Profile saved on this phone. ${error.message}';
+        notifyListeners();
+      }
+    }
   }
 
   Future<void> completeOnboarding({
@@ -508,6 +521,18 @@ class AppState extends ChangeNotifier {
     );
     await _persistNow();
     notifyListeners();
+
+    // A Google sign-in during onboarding already created the account; push the
+    // names the learner just confirmed so the server copy matches.
+    if (isSignedIn) {
+      unawaited(
+        _api!.updateProfile(
+          firstName: profile.firstName == 'learner' ? '' : profile.firstName,
+          lastName: profile.lastName,
+          school: profile.school,
+        ).catchError((Object _) {}),
+      );
+    }
   }
 
   Future<void> setTheme(AppThemePreference preference) async {

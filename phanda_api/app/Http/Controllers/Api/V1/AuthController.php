@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Requests\Api\V1\ForgotPasswordRequest;
 use App\Http\Requests\Api\V1\GoogleSignInRequest;
+use App\Http\Requests\Api\V1\UpdateProfileRequest;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Requests\Api\V1\ResendVerificationRequest;
@@ -139,6 +140,40 @@ final class AuthController extends ApiController
         $user->currentAccessToken()->delete();
 
         return $this->success(message: 'Logged out successfully');
+    }
+
+    /**
+     * Updates the confirmed profile. Names are stored as first/last and the
+     * display name is rebuilt from them so the two never drift apart.
+     */
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $data = $request->validated();
+
+        $first = array_key_exists('first_name', $data)
+            ? trim((string) $data['first_name'])
+            : (string) $user->first_name;
+        $last = array_key_exists('last_name', $data)
+            ? trim((string) $data['last_name'])
+            : (string) $user->last_name;
+
+        if (array_key_exists('first_name', $data) || array_key_exists('last_name', $data)) {
+            $user->first_name = $first;
+            $user->last_name = $last;
+            $user->name = trim($first.' '.$last);
+        } elseif (array_key_exists('name', $data)) {
+            $user->name = trim((string) $data['name']);
+        }
+
+        if (array_key_exists('school', $data)) {
+            $user->school = $data['school'] === null ? null : trim((string) $data['school']);
+        }
+
+        $user->save();
+
+        return $this->success(new UserResource($user->fresh()), 'Profile updated.');
     }
 
     public function me(Request $request): JsonResponse

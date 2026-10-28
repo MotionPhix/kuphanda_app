@@ -200,6 +200,24 @@ class ApiClient {
     }
   }
 
+  Future<void> updateProfile({
+    required String firstName,
+    required String lastName,
+    String? school,
+  }) async {
+    await _send(
+      () => _http.patch(
+        _uri('/me'),
+        headers: _headers,
+        body: jsonEncode(<String, Object?>{
+          'first_name': firstName,
+          'last_name': lastName,
+          'school': school,
+        }),
+      ),
+    );
+  }
+
   Future<AuthSession> googleAuth(String idToken) async {
     final body = await _send(
       () => _http.post(
