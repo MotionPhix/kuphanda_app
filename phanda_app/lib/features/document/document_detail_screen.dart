@@ -12,6 +12,7 @@ import '../../data/models/reading.dart';
 import '../../data/models/study_guide.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
+import '../reader/block_reader_screen.dart';
 import '../reader/guide_reader_screen.dart';
 import '../reader/pdf_reader_screen.dart';
 
@@ -452,6 +453,18 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     }
     if (guide != null) {
       _openGuide(context, document, 0);
+      return;
+    }
+    // A structured version reflows to the screen; prefer it over the PDF.
+    if (document.hasBlocks) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => BlockReaderScreen(
+            documentId: document.id,
+            title: document.title,
+          ),
+        ),
+      );
       return;
     }
     final asset = entry.asset;

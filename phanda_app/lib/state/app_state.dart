@@ -10,6 +10,7 @@ import '../data/api/api_config.dart';
 import '../data/api/api_models.dart';
 import '../data/api/token_store.dart';
 import '../data/models/classroom.dart';
+import '../data/models/block_document.dart';
 import '../data/models/document.dart';
 import '../data/models/profile.dart';
 import '../data/models/reading.dart';
@@ -1242,6 +1243,15 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Billing and subscriptions
   // ---------------------------------------------------------------------------
+
+  /// Loads the reflowable version of a document. Throws [ApiException] when
+  /// the account is not entitled or the document has no blocks.
+  Future<BlockDocument> loadBlockDocument(String documentId) {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to read this paper.');
+    }
+    return _api!.fetchBlockDocument(documentId);
+  }
 
   /// Pulls the recent messages addressed to this learner's audiences. A failure
   /// keeps whatever was already loaded: an inbox must not break the app when a

@@ -89,6 +89,23 @@ class BlockDocument {
 
   final List<DocumentBlock> blocks;
 
+  factory BlockDocument.fromMap(Map<String, Object?> json) {
+    final rawBlocks = json['blocks'];
+
+    return BlockDocument(
+      title: json['title'] as String? ?? 'Untitled',
+      subtitle: json['subtitle'] as String?,
+      blocks: rawBlocks is List
+          ? rawBlocks
+              .whereType<Map<Object?, Object?>>()
+              .map((block) => DocumentBlock.fromJson(
+                    block.map((key, value) => MapEntry(key.toString(), value)),
+                  ))
+              .toList()
+          : const <DocumentBlock>[],
+    );
+  }
+
   factory BlockDocument.fromJsonString(String source) {
     final decoded = jsonDecode(source);
 

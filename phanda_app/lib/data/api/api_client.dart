@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../models/block_document.dart';
 import 'api_models.dart';
 
 /// Thin, typed client for the Kuphanda library API.
@@ -312,6 +313,28 @@ class ApiClient {
         .whereType<Map<String, Object?>>()
         .map(PaymentRecord.fromJson)
         .toList();
+  }
+
+  /// The reflowable version of a document. The API enforces the same
+  /// entitlement as the file, so a locked paper throws rather than returning
+  /// empty blocks.
+  Future<BlockDocument> fetchBlockDocument(String documentId) async {
+    final body = await _send(
+      () => _http.get(
+        _uri('/documents/$documentId/blocks'),
+        headers: _headers,
+      ),
+    );
+
+    final data = body['data'];
+
+    if (data is! Map<Object?, Object?>) {
+      throw const ApiException('This document has no structured version.');
+    }
+
+    return BlockDocument.fromMap(
+      data.map((key, value) => MapEntry(key.toString(), value)),
+    );
   }
 
   /// Messages addressed to this learner's audiences, newest first.
