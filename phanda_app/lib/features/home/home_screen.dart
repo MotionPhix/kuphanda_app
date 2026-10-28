@@ -9,7 +9,9 @@ import '../../core/widgets/assignment_tile.dart';
 import '../../core/widgets/charts.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/document_card.dart';
+import '../../data/api/api_models.dart';
 import '../../state/app_state.dart';
+import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -52,6 +54,18 @@ class HomeScreen extends StatelessWidget {
                 onImport: () => onNavigate(2),
                 onClasses: () => onNavigate(3),
               ),
+              if (state.notifications.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _UpdatesCard(
+                  latest: state.notifications.first,
+                  count: state.notifications.length,
+                  onOpen: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const NotificationsScreen(),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 28),
               ResponsiveTwoPane(
                 primary: Column(
@@ -514,3 +528,72 @@ class _WeeklyCard extends StatelessWidget {
   }
 }
 
+
+/// A single line that surfaces the newest message and opens the inbox. It only
+/// appears when there is something to read, so the home screen stays calm.
+class _UpdatesCard extends StatelessWidget {
+  const _UpdatesCard({
+    required this.latest,
+    required this.count,
+    required this.onOpen,
+  });
+
+  final AppNotification latest;
+  final int count;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onOpen,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.notifications_active_outlined,
+                size: 20,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      count == 1 ? '1 update' : '$count updates',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer
+                            .withValues(alpha: 0.75),
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      latest.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

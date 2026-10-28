@@ -480,3 +480,31 @@ class StaffDocument {
             : null,
       );
 }
+
+/// A message the library or a teacher sent, as returned by /me/notifications.
+/// Mirrors the push payload so a learner can re-read it in the app.
+class AppNotification {
+  const AppNotification({
+    required this.id,
+    required this.category,
+    required this.title,
+    required this.body,
+    this.sentAt,
+  });
+
+  final int id;
+  final String category;
+  final String title;
+  final String body;
+  final DateTime? sentAt;
+
+  factory AppNotification.fromJson(Map<String, Object?> json) {
+    return AppNotification(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      category: json['category'] as String? ?? 'general',
+      title: json['title'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      sentAt: DateTime.tryParse(json['sent_at'] as String? ?? ''),
+    );
+  }
+}

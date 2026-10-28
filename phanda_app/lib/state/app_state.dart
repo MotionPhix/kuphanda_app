@@ -108,6 +108,7 @@ class AppState extends ChangeNotifier {
   final Map<String, bool> _entitled = <String, bool>{};
   List<RemotePlan> _plans = const <RemotePlan>[];
   List<PaymentRecord> _payments = const <PaymentRecord>[];
+  List<AppNotification> _notifications = const <AppNotification>[];
   BillingStatus? _billing;
   String? _token;
   AuthSession? _account;
@@ -136,6 +137,9 @@ class AppState extends ChangeNotifier {
   String? get accountPlan => _snapshot.accountPlan;
   bool get isSyncing => _syncing;
   String? get syncError => _syncError;
+
+  /// Messages the library or a teacher has sent to this learner, newest first.
+  List<AppNotification> get notifications => _notifications;
 
   /// The most recent notification received while the app was open. The shell
   /// shows it as a banner; it is cleared once presented.
@@ -318,6 +322,7 @@ class AppState extends ChangeNotifier {
       // Refresh entitlements in the background so a returning subscriber sees
       // their plan without opening the subscription screen.
       unawaited(loadBilling());
+      unawaited(loadNotifications());
       unawaited(startPush());
     }
   }
@@ -1123,6 +1128,7 @@ class AppState extends ChangeNotifier {
     await _persistNow();
     startAutoSync();
     notifyListeners();
+    unawaited(loadNotifications());
     unawaited(startPush());
   }
 
@@ -1227,6 +1233,7 @@ class AppState extends ChangeNotifier {
       ..pendingPaymentKind = null
       ..pendingPaymentAt = null;
     _syncError = null;
+    _notifications = const <AppNotification>[];
 
     notifyListeners();
     await _persistNow();
@@ -1235,6 +1242,20 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Billing and subscriptions
   // ---------------------------------------------------------------------------
+
+  /// Pulls the recent messages addressed to this learner's audiences. A failure
+  /// keeps whatever was already loaded: an inbox must not break the app when a
+  /// school has no signal.
+  Future<void> loadNotifications() async {
+    if (!isSignedIn) return;
+    try {
+      final items = await _api!.fetchNotifications();
+      _notifications = items;
+      notifyListeners();
+    } catch (error) {
+      debugPrint('Could not load notifications: $error');
+    }
+  }
 
   Future<void> loadBilling() async {
     if (!isSignedIn) return;

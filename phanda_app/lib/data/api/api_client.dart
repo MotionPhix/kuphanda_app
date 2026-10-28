@@ -314,6 +314,21 @@ class ApiClient {
         .toList();
   }
 
+  /// Messages addressed to this learner's audiences, newest first.
+  Future<List<AppNotification>> fetchNotifications() async {
+    final body = await _send(
+      () => _http.get(_uri('/me/notifications'), headers: _headers),
+    );
+    final rows = body['data'];
+    if (rows is! List) return const <AppNotification>[];
+    return rows
+        .whereType<Map<Object?, Object?>>()
+        .map((row) => AppNotification.fromJson(
+              row.map((key, value) => MapEntry(key.toString(), value)),
+            ))
+        .toList();
+  }
+
   Future<PaymentStatus> paymentStatus(String txRef) async {
     final body = await _send(
       () => _http.get(_uri('/billing/payments/$txRef'), headers: _headers),
