@@ -300,6 +300,11 @@ class AppState extends ChangeNotifier {
     }
     notifyListeners();
     startAutoSync();
+    if (isSignedIn) {
+      // Refresh entitlements in the background so a returning subscriber sees
+      // their plan without opening the subscription screen.
+      unawaited(loadBilling());
+    }
   }
 
   /// A little history so the weekly chart and streak are not empty on a brand
@@ -1049,9 +1054,11 @@ class AppState extends ChangeNotifier {
   Future<void> loadBilling() async {
     if (!isSignedIn) return;
     try {
-      final plans = await _api!.fetchPlans();
-      final status = await _api!.fetchBillingStatus();
-      final payments = await _api!.fetchPayments();
+      final (plans, status, payments) = await (
+        _api!.fetchPlans(),
+        _api!.fetchBillingStatus(),
+        _api!.fetchPayments(),
+      ).wait;
       _plans = plans;
       _billing = status;
       _payments = payments;

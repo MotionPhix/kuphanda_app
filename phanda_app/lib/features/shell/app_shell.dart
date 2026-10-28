@@ -24,7 +24,7 @@ class _AppShellState extends State<AppShell> {
   static const _destinations = <_Destination>[
     _Destination('Home', Icons.home_outlined, Icons.home_rounded),
     _Destination('Library', Icons.local_library_outlined, Icons.local_library_rounded),
-    _Destination('Documents', Icons.folder_copy_outlined, Icons.folder_copy_rounded),
+    _Destination('Files', Icons.folder_copy_outlined, Icons.folder_copy_rounded),
     _Destination('Classes', Icons.groups_outlined, Icons.groups_rounded),
     _Destination('Progress', Icons.insights_outlined, Icons.insights_rounded),
   ];

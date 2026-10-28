@@ -312,7 +312,7 @@ class _HomeHeader extends StatelessWidget {
                     Expanded(
                       child: _HeaderStat(
                         value: '$days',
-                        label: 'days to ${profile.examTarget} ${state.examDate.year}',
+                        label: 'days to ${profile.examTarget}',
                         onTap: onOpenExam,
                       ),
                     ),
@@ -359,15 +359,18 @@ class _HeaderStat extends StatelessWidget {
                 value,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontSize: 26,
+                  fontSize: 24,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 10.5,
                     height: 1.2,
                   ),
                 ),
@@ -408,7 +411,7 @@ class _QuickActions extends StatelessWidget {
         Expanded(
           child: _QuickAction(
             icon: Icons.download_for_offline_outlined,
-            label: 'My downloads',
+            label: 'Downloads',
             onTap: onImport,
           ),
         ),
