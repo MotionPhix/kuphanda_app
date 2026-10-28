@@ -182,7 +182,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
-                if (!entry.onDevice && guide == null && !locked) ...[
+                if (!entry.onDevice && guide == null && !locked && !document.hasBlocks) ...[
                   InfoBanner(
                     tone: BannerTone.warning,
                     icon: Icons.attach_file_rounded,
@@ -760,6 +760,13 @@ class _PrimaryActions extends StatelessWidget {
           ? 'Continue guide · ${progress.percent.round()}%'
           : 'Read study guide';
       icon = Icons.auto_stories_rounded;
+      action = onRead;
+    } else if (document.hasBlocks) {
+      // Reads from the API in the document's own layout, so no file is needed.
+      label = progress.percent > 0
+          ? 'Continue reading · ${progress.percent.round()}%'
+          : 'Read now';
+      icon = Icons.menu_book_rounded;
       action = onRead;
     } else if (hasFile) {
       label = progress.percent > 0

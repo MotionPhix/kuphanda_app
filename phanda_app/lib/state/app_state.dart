@@ -320,6 +320,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     startAutoSync();
     if (isSignedIn) {
+      // Online-first means the server catalogue wins, but the timer below only
+      // fires after 15 minutes: without this a cold start shows whatever was
+      // cached, so newly published papers stay invisible until a manual sync.
+      unawaited(syncNow(silent: true));
       // Refresh entitlements in the background so a returning subscriber sees
       // their plan without opening the subscription screen.
       unawaited(loadBilling());
