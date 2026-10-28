@@ -114,6 +114,36 @@ void main() {
       expect(find.text('Marking guide'), findsOneWidget);
     });
 
+    test('structures the real MSCE paper without inventing marks', () {
+      final source =
+          File('assets/samples/msce-maths-2002-p1.json').readAsStringSync();
+      final document = BlockDocument.fromJsonString(source);
+
+      final questions =
+          document.blocks.where((b) => b.type == 'question').toList();
+
+      expect(questions, hasLength(24));
+      // Stem text must be present for every question.
+      expect(questions.every((q) => q.text.isNotEmpty), isTrue);
+
+      final marks = questions.map((q) => q.marks).whereType<int>();
+      expect(marks.reduce((a, b) => a + b), lessThanOrEqualTo(100));
+      // Two questions had their marks cut off in the scan and stay empty.
+      expect(questions.where((q) => q.marks == null), hasLength(2));
+    });
+
+    test('flags the one question the scan obscured', () {
+      final source =
+          File('assets/samples/msce-maths-2002-p1.json').readAsStringSync();
+      final document = BlockDocument.fromJsonString(source);
+
+      final flagged =
+          document.blocks.where((b) => b.raw['needs_review'] == true).toList();
+
+      expect(flagged, hasLength(1));
+      expect(flagged.single.label, '5.');
+      expect(flagged.single.raw['review_note'], isNotNull);
+    });
     testWidgets('lays out the full sample on a small phone without overflowing',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 1920);

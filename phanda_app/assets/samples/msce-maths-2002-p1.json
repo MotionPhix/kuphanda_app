@@ -1,0 +1,252 @@
+{
+  "title": "Mathematics Paper I — MSCE 2002",
+  "subtitle": "Malawi School Certificate of Education, Paper I (M131/I), 100 marks, 2 hours.",
+  "provenance": {
+    "source": "mathematics-past.pdf supplied by the library",
+    "pages": 6,
+    "note": "Transcribed from the printed stems only. The supplied scan is a worked copy with handwritten answers over the questions, and those workings are deliberately excluded. Questions 13 and 17 had their mark allocation cut off in the scan and are stored without one rather than guessed."
+  },
+  "blocks": [
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "Answer all 24 questions. Mathematical tables and answer books are provided. All working must be clearly shown. Use of electronic calculators is not allowed."
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "Section A"
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "1.",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "Simplify  (3½ × 1½ − 3) ÷ 9"
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "2.",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "Figure 1 is a pie-chart representing sales of three commodities: tobacco, tea and coffee. Express coffee sales as a percentage of the total sales.",
+      "figure": {
+        "asset": "assets/samples/figures/fig1-pie-chart.png",
+        "alt": "Pie chart with tobacco labelled 208 degrees and tea labelled 107 degrees"
+      }
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "3.",
+      "marks": 3,
+      "difficulty": 1,
+      "text": "P is a point on the graph whose equation is y = x² − 6x. If the x-coordinate of P is 2, calculate its y coordinate."
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "4.",
+      "marks": 6,
+      "difficulty": 3,
+      "text": "In a cyclic quadrilateral ABCD, twice angle BAD = three times angle DCB. Calculate angle BAD."
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "5.",
+      "marks": 3,
+      "difficulty": 3,
+      "needs_review": true,
+      "text": "Given that angle θ is acute and that log cos θ = 1.73, evaluate (cos θ)².",
+      "review_note": "The printed value was partly covered by handwriting in the scan; confirm 1.73 against a clean copy."
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "6.",
+      "marks": 3,
+      "difficulty": 2,
+      "text": "Factorise completely 1 − 16(1 − y)², giving your answer in its simplest form."
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "7.",
+      "marks": 6,
+      "difficulty": 3,
+      "text": "In Figure 2, DB is perpendicular to the line ABC, AE = 25 cm, BC = 15 cm, angle EAB = 30°, and angle BCD = 45°. Calculate the length of DE.",
+      "figure": {
+        "asset": "assets/samples/figures/fig2-triangle.png",
+        "alt": "Triangle ABC with perpendicular DB and point E on DB"
+      }
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "8.",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "Given that a⁷ ÷ (a⁻³ × a²) = aʸ, find the value of y."
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "9.",
+      "marks": 4,
+      "difficulty": 3,
+      "text": "In Figure 3, D is the midpoint of the minor arc BDC, angle ABC = 40° and angle ACB = 60°. Calculate angle DAC.",
+      "figure": {
+        "asset": "assets/samples/figures/fig3-circle-angles.png",
+        "alt": "Circle through A, B, C and D with chords drawn and angles 40 and 60 degrees marked"
+      }
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "10.",
+      "marks": 3,
+      "difficulty": 2,
+      "text": "Make x the subject of the formula 4y = ax²."
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "11.",
+      "marks": 5,
+      "difficulty": 3,
+      "text": "In Figure 4, O is the centre of the circle, TA is a tangent, BC is parallel to TA and angle BCT = 37°. Calculate the value of the angle marked y.",
+      "figure": {
+        "asset": "assets/samples/figures/fig4-tangent-circle.png",
+        "alt": "Circle centre O with tangent TA, chord BC parallel to TA and angle y marked"
+      }
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "12.",
+      "marks": 4,
+      "difficulty": 3,
+      "text": "Solve for x:  logₓ 125⁻¹ = −3."
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "13.",
+      "marks": null,
+      "difficulty": 2,
+      "text": "Given that 2x, x, x + 3, ………… are terms in an Arithmetic Progression, calculate the value of x."
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "Section B"
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "14.",
+      "marks": 5,
+      "difficulty": 3,
+      "text": "In Figure 5, AB is parallel to CD, EF and GH. The parallel lines AB, CD, EF and GH intersect QR such that QX = XY = YR. SU = 9 cm, DU = 8 cm and TV = 5 cm. Prove that angle TUV = 90°.",
+      "figure": {
+        "asset": "assets/samples/figures/fig5-parallel-lines.png",
+        "alt": "Four parallel lines crossed by two transversals with lengths marked"
+      }
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "15.",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "Simplify ∛(8a) + 2∛a − ∛(27a), giving your answer in the simplest form."
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "16.",
+      "marks": 3,
+      "difficulty": 2,
+      "text": "The number of people (N) who suffer from malaria in a month is inversely proportional to the amount of insecticide (M) applied that month. When 5 litres of insecticide are applied, only 1 person suffers from malaria. Find the equation connecting N and M."
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "17.",
+      "marks": null,
+      "difficulty": 3,
+      "text": "P is a set of points (x, y) which satisfies the three inequalities:  x ≥ 0;  x + y ≤ 4;  y ≥ x + 1.  Show on a graph the region represented by P."
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "18.",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "Using a ruler and a pair of compasses only, construct a circle of radius 3 cm and a chord AB which subtends an angle on the circumference of 45°. Measure the length of the chord."
+    },
+    {
+      "type": "question",
+      "page": 5,
+      "label": "19.",
+      "marks": 5,
+      "difficulty": 3,
+      "text": "Figure 6 shows travel graphs of a minibus that leaves Mzuzu at 07:00 hours and arrives in Blantyre at 15:00 hours, and a car that leaves Blantyre at 07:30 hours and arrives in Mzuzu at 14:30 hours. From Mzuzu the minibus travels at a constant speed and arrives in Lilongwe at 10:30 hours and immediately proceeds to Blantyre at another constant speed. From Blantyre the car travels at a constant speed and arrives in Lilongwe at 10:00 hours. At noon the car leaves for Mzuzu at a constant speed. Calculate the average speed of the minibus during the time when the car stopped in Lilongwe.",
+      "figure": {
+        "asset": "assets/samples/figures/fig6-travel-graph.png",
+        "alt": "Distance-time graph from Blantyre to Mzuzu via Lilongwe for a minibus and a car"
+      }
+    },
+    {
+      "type": "question",
+      "page": 6,
+      "label": "20.",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "A straight line passes through points A(1, −1) and B(7, −9). Calculate the distance between A and B."
+    },
+    {
+      "type": "question",
+      "page": 6,
+      "label": "21.",
+      "marks": 3,
+      "difficulty": 2,
+      "text": "The volume of a cone is 462 cm³. If its height is 9 cm, calculate its radius. (Take π = 22/7 and volume of a cone = ⅓πr²h.)"
+    },
+    {
+      "type": "question",
+      "page": 6,
+      "label": "22.",
+      "marks": 4,
+      "difficulty": 3,
+      "text": "In Figure 7, triangle ABC is similar to triangle BAD. If the area of triangle ABC = 72 cm², the area of triangle BAD = 200 cm² and BC = 6 cm, calculate the length of AD.",
+      "figure": {
+        "asset": "assets/samples/figures/fig7-similar-triangles.png",
+        "alt": "Two triangles sharing side AB with diagonals drawn"
+      }
+    },
+    {
+      "type": "question",
+      "page": 6,
+      "label": "23.",
+      "marks": 6,
+      "difficulty": 3,
+      "text": "In Figure 8, triangle ABC is isosceles in which AB = AC and angle BAC = 140°. AB and AC are produced to D and E respectively. The bisectors of angle CBD and angle BCE meet at O. Calculate angle BOC.",
+      "figure": {
+        "asset": "assets/samples/figures/fig8-isosceles.png",
+        "alt": "Isosceles triangle with base angles produced and bisectors meeting at O"
+      }
+    },
+    {
+      "type": "question",
+      "page": 6,
+      "label": "24.",
+      "marks": 4,
+      "difficulty": 3,
+      "text": "When a polynomial x³ + kx² + x − k is divided by (x − k) the remainder is 2. Calculate the value of k."
+    }
+  ]
+}
