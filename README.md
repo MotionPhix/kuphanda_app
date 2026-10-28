@@ -124,8 +124,19 @@ flutter pub get
 flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
 ```
 
-For an Android emulator use `http://10.0.2.2:8000/api/v1`; for a physical device
-use the machine's LAN address and add it to the Android network security config.
+Android emulator: `--dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1`.
+
+Physical Android device over USB (no LAN or firewall changes):
+
+```bash
+adb reverse tcp:8001 tcp:8001
+php artisan serve --port=8001
+flutter run -d <device> --dart-define=API_BASE_URL=http://localhost:8001/api/v1
+```
+
+`android/app/src/main/res/xml/network_security_config.xml` allows cleartext only
+for `10.0.2.2` and `localhost`. All other hosts, including production, require
+HTTPS.
 
 ## Publishing content
 
@@ -171,10 +182,13 @@ expiry removal, bundled-file protection) and API client parsing/error mapping.
 - An admin publishing UI. Files are managed by the library team through the
   database and storage (seeded for now); there is no upload form.
 - Push notifications for new versions or assignments.
-- A production PayChangu account. The gateway is implemented against the
-  documented endpoints, but live keys and a public HTTPS webhook are required.
-- Android/iOS build verification. Only Windows has been built and run here; the
-  local Android SDK licences are not accepted.
+- A live PayChangu payment and webhook. A test-mode payment has been completed
+  end to end; production needs live keys and a public HTTPS webhook plus
+  `PAYCHANGU_WEBHOOK_SECRET`.
+- iOS build verification. Android has been built and run on both an emulator and
+  a physical phone; iOS has not been opened in Xcode.
+- The bundled “How to use Kuphanda” PDF still uses the old offline-only wording.
+  The app copy is current; publish a v3 file when the content is revised.
 
 Catalogue records are sample metadata. Only two Kuphanda-authored PDFs ship as
 files (`phanda_api/database/seeders/files/`). No MANEB papers or textbooks are

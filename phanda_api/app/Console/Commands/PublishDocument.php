@@ -115,6 +115,7 @@ final class PublishDocument extends Command
                     'latest_version' => $nextVersion,
                     'content_updated_at' => now(),
                     'is_published' => true,
+                    'pages' => $pageCount,
                 ])->save();
             });
         } catch (Throwable $exception) {

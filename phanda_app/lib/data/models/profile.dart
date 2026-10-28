@@ -28,7 +28,7 @@ enum LibraryPlan {
 }
 
 enum AppThemePreference {
-  system('System', Icons.brightness_auto_outlined),
+  system('Auto', Icons.brightness_auto_outlined),
   light('Light', Icons.light_mode_outlined),
   dark('Dark', Icons.dark_mode_outlined);
 

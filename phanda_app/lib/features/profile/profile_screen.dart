@@ -213,14 +213,14 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.sd_storage_outlined,
                         title: 'Storage used',
                         subtitle:
-                            '${state.importedFileCount} imported files · ${formatBytes(state.storageBytes)}',
+                            '${state.importedFileCount} ${state.importedFileCount == 1 ? 'file' : 'files'} · ${formatBytes(state.storageBytes)}',
                         onTap: null,
                       ),
                       const Divider(height: 1),
                       _ProfileItem(
                         icon: Icons.restart_alt_rounded,
                         title: 'Reset app data',
-                        subtitle: 'Remove imported files, progress, notes and classes',
+                        subtitle: 'Remove downloads, progress, notes and classes',
                         destructive: true,
                         onTap: () async {
                           final confirmed = await confirmAction(
@@ -257,7 +257,7 @@ class ProfileScreen extends StatelessWidget {
                               children: [
                                 Text('Kuphanda', style: theme.textTheme.titleSmall),
                                 Text(
-                                  'Version 1.0.0 · offline library',
+                                  'Version 1.0.0 · online library',
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -269,15 +269,16 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Kuphanda is a document library and study manager for Malawian '
-                        'secondary schools, covering Forms 1–4 and the JCE and MSCE '
-                        'examinations. It works without an account or a connection.',
+                        'Kuphanda is a subscription reading platform for Malawian secondary '
+                        'schools, covering Forms 1–4 and the JCE and MSCE examinations. '
+                        'Browse online, subscribe with PayChangu, and download entitled '
+                        'documents for offline reading.',
                         style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Catalogue records are sample metadata. No past papers or textbooks '
-                        'are bundled: attach files you are allowed to use. Past papers and '
+                        'The catalogue and its PDFs are supplied by the library team. Files '
+                        'you import stay on this phone and are not uploaded. Past papers and '
                         'textbooks remain the property of MANEB and their publishers.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,

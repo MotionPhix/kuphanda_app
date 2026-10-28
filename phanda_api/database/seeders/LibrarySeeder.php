@@ -107,7 +107,7 @@ final class LibrarySeeder extends Seeder
                 'title' => 'How to use Kuphanda',
                 'form' => 1,
                 'kind' => 'guide',
-                'description' => 'A short guide to finding documents, attaching PDFs, keeping notes and working offline. Ships with the app.',
+                'description' => 'A short guide to finding papers, subscribing, downloading for offline reading and keeping notes.',
                 'pages' => 4,
                 'access_tier' => 'free',
                 'author' => 'Kuphanda',

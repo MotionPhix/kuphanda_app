@@ -362,8 +362,8 @@ List<Document> buildCatalogue({DateTime? now}) {
       form: 1,
       kind: DocumentKind.guide,
       description:
-          'A short guide to finding documents, attaching PDFs, keeping notes and working offline. '
-          'Ships with the app and is readable immediately.',
+          'A short guide to finding papers, subscribing, downloading for offline reading and '
+          'keeping notes. Ships with the app and is readable immediately.',
       pages: 2,
       rating: 4.9,
       ratingCount: 12,

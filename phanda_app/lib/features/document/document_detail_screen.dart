@@ -130,26 +130,27 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  for (var index = 1; index <= 5; index++)
-                                    Icon(
-                                      index <= state.averageRating(document).round()
-                                          ? Icons.star_rounded
-                                          : Icons.star_border_rounded,
-                                      size: 16,
-                                      color: AppColors.sun,
+                              if (document.ratingCount > 0 || entry.rating != null)
+                                Row(
+                                  children: [
+                                    for (var index = 1; index <= 5; index++)
+                                      Icon(
+                                        index <= state.averageRating(document).round()
+                                            ? Icons.star_rounded
+                                            : Icons.star_border_rounded,
+                                        size: 16,
+                                        color: AppColors.sun,
+                                      ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${state.averageRating(document).toStringAsFixed(1)} '
+                                      '(${document.ratingCount + (entry.rating == null ? 0 : 1)})',
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
                                     ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${state.averageRating(document).toStringAsFixed(1)} '
-                                    '(${document.ratingCount + (entry.rating == null ? 0 : 1)})',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
                               const SizedBox(height: 8),
                               Text(
                                 '${document.pages} pages · ${document.author}',
@@ -232,9 +233,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         onPressed: () => _addNote(context, state, document),
                         icon: const Icon(Icons.edit_note_rounded, size: 18),
                         label: Text(
-                          state.notesFor(document.id).isEmpty
-                              ? 'Add note'
-                              : 'Notes (${state.notesFor(document.id).length})',
+                          state.notesFor(document.id).isEmpty ? 'Note' : 'Notes',
                         ),
                       ),
                     ),
@@ -243,7 +242,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => setState(() => _tab = 1),
                         icon: const Icon(Icons.bookmarks_outlined, size: 18),
-                        label: Text('Marks (${state.bookmarksFor(document.id).length})'),
+                        label: const Text('Marks'),
                       ),
                     ),
                   ],
