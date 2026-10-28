@@ -21,6 +21,7 @@ final class DatabaseSeeder extends Seeder
 
         $this->call(LibrarySeeder::class);
         $this->call(PlanSeeder::class);
+        $this->call(BlockDocumentSeeder::class);
 
         User::factory()->create([
             'name' => 'Test User',

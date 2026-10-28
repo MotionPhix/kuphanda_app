@@ -71,6 +71,8 @@ class Document {
     this.language = 'English',
     this.tags = const <String>[],
     this.personal = false,
+    this.format = 'pdf',
+    this.hasBlocks = false,
   });
 
   final String id;
@@ -104,6 +106,12 @@ class Document {
 
   /// True for documents the learner imported themselves.
   final bool personal;
+
+  /// `pdf`, `blocks` or `hybrid`. Only the latter two can reflow.
+  final String format;
+
+  /// Whether the API holds a structured version of this document.
+  final bool hasBlocks;
 
   String get qualification => Subject.qualificationForForm(form);
 
@@ -209,6 +217,8 @@ class Document {
       tags: (json['tags'] as List<Object?>?)?.map((tag) => tag.toString()).toList() ??
           const <String>[],
       personal: json['personal'] as bool? ?? false,
+      format: json['format'] as String? ?? 'pdf',
+      hasBlocks: json['has_blocks'] as bool? ?? false,
     );
   }
 }

@@ -44,6 +44,7 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
     Route::get('subjects', [CatalogController::class, 'subjects'])->name('api.v1.subjects.index');
     Route::get('documents', [CatalogController::class, 'documents'])->name('api.v1.documents.index');
     Route::get('documents/{document}', [CatalogController::class, 'show'])->name('api.v1.documents.show');
+    Route::get('documents/{document}/blocks', [CatalogController::class, 'blocks'])->name('api.v1.documents.blocks');
 
     // Offline library: explicit marks, download, acknowledgement, sync, removal.
     Route::get('library/offline', [OfflineLibraryController::class, 'index'])

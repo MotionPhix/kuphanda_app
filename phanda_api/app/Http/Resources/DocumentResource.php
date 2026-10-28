@@ -25,6 +25,8 @@ final class DocumentResource extends JsonResource
             'subject' => new SubjectResource($this->whenLoaded('subject')),
             'form' => $this->form,
             'kind' => $this->kind,
+            'format' => $this->format,
+            'has_blocks' => ! empty($this->blocks['blocks'] ?? null),
             'description' => $this->description,
             'pages' => $this->pages,
             'year' => $this->year,

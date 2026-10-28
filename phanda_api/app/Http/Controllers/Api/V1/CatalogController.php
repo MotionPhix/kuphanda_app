@@ -9,6 +9,7 @@ use App\Http\Resources\DocumentResource;
 use App\Http\Resources\SubjectResource;
 use App\Models\Document;
 use App\Models\Subject;
+use App\Services\EntitlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -78,5 +79,39 @@ final class CatalogController extends ApiController
         return $this->success(
             new DocumentResource($document->load(['subject', 'currentVersion']))
         );
+    }
+
+    /**
+     * The reflowable version of a document.
+     *
+     * Gated by the same entitlement as the file itself: a locked paper must not
+     * leak its questions through the structured endpoint.
+     */
+    public function blocks(Request $request, Document $document): JsonResponse
+    {
+        if (! $document->is_published) {
+            return $this->notFound('Document not found');
+        }
+
+        $user = $request->user();
+
+        if ($user === null || ! app(EntitlementService::class)->canAccess($user, $document)) {
+            return $this->forbidden('Subscribe or buy this paper to read it.');
+        }
+
+        $blocks = $document->blocks['blocks'] ?? null;
+
+        if (! is_array($blocks) || $blocks === []) {
+            return $this->notFound('This document has no structured version yet.');
+        }
+
+        return $this->success([
+            'id' => $document->id,
+            'title' => $document->title,
+            'subtitle' => $document->blocks['subtitle'] ?? null,
+            'format' => $document->format,
+            'source_version' => $document->latest_version,
+            'blocks' => $blocks,
+        ]);
     }
 }
