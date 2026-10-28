@@ -188,7 +188,18 @@ flutter build apk --release --target-platform android-arm64 \
   --dart-define=GOOGLE_SERVER_CLIENT_ID=239327365893-1725f6in8f6nnmc85836eqhrets9hfes.apps.googleusercontent.com
 ```
 
-Two requirements make this work:
+Start the tunnel so Herd still sees its own hostname:
+
+```bash
+ngrok http https://phanda_api.test --host-header=rewrite
+```
+
+Without `--host-header=rewrite`, Herd answers with its own
+`Site not found` page — a 404 in HTML, not JSON — because it routes by `Host` and
+`*.ngrok-free.dev` is not one of its sites. The app then looks broken while the
+API is perfectly healthy.
+
+Three requirements make this work:
 
 - `ApiClient` sends `ngrok-skip-browser-warning: true`. Without it ngrok answers
   the first request from an unknown client with an HTML interstitial instead of

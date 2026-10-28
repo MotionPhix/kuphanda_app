@@ -75,6 +75,10 @@ class RemoteDocument {
       language: (json['language'] as String?) ?? 'English',
       tags: (json['tags'] as List<Object?>?)?.map((tag) => tag.toString()).toList() ??
           const <String>[],
+      // Without these two the catalogue silently treated a structured paper as
+      // a catalogue-only record with no file, so it could not be opened.
+      format: (json['format'] as String?) ?? 'pdf',
+      hasBlocks: json['has_blocks'] as bool? ?? false,
     );
 
     return RemoteDocument(

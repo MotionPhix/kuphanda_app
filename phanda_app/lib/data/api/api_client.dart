@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 
 import '../models/block_document.dart';
@@ -105,9 +106,16 @@ class ApiClient {
         rows = const <Object?>[];
       }
 
-      documents.addAll(
-        rows.whereType<Map<String, Object?>>().map(RemoteDocument.fromJson),
-      );
+      // One malformed row must not take out the whole catalogue: before this,
+      // a single bad document threw, the caller kept its cached list and the
+      // library silently went stale with no indication why.
+      for (final row in rows.whereType<Map<String, Object?>>()) {
+        try {
+          documents.add(RemoteDocument.fromJson(row));
+        } catch (error) {
+          debugPrint('Skipped document ${row['id']}: $error');
+        }
+      }
       page++;
     } while (page <= lastPage);
 
