@@ -1,0 +1,111 @@
+{
+  "title": "Mechanics: motion, force and momentum",
+  "subtitle": "Sample block document for the reader pilot — not an official examination paper.",
+  "source_asset": "assets/samples/mechanics_sample.pdf",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Motion in a straight line"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "Speed is how fast an object moves; velocity is speed in a stated direction. An object can travel at a steady speed and still have a changing velocity, because the direction of travel can change."
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "Acceleration is the rate of change of velocity: a = (v − u) / t. A negative acceleration does not always mean slowing down; it means the acceleration points opposite to the chosen positive direction."
+    },
+    {
+      "type": "figure",
+      "page": 1,
+      "text": "Velocity-time graph for a car accelerating uniformly from rest.",
+      "figure": {
+        "asset": "assets/samples/figures/velocity_time.png",
+        "alt": "Straight line rising from the origin to 20 metres per second at 8 seconds"
+      }
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "The gradient of a velocity-time graph is the acceleration.",
+        "The area under the graph is the distance travelled.",
+        "A horizontal section means constant velocity, not rest."
+      ]
+    },
+    {
+      "type": "divider",
+      "page": 2
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Worked example"
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "Question 1",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "A car accelerates uniformly from rest to 20 m/s in 8.0 s.",
+      "parts": [
+        { "type": "paragraph", "label": "(a)", "text": "Calculate the acceleration of the car." },
+        { "type": "paragraph", "label": "(b)", "text": "Calculate the distance travelled in this time." }
+      ],
+      "items": [
+        "a = (v − u) / t = (20 − 0) / 8.0",
+        "a = 2.5 m/s²",
+        "distance = area under graph = ½ × 8.0 × 20",
+        "distance = 80 m"
+      ]
+    },
+    {
+      "type": "table",
+      "page": 2,
+      "text": "Comparing the two quantities",
+      "rows": [
+        ["Quantity", "Unit", "Vector?"],
+        ["Speed", "m/s", "No"],
+        ["Velocity", "m/s", "Yes"],
+        ["Acceleration", "m/s²", "Yes"]
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Momentum"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "Momentum is mass multiplied by velocity, p = mv. In a closed system the total momentum before a collision equals the total momentum after it, provided no external force acts."
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "Question 2",
+      "marks": 5,
+      "difficulty": 3,
+      "text": "A trolley of mass 2.0 kg moving at 3.0 m/s collides with a stationary trolley of mass 1.0 kg. They move off together.",
+      "parts": [
+        { "type": "paragraph", "label": "(a)", "text": "State the principle of conservation of momentum." },
+        { "type": "paragraph", "label": "(b)", "text": "Calculate their common velocity after the collision." }
+      ],
+      "items": [
+        "Total momentum before = total momentum after",
+        "m₁u₁ + m₂u₂ = (m₁ + m₂)v",
+        "(2.0 × 3.0) + 0 = (2.0 + 1.0) × v",
+        "v = 2.0 m/s"
+      ]
+    },
+    {
+      "type": "extension",
+      "page": 3,
+      "text": "Interactive simulation of this collision"
+    }
+  ]
+}
