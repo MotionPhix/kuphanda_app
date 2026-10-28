@@ -171,6 +171,17 @@ final class AuthController extends ApiController
             $user->school = $data['school'] === null ? null : trim((string) $data['school']);
         }
 
+        // Audience fields: they decide which class and role notifications this
+        // account receives. A learner cannot promote themselves to staff here;
+        // `role` only distinguishes student from teacher.
+        if (array_key_exists('role', $data)) {
+            $user->role = (string) $data['role'];
+        }
+
+        if (array_key_exists('form', $data)) {
+            $user->form = $data['form'] === null ? null : (int) $data['form'];
+        }
+
         $user->save();
 
         return $this->success(new UserResource($user->fresh()), 'Profile updated.');

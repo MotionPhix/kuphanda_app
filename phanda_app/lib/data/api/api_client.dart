@@ -28,6 +28,10 @@ class ApiClient {
   Map<String, String> get _headers => <String, String>{
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        // ngrok's free tier serves an HTML interstitial before the first
+        // request from an unknown client. Without this header the app would
+        // try to parse that page as JSON. It is ignored by every other host.
+        'ngrok-skip-browser-warning': 'true',
         if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
@@ -204,6 +208,8 @@ class ApiClient {
     required String firstName,
     required String lastName,
     String? school,
+    String? role,
+    int? form,
   }) async {
     await _send(
       () => _http.patch(
@@ -213,7 +219,39 @@ class ApiClient {
           'first_name': firstName,
           'last_name': lastName,
           'school': school,
+          'role': role,
+          'form': form,
         }),
+      ),
+    );
+  }
+
+  /// Registers this device for push notifications. Idempotent: the same token
+  /// is reassigned to whoever is signed in.
+  Future<void> registerDevice({
+    required String token,
+    required String platform,
+    String? appVersion,
+  }) async {
+    await _send(
+      () => _http.post(
+        _uri('/me/devices'),
+        headers: _headers,
+        body: jsonEncode(<String, Object?>{
+          'token': token,
+          'platform': platform,
+          'app_version': appVersion,
+        }),
+      ),
+    );
+  }
+
+  Future<void> removeDevice(String token) async {
+    await _send(
+      () => _http.delete(
+        _uri('/me/devices'),
+        headers: _headers,
+        body: jsonEncode(<String, Object?>{'token': token}),
       ),
     );
   }
@@ -281,6 +319,61 @@ class ApiClient {
       () => _http.get(_uri('/billing/payments/$txRef'), headers: _headers),
     );
     return PaymentStatus.fromJson(_dataMap(body));
+  }
+
+  Future<List<StaffDocument>> fetchStaffDocuments() async {
+    final body = await _send(
+      () => _http.get(_uri('/staff/documents'), headers: _headers),
+    );
+    final rows = body['data'];
+    return (rows is List ? rows : const <Object?>[])
+        .whereType<Map<String, Object?>>()
+        .map(StaffDocument.fromJson)
+        .toList();
+  }
+
+  Future<StaffVersion> uploadStaffVersion({
+    required String documentId,
+    required String filePath,
+    required String fileName,
+    required int pages,
+    String? notes,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      _uri('/staff/documents/$documentId/versions'),
+    )
+      ..headers.addAll(_headers)
+      ..fields['pages'] = '$pages';
+
+    if (notes != null && notes.trim().isNotEmpty) {
+      request.fields['notes'] = notes.trim();
+    }
+
+    request.files.add(
+      await http.MultipartFile.fromPath('file', filePath, filename: fileName),
+    );
+
+    final streamed = await _http.send(request).timeout(const Duration(seconds: 90));
+    final response = await http.Response.fromStream(streamed);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw _errorFor(response.statusCode, response.body);
+    }
+
+    final body = jsonDecode(response.body) as Map<String, Object?>;
+    return StaffVersion.fromJson(_dataMap(body));
+  }
+
+  Future<StaffDocument> setStaffPublication(String documentId, bool published) async {
+    final body = await _send(
+      () => _http.patch(
+        _uri('/staff/documents/$documentId/publication'),
+        headers: _headers,
+        body: jsonEncode(<String, bool>{'is_published': published}),
+      ),
+    );
+    return StaffDocument.fromJson(_dataMap(body));
   }
 
   Future<Map<String, Object?>> _send(Future<http.Response> Function() request) async {

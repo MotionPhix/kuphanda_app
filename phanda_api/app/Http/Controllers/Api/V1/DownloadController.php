@@ -43,13 +43,19 @@ final class DownloadController extends ApiController
             return $this->notFound('This document has no file available.');
         }
 
-        $disk = Storage::disk($version->disk);
+        // New versions are stored by Spatie Media Library; older rows fall back
+        // to the plain disk path until they are backfilled.
+        if ($version->media !== null) {
+            $stream = $version->media->stream();
+        } else {
+            $disk = Storage::disk($version->disk);
 
-        if (! $disk->exists($version->path)) {
-            return $this->notFound('The stored file is missing. Contact the library administrator.');
+            if (! $disk->exists($version->path)) {
+                return $this->notFound('The stored file is missing. Contact the library administrator.');
+            }
+
+            $stream = $disk->readStream($version->path);
         }
-
-        $stream = $disk->readStream($version->path);
 
         if ($stream === false) {
             return $this->error('The stored file could not be read.', 500);

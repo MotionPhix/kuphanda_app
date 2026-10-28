@@ -69,10 +69,41 @@ it('publishes a first version with checksum and page count', function (): void {
 
     Storage::disk('local')->assertExists($version->path);
 
+    $media = $this->document->getMedia('files')->first();
+    expect($media)->not->toBeNull()
+        ->and($version->media_id)->toBe($media->id)
+        ->and($media->disk)->toBe('local')
+        ->and($media->mime_type)->toBe('application/pdf');
+    Storage::disk('local')->assertExists($media->id.'/'.$media->file_name);
+
     $this->document->refresh();
     expect($this->document->latest_version)->toBe(1)
         ->and($this->document->is_published)->toBeTrue()
         ->and($this->document->content_updated_at)->not->toBeNull();
+});
+
+it('serves a media-library version to an authenticated offline reader', function (): void {
+    $this->artisan('library:publish', [
+        'document' => 'publish-target',
+        'file' => $this->pdf,
+        '--pages' => 2,
+    ])->assertSuccessful();
+
+    $user = User::factory()->create(['plan' => LibraryPlan::School]);
+    Sanctum::actingAs($user);
+
+    OfflineDocument::query()->create([
+        'user_id' => $user->id,
+        'document_id' => 'publish-target',
+        'marked_at' => now(),
+    ]);
+
+    $response = $this->get('/api/v1/library/offline/publish-target/download');
+
+    $response->assertOk()
+        ->assertHeader('X-Document-Version', '1');
+
+    expect($response->streamedContent())->toContain('%PDF');
 });
 
 it('bumps the version instead of overwriting a published file', function (): void {

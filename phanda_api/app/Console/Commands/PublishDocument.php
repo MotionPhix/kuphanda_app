@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\Document;
-use App\Models\DocumentVersion;
+use App\Services\DocumentPublisher;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
@@ -80,47 +78,16 @@ final class PublishDocument extends Command
         }
 
         $pageCount = $pages !== null ? (int) $pages : $this->estimatePages($contents);
-        $nextVersion = ((int) $document->versions()->max('version')) + 1;
-        $storagePath = 'library/documents/'.$document->id.'/v'.$nextVersion.'.pdf';
-        $checksum = hash('sha256', $contents);
 
         try {
-            DB::transaction(function () use (
+            $version = app(DocumentPublisher::class)->publish(
                 $document,
-                $contents,
-                $storagePath,
-                $nextVersion,
+                $path,
                 $pageCount,
-                $size,
-                $checksum,
-                $path
-            ): void {
-                Storage::disk('local')->put($storagePath, $contents);
-
-                DocumentVersion::query()->create([
-                    'document_id' => $document->id,
-                    'version' => $nextVersion,
-                    'disk' => 'local',
-                    'path' => $storagePath,
-                    'file_name' => basename($path),
-                    'mime_type' => 'application/pdf',
-                    'size_bytes' => $size,
-                    'page_count' => $pageCount,
-                    'checksum' => $checksum,
-                    'notes' => $this->option('notes'),
-                    'published_at' => now(),
-                ]);
-
-                $document->forceFill([
-                    'latest_version' => $nextVersion,
-                    'content_updated_at' => now(),
-                    'is_published' => true,
-                    'pages' => $pageCount,
-                ])->save();
-            });
+                $this->option('notes'),
+            );
         } catch (Throwable $exception) {
             report($exception);
-            Storage::disk('local')->delete($storagePath);
             $this->error('Publishing failed: '.$exception->getMessage());
 
             return self::FAILURE;
@@ -129,10 +96,10 @@ final class PublishDocument extends Command
         $this->info(sprintf(
             'Published %s v%d (%s, %d pages, %s).',
             $document->id,
-            $nextVersion,
-            $this->humanSize($size),
-            $pageCount,
-            substr($checksum, 0, 12)
+            $version->version,
+            $this->humanSize($version->size_bytes),
+            $version->page_count,
+            substr($version->checksum, 0, 12)
         ));
         $this->line('Learners will see it as an update on their next sync.');
 

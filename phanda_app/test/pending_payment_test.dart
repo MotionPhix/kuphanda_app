@@ -38,6 +38,22 @@ class _FakeApi extends ApiClient {
   Future<List<PaymentRecord>> fetchPayments() async => const [];
 
   @override
+  Future<void> registerDevice({
+    required String token,
+    required String platform,
+    String? appVersion,
+  }) async {}
+
+  @override
+  Future<AuthSession> me() async => const AuthSession(
+        token: 'token',
+        userId: 1,
+        name: 'Test Learner',
+        email: 'test@example.com',
+        plan: 'free',
+      );
+
+  @override
   Future<List<RemoteDocument>> fetchDocuments({int perPage = 100}) async => const [];
 
   @override

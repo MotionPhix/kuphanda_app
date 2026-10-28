@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\PaymentGateway;
+use App\Contracts\PushSender;
 use App\Services\EntitlementService;
 use App\Services\PayChanguGateway;
+use App\Services\Push\FirebasePushSender;
+use App\Services\Push\NullPushSender;
+use App\Services\Push\PushDispatcher;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -21,6 +25,19 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PaymentGateway::class, PayChanguGateway::class);
         $this->app->singleton(EntitlementService::class);
+
+        $this->app->singleton(PushSender::class, function (): PushSender {
+            $project = (string) config('services.firebase.project_id', '');
+            $credentials = (string) config('services.firebase.credentials', '');
+
+            if ($project === '' || $credentials === '' || ! is_file($credentials)) {
+                return new NullPushSender();
+            }
+
+            return new FirebasePushSender($project, $credentials);
+        });
+
+        $this->app->singleton(PushDispatcher::class);
     }
 
     /**

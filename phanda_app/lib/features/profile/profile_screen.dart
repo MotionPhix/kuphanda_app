@@ -8,6 +8,7 @@ import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
 import '../billing/subscription_screen.dart';
+import '../staff/staff_library_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -123,6 +124,19 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (state.isStaff) ...[
+                        const Divider(height: 1),
+                        _ProfileItem(
+                          icon: Icons.upload_file_outlined,
+                          title: 'Staff tools',
+                          subtitle: 'Publish versions and withdraw documents',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const StaffLibraryScreen(),
+                            ),
+                          ),
+                        ),
+                      ],
                       const Divider(height: 1),
                       _ProfileItem(
                         icon: Icons.menu_book_outlined,

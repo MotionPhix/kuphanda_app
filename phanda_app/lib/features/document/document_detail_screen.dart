@@ -215,37 +215,13 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => state.toggleSaved(document.id),
-                        icon: Icon(
-                          entry.saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                          size: 18,
-                        ),
-                        label: Text(entry.saved ? 'Saved' : 'Save'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _addNote(context, state, document),
-                        icon: const Icon(Icons.edit_note_rounded, size: 18),
-                        label: Text(
-                          state.notesFor(document.id).isEmpty ? 'Note' : 'Notes',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => setState(() => _tab = 1),
-                        icon: const Icon(Icons.bookmarks_outlined, size: 18),
-                        label: const Text('Marks'),
-                      ),
-                    ),
-                  ],
+                _DocumentActionBar(
+                  saved: entry.saved,
+                  noteCount: state.notesFor(document.id).length,
+                  marksActive: _tab == 1,
+                  onSave: () => state.toggleSaved(document.id),
+                  onNote: () => _addNote(context, state, document),
+                  onMarks: () => setState(() => _tab = 1),
                 ),
                 const SizedBox(height: 24),
                 _Tabs(value: _tab, onChanged: (value) => setState(() => _tab = value)),
@@ -507,53 +483,207 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final progress = state.progressOrDefault(document);
     final pageController = TextEditingController(text: '${progress.currentPage}');
 
+    // A purpose-built composer instead of the generic sheet: the sheet grows to
+    // exactly its content, so the field and both buttons stay above the
+    // keyboard rather than being pushed behind it.
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-        child: SheetBody(
-          title: 'Add a note',
-          subtitle: 'Notes stay on this phone and are listed with the document.',
-          actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(sheetContext),
-                child: const Text('Cancel'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FilledButton(
-                onPressed: () async {
-                  final page = int.tryParse(pageController.text) ?? progress.currentPage;
-                  await state.addNote(document.id, page, controller.text);
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
-                },
-                child: const Text('Save note'),
-              ),
-            ),
-          ],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 120,
-                child: TextField(
-                  controller: pageController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Page'),
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Add a note', style: theme.textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(
+                  'Notes stay on this phone and are listed with the document.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 5,
-                minLines: 3,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'What do you want to remember?',
-                  alignLabelWithHint: true,
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 120,
+                  child: TextField(
+                    controller: pageController,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(labelText: 'Page'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  minLines: 3,
+                  maxLines: 5,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(
+                    hintText: 'What do you want to remember?',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          final page = int.tryParse(pageController.text) ??
+                              progress.currentPage;
+                          await state.addNote(document.id, page, controller.text);
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                          }
+                        },
+                        child: const Text('Save note'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    controller.dispose();
+    pageController.dispose();
+  }
+}
+
+/// Save / Note / Marks as one segmented control rather than three identical
+/// pills. Each segment is a single line by construction: the label never wraps,
+/// so "Marks" cannot break into "Mark s" on a narrow phone.
+class _DocumentActionBar extends StatelessWidget {
+  const _DocumentActionBar({
+    required this.saved,
+    required this.noteCount,
+    required this.marksActive,
+    required this.onSave,
+    required this.onNote,
+    required this.onMarks,
+  });
+
+  final bool saved;
+  final int noteCount;
+  final bool marksActive;
+  final VoidCallback onSave;
+  final VoidCallback onNote;
+  final VoidCallback onMarks;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      height: 48,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _Segment(
+              icon: saved
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
+              label: saved ? 'Saved' : 'Save',
+              active: saved,
+              onTap: onSave,
+            ),
+          ),
+          _divider(theme),
+          Expanded(
+            child: _Segment(
+              icon: Icons.edit_note_rounded,
+              label: noteCount == 0 ? 'Note' : 'Notes · $noteCount',
+              active: false,
+              onTap: onNote,
+            ),
+          ),
+          _divider(theme),
+          Expanded(
+            child: _Segment(
+              icon: Icons.bookmarks_outlined,
+              label: 'Marks',
+              active: marksActive,
+              onTap: onMarks,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider(ThemeData theme) => Container(
+        width: 1,
+        color: theme.colorScheme.outlineVariant,
+      );
+}
+
+class _Segment extends StatelessWidget {
+  const _Segment({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final foreground = active
+        ? theme.colorScheme.onSecondaryContainer
+        : theme.colorScheme.onSurface;
+
+    return Material(
+      color: active ? theme.colorScheme.secondaryContainer : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: foreground,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
@@ -561,8 +691,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         ),
       ),
     );
-    controller.dispose();
-    pageController.dispose();
   }
 }
 

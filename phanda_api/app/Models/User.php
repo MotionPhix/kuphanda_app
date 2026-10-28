@@ -35,8 +35,11 @@ use Laravel\Sanctum\HasApiTokens;
     'email',
     'password',
     'plan',
+    'role',
+    'form',
     'google_id',
     'avatar_url',
+    'is_staff',
 ])]
 #[Hidden([
     'password',
@@ -69,6 +72,8 @@ final class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'plan' => LibraryPlan::class,
+            'is_staff' => 'boolean',
+            'form' => 'integer',
         ];
     }
 

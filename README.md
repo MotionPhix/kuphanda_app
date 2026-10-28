@@ -13,6 +13,23 @@ Two folders:
 | `phanda_app/` | Flutter app (Android, iOS, Windows). |
 | `phanda_api/` | Laravel API: accounts, catalogue, entitlements, PayChangu, offline sync. |
 
+## Application identifiers
+
+The app ships under **`com.ultrashots.kuphanda`** on both Android
+(`applicationId`/`namespace`) and iOS (`PRODUCT_BUNDLE_IDENTIFIER`).
+
+Naming rule: `com.<developer>.<product>` — reverse-domain of the studio that owns
+and publishes the build, followed by the product name. The segment is lowercase,
+has no hyphens or underscores, and is never `example`. It is permanent once the
+first release is published, so it is chosen before the first store upload.
+
+| Thing | Value |
+| --- | --- |
+| Android application ID / namespace | `com.ultrashots.kuphanda` |
+| iOS bundle identifier | `com.ultrashots.kuphanda` |
+| Firebase project | `kuphanda-app` |
+| Firebase Android app | `com.ultrashots.kuphanda` |
+
 ## Access model
 
 Documents carry an `access_tier`: `free`, `daily`, `weekly`, `monthly` or
@@ -68,9 +85,9 @@ Linking fills blank profile fields only; names the learner has confirmed are
 never overwritten.
 
 1. Create a Web OAuth client and put its ID in `GOOGLE_CLIENT_ID`.
-2. Create an Android OAuth client for the app package (`com.example.kuphanda`)
-   and the signing certificate's SHA-1, then add `google-services.json` to
-   `android/app/` (do not commit it).
+2. Create an Android OAuth client for the app package
+   (`com.ultrashots.kuphanda`) and the signing certificate's SHA-1, then add
+   `google-services.json` to `android/app/` (do not commit it).
 3. Build the app with the same web client ID:
    `--dart-define=GOOGLE_SERVER_CLIENT_ID=...apps.googleusercontent.com`.
 
@@ -159,6 +176,27 @@ php artisan serve --port=8001
 flutter run -d <device> --dart-define=API_BASE_URL=http://localhost:8001/api/v1
 ```
 
+### Device testing through Herd + ngrok
+
+Herd serves the API at `https://phanda_api.test`. A physical phone cannot resolve
+that host, so the same site is exposed through ngrok on a stable free URL and the
+app is built against it:
+
+```bash
+flutter build apk --release --target-platform android-arm64 \
+  --dart-define=API_BASE_URL=https://zap-petticoat-slept.ngrok-free.dev/api/v1 \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=239327365893-1725f6in8f6nnmc85836eqhrets9hfes.apps.googleusercontent.com
+```
+
+Two requirements make this work:
+
+- `ApiClient` sends `ngrok-skip-browser-warning: true`. Without it ngrok answers
+  the first request from an unknown client with an HTML interstitial instead of
+  JSON. Every other host ignores the header.
+- `TRUSTED_PROXIES=*` in `phanda_api/.env` makes Laravel honour
+  `X-Forwarded-Proto`, so generated download URLs are `https://…` rather than
+  `http://…`. Leave it empty outside a tunnel: it trusts client-supplied headers.
+
 `android/app/src/main/res/xml/network_security_config.xml` allows cleartext only
 for `10.0.2.2` and `localhost`. All other hosts, including production, require
 HTTPS.
@@ -173,10 +211,22 @@ php artisan library:publish sample-howto /srv/library/quick-start-v3.pdf \
   --pages=6 --notes="Adds the revision planner"
 ```
 
-The command validates the PDF, hashes it, stores it under
-`storage/app/private/library/documents/{id}/`, and bumps `latest_version`.
-Existing readers keep their old copy until the app syncs; the next sync offers
-the update. Files are limited to 50 MB.
+The command validates the PDF, hashes it, and stores it through **Spatie Media
+Library** on the private `local` disk (`media` table plus the file under
+`storage/app/private/{media-id}/`). It then bumps `latest_version`. Existing
+readers keep their old copy until the app syncs; the next sync offers the
+update. Files are limited to 50 MB.
+
+`document_versions` keeps the version number, checksum, page count and a
+`media_id`; Media Library owns the bytes. Versions published before the move are
+imported with:
+
+```bash
+php artisan library:media-backfill
+```
+
+Set `MEDIA_DISK=local` (the default) so PDFs stay private; downloads are
+streamed by the authenticated endpoint and never served from `/storage`.
 
 To withdraw a document:
 
@@ -191,7 +241,7 @@ kept, so publishing again restores access without learners re-marking anything.
 ## Tests and builds
 
 ```bash
-cd phanda_api && php artisan test        # 60 tests
+cd phanda_api && php artisan test        # 61 tests
 cd phanda_app && flutter analyze         # no issues
 cd phanda_app && flutter test            # 24 tests
 cd phanda_app && flutter build windows --debug

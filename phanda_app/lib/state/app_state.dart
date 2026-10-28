@@ -15,6 +15,7 @@ import '../data/models/profile.dart';
 import '../data/models/reading.dart';
 import '../data/models/study_guide.dart';
 import '../data/models/subject.dart';
+import '../data/notifications/push_service.dart';
 import '../data/seed/classroom_seed.dart';
 import '../data/seed/curriculum_seed.dart';
 import '../data/seed/library_seed.dart';
@@ -116,6 +117,8 @@ class AppState extends ChangeNotifier {
   String? _lastError;
   Timer? _persistTimer;
   Timer? _autoSyncTimer;
+  PushService? _push;
+  PushNotification? _lastPush;
 
   bool get isReady => _ready;
   String? get lastError => _lastError;
@@ -126,12 +129,22 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   bool get isSignedIn => _token != null && _token!.isNotEmpty;
+  bool get isStaff => _account?.isStaff ?? false;
   AuthSession? get account => _account;
   String? get accountName => _snapshot.accountName;
   String? get accountEmail => _snapshot.accountEmail;
   String? get accountPlan => _snapshot.accountPlan;
   bool get isSyncing => _syncing;
   String? get syncError => _syncError;
+
+  /// The most recent notification received while the app was open. The shell
+  /// shows it as a banner; it is cleared once presented.
+  PushNotification? get lastPush => _lastPush;
+  bool get pushAvailable => _push?.isAvailable ?? false;
+
+  void clearLastPush() {
+    _lastPush = null;
+  }
   DateTime? get lastSyncAt => _snapshot.lastSyncAt;
   int get offlineMarkCount => _snapshot.offlineMarked.length;
   int get pendingRemovalCount => _snapshot.pendingRemovals.length;
@@ -286,8 +299,9 @@ class AppState extends ChangeNotifier {
         userId: snapshot.accountId ?? 0,
         name: snapshot.accountName ?? '',
         email: snapshot.accountEmail ?? '',
-        plan: snapshot.accountPlan ?? 'school',
+        plan: snapshot.accountPlan ?? 'free',
         school: snapshot.accountSchool,
+        isStaff: snapshot.accountStaff,
       );
     } else {
       _token = null;
@@ -304,6 +318,7 @@ class AppState extends ChangeNotifier {
       // Refresh entitlements in the background so a returning subscriber sees
       // their plan without opening the subscription screen.
       unawaited(loadBilling());
+      unawaited(startPush());
     }
   }
 
@@ -487,6 +502,9 @@ class AppState extends ChangeNotifier {
           firstName: next.firstName == 'learner' ? '' : next.firstName,
           lastName: next.lastName,
           school: next.school,
+          // Role and form decide which notifications this account receives.
+          role: next.role == StudentRole.teacher ? 'teacher' : 'student',
+          form: next.role == StudentRole.student ? next.form : null,
         );
       } on ApiException catch (error) {
         _syncError = 'Profile saved on this phone. ${error.message}';
@@ -530,6 +548,8 @@ class AppState extends ChangeNotifier {
           firstName: profile.firstName == 'learner' ? '' : profile.firstName,
           lastName: profile.lastName,
           school: profile.school,
+          role: role == StudentRole.teacher ? 'teacher' : 'student',
+          form: role == StudentRole.student ? form : null,
         ).catchError((Object _) {}),
       );
     }
@@ -677,6 +697,35 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   Future<PickedPdf?> pickPdf() => _files.pickPdf();
+
+  Future<List<StaffDocument>> loadStaffDocuments() async {
+    if (!isSignedIn) throw const ApiException('Sign in with a staff account.');
+
+    return _api!.fetchStaffDocuments();
+  }
+
+  Future<StaffVersion> uploadStaffVersion({
+    required String documentId,
+    required PickedPdf file,
+    required int pages,
+    String? notes,
+  }) async {
+    if (!isStaff) throw const ApiException('Staff access is required.');
+
+    return _api!.uploadStaffVersion(
+      documentId: documentId,
+      filePath: file.path,
+      fileName: file.fileName,
+      pages: pages,
+      notes: notes,
+    );
+  }
+
+  Future<void> setStaffPublication(String documentId, bool published) async {
+    if (!isStaff) throw const ApiException('Staff access is required.');
+
+    await _api!.setStaffPublication(documentId, published);
+  }
 
   Future<void> attachPdf(String documentId, PickedPdf picked) async {
     final document = documentById(documentId);
@@ -1046,7 +1095,8 @@ class AppState extends ChangeNotifier {
       ..accountName = session.name
       ..accountEmail = session.email
       ..accountPlan = session.plan
-      ..accountSchool = session.school;
+      ..accountSchool = session.school
+      ..accountStaff = session.isStaff;
 
     // The server is authoritative about entitlement. Mirror it locally so the
     // lock badges and the API's 403 responses agree.
@@ -1073,6 +1123,69 @@ class AppState extends ChangeNotifier {
     await _persistNow();
     startAutoSync();
     notifyListeners();
+    unawaited(startPush());
+  }
+
+  /// Starts Firebase Cloud Messaging once per session and registers the device
+  /// token with the API. Safe to call repeatedly and on platforms without push.
+  Future<void> startPush() async {
+    if (!PushService.isSupported) return;
+    if (_push != null) {
+      if (isSignedIn) {
+        final token = _push!.token;
+        if (token != null) unawaited(_registerDeviceToken(token));
+      }
+      return;
+    }
+
+    final push = PushService(
+      onToken: _registerDeviceToken,
+      onForeground: (notification) {
+        _lastPush = notification;
+        notifyListeners();
+      },
+    );
+    _push = push;
+
+    await push.start();
+    if (!push.isAvailable) return;
+
+    await push.joinTopics(_audienceTopics());
+    final token = push.token;
+    if (token != null) await _registerDeviceToken(token);
+  }
+
+  /// Topics mirror the server audiences: everyone, the account's role, and the
+  /// learner's form.
+  List<String> _audienceTopics() {
+    if (!isSignedIn) return const <String>[];
+    final topics = <String>{'all'};
+    topics.add(
+      profile.role == StudentRole.teacher ? 'teachers' : 'students',
+    );
+    if (profile.role == StudentRole.student) {
+      topics.add('form-${profile.form}');
+    }
+    return topics.toList();
+  }
+
+  Future<void> _registerDeviceToken(String token) async {
+    if (!isSignedIn) return;
+    try {
+      await _api?.registerDevice(
+        token: token,
+        platform: defaultTargetPlatform == TargetPlatform.iOS
+            ? 'ios'
+            : defaultTargetPlatform == TargetPlatform.android
+                ? 'android'
+                : 'other',
+        appVersion: '1.0.0',
+      );
+    } catch (error) {
+      // Push registration must never block the app; the token is retried on
+      // the next launch, token refresh or manual sync.
+      debugPrint('Could not register the push token: $error');
+    }
   }
 
   Future<void> signOut() async {
@@ -1081,6 +1194,20 @@ class AppState extends ChangeNotifier {
         await _api?.logout();
       } catch (_) {
         // Signing out must work offline; the token is discarded locally.
+      }
+
+      // Stop this device from receiving another account's notifications.
+      final push = _push;
+      if (push != null) {
+        await push.leaveTopics(_audienceTopics());
+        final token = push.token;
+        if (token != null) {
+          try {
+            await _api?.removeDevice(token);
+          } catch (_) {
+            // The server also drops tokens that FCM reports as unregistered.
+          }
+        }
       }
     }
 
@@ -1112,14 +1239,23 @@ class AppState extends ChangeNotifier {
   Future<void> loadBilling() async {
     if (!isSignedIn) return;
     try {
-      final (plans, status, payments) = await (
+      final (plans, status, payments, account) = await (
         _api!.fetchPlans(),
         _api!.fetchBillingStatus(),
         _api!.fetchPayments(),
+        _api!.me(),
       ).wait;
       _plans = plans;
       _billing = status;
       _payments = payments;
+      _account = account;
+      _snapshot
+        ..accountName = account.name
+        ..accountEmail = account.email
+        ..accountPlan = account.plan
+        ..accountSchool = account.school
+        ..accountStaff = account.isStaff;
+      _schedulePersist();
       notifyListeners();
     } on ApiException catch (error) {
       _syncError = error.message;

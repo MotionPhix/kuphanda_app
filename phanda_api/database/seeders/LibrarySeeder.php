@@ -47,28 +47,26 @@ final class LibrarySeeder extends Seeder
      */
     private function publishVersion(Document $document, array $version): DocumentVersion
     {
-        $source = database_path('seeders/files/'.$version['file']);
-        $contents = file_get_contents($source);
-        $path = 'library/documents/'.$document->id.'/v'.$version['version'].'.pdf';
+        $publisher = app(\App\Services\DocumentPublisher::class);
+        $existing = $document->versions()
+            ->where('version', $version['version'])
+            ->first();
 
-        Storage::disk('local')->put($path, $contents);
+        if ($existing !== null) {
+            if ($existing->media_id === null) {
+                $publisher->importExisting($document, $existing);
+            }
 
-        return DocumentVersion::query()->updateOrCreate(
-            [
-                'document_id' => $document->id,
-                'version' => $version['version'],
-            ],
-            [
-                'disk' => 'local',
-                'path' => $path,
-                'file_name' => $version['file'],
-                'mime_type' => 'application/pdf',
-                'size_bytes' => strlen($contents),
-                'page_count' => $version['page_count'],
-                'checksum' => hash('sha256', $contents),
-                'notes' => $version['notes'] ?? null,
-                'published_at' => Carbon::now()->subDays($version['days_ago']),
-            ]
+            return $existing->fresh();
+        }
+
+        return $publisher->publish(
+            $document,
+            database_path('seeders/files/'.$version['file']),
+            $version['page_count'],
+            $version['notes'] ?? null,
+            $version['version'],
+            Carbon::now()->subDays($version['days_ago']),
         );
     }
 

@@ -12,6 +12,7 @@ use App\Models\DocumentPurchase;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Push\PushDispatcher;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -27,6 +28,7 @@ final class BillingService
     public function __construct(
         private readonly PaymentGateway $gateway,
         private readonly EntitlementService $entitlements,
+        private readonly PushDispatcher $push,
     ) {}
 
     /**
@@ -191,6 +193,8 @@ final class BillingService
 
             $this->entitlements->forget($subscription->user);
 
+            $this->notify(fn () => $this->push->subscriptionActivated($subscription->fresh(['user', 'plan'])));
+
             return true;
         }
 
@@ -210,6 +214,8 @@ final class BillingService
             if ($purchase->user !== null) {
                 $this->entitlements->forget($purchase->user);
             }
+
+            $this->notify(fn () => $this->push->purchaseCompleted($purchase->fresh(['user', 'document'])));
 
             return true;
         }
@@ -303,5 +309,17 @@ final class BillingService
             'kind' => $subscription !== null ? 'subscription' : 'document',
             'entitlement' => $this->statusFor($user),
         ];
+    }
+    /**
+     * Notifications are best effort: a push provider problem must never undo a
+     * paid entitlement or fail a webhook retry.
+     */
+    private function notify(callable $callback): void
+    {
+        try {
+            $callback();
+        } catch (\Throwable $error) {
+            report($error);
+        }
     }
 }

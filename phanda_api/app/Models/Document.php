@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * A document record owned by the library. The file itself lives in
@@ -68,9 +70,10 @@ use Illuminate\Support\Carbon;
     'latest_version',
     'content_updated_at',
 ])]
-final class Document extends Model
+final class Document extends Model implements HasMedia
 {
     use HasFactory;
+    use InteractsWithMedia;
 
     public $incrementing = false;
 
@@ -128,6 +131,13 @@ final class Document extends Model
     public function offlineMarks(): HasMany
     {
         return $this->hasMany(OfflineDocument::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('files')
+            ->useDisk(config('media-library.disk_name'))
+            ->acceptsMimeTypes(['application/pdf']);
     }
 
     /**

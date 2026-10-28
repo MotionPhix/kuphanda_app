@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $starts_at
  * @property Carbon|null $ends_at
  * @property Carbon|null $paid_at
+ * @property Carbon|null $expiry_reminded_at
  * @property array<string, mixed>|null $provider_data
  */
 #[Fillable([
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
     'starts_at',
     'ends_at',
     'paid_at',
+    'expiry_reminded_at',
     'provider_data',
 ])]
 final class Subscription extends Model
@@ -46,6 +48,7 @@ final class Subscription extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'paid_at' => 'datetime',
+            'expiry_reminded_at' => 'datetime',
             'provider_data' => 'array',
         ];
     }

@@ -49,7 +49,7 @@ class ProgressScreen extends StatelessWidget {
               ScreenHeader(
                 eyebrow: 'Evidence, not tick boxes',
                 title: 'Progress',
-                subtitle: 'Pages read and minutes studied on this device.',
+                subtitle: 'Pages read and minutes studied across this account.',
                 actions: [
                   IconButton(
                     onPressed: onOpenProfile,
@@ -73,6 +73,7 @@ class ProgressScreen extends StatelessWidget {
                 builder: (context, constraints) {
                   final columns = constraints.maxWidth >= 820 ? 4 : 2;
                   final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
+                  final tileHeight = constraints.maxWidth >= 820 ? 112.0 : 118.0;
                   return Wrap(
                     spacing: 10,
                     runSpacing: 10,
@@ -80,6 +81,7 @@ class ProgressScreen extends StatelessWidget {
                       SizedBox(
                         width: width,
                         child: StatTile(
+                          height: tileHeight,
                           label: 'Streak',
                           value: '${stats.currentStreak}',
                           caption: stats.currentStreak == 1 ? 'day in a row' : 'days in a row',
@@ -90,6 +92,7 @@ class ProgressScreen extends StatelessWidget {
                       SizedBox(
                         width: width,
                         child: StatTile(
+                          height: tileHeight,
                           label: 'This week',
                           value: formatMinutes(stats.weekMinutes),
                           caption: 'goal ${formatMinutes(stats.weeklyGoalMinutes)}',
@@ -99,6 +102,7 @@ class ProgressScreen extends StatelessWidget {
                       SizedBox(
                         width: width,
                         child: StatTile(
+                          height: tileHeight,
                           label: 'Finished',
                           value: '${finished.length}',
                           caption: '${plural(started.length, 'document')} started',
@@ -108,6 +112,7 @@ class ProgressScreen extends StatelessWidget {
                       SizedBox(
                         width: width,
                         child: StatTile(
+                          height: tileHeight,
                           label: 'Pages read',
                           value: '$pagesRead',
                           caption: 'across all documents',

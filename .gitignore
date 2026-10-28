@@ -29,6 +29,11 @@ phanda_app/app.*.symbols
 phanda_app/app.*.map.json
 phanda_app/.widget_preview/
 
+# Firebase
+phanda_app/android/app/google-services.json
+phanda_app/ios/Runner/GoogleService-Info.plist
+phanda_api/storage/app/firebase/
+
 # Android
 phanda_app/android/.gradle/
 phanda_app/android/local.properties

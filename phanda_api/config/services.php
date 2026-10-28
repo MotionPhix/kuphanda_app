@@ -21,6 +21,14 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
     ],
 
+    'firebase' => [
+        // Same Firebase project as Google sign-in for the app.
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        // Absolute path to the service-account JSON. Keep it outside the
+        // repository and outside the public directory.
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+    ],
+
     'paychangu' => [
         'base_url' => env('PAYCHANGU_BASE_URL', 'https://api.paychangu.com'),
         'secret_key' => env('PAYCHANGU_SECRET_KEY'),

@@ -175,6 +175,7 @@ class AuthSession {
     this.lastName = '',
     this.avatarUrl,
     this.googleLinked = false,
+    this.isStaff = false,
   });
 
   final String token;
@@ -187,6 +188,7 @@ class AuthSession {
   final String lastName;
   final String? avatarUrl;
   final bool googleLinked;
+  final bool isStaff;
 
   bool get isSchoolPlan => plan == 'school';
 
@@ -200,6 +202,7 @@ class AuthSession {
         'last_name': lastName,
         'avatar_url': avatarUrl,
         'google_linked': googleLinked,
+        'is_staff': isStaff,
       };
 
   static AuthSession fromJson(Map<String, Object?> json, {required String token}) {
@@ -214,6 +217,7 @@ class AuthSession {
       lastName: (json['last_name'] as String?) ?? '',
       avatarUrl: json['avatar_url'] as String?,
       googleLinked: json['google_linked'] as bool? ?? false,
+      isStaff: json['is_staff'] as bool? ?? false,
     );
   }
 }
@@ -401,4 +405,78 @@ class PaymentRecord {
       documentId: json['document_id'] as String?,
     );
   }
+}
+
+class StaffVersion {
+  const StaffVersion({
+    required this.number,
+    required this.fileName,
+    required this.sizeBytes,
+    required this.pageCount,
+    required this.checksum,
+    this.mediaId,
+    this.notes,
+    this.publishedAt,
+  });
+
+  final int number;
+  final String fileName;
+  final int sizeBytes;
+  final int pageCount;
+  final String checksum;
+  final int? mediaId;
+  final String? notes;
+  final DateTime? publishedAt;
+
+  factory StaffVersion.fromJson(Map<String, Object?> json) => StaffVersion(
+        number: (json['number'] as num?)?.toInt() ?? 0,
+        fileName: (json['file_name'] as String?) ?? '',
+        sizeBytes: (json['size_bytes'] as num?)?.toInt() ?? 0,
+        pageCount: (json['page_count'] as num?)?.toInt() ?? 0,
+        checksum: (json['checksum'] as String?) ?? '',
+        mediaId: (json['media_id'] as num?)?.toInt(),
+        notes: json['notes'] as String?,
+        publishedAt: DateTime.tryParse(json['published_at'] as String? ?? ''),
+      );
+}
+
+class StaffDocument {
+  const StaffDocument({
+    required this.id,
+    required this.title,
+    required this.isPublished,
+    required this.latestVersion,
+    required this.pages,
+    required this.versionCount,
+    this.subject,
+    this.form,
+    this.kind,
+    this.currentVersion,
+  });
+
+  final String id;
+  final String title;
+  final String? subject;
+  final int? form;
+  final String? kind;
+  final bool isPublished;
+  final int latestVersion;
+  final int pages;
+  final int versionCount;
+  final StaffVersion? currentVersion;
+
+  factory StaffDocument.fromJson(Map<String, Object?> json) => StaffDocument(
+        id: (json['id'] as String?) ?? '',
+        title: (json['title'] as String?) ?? '',
+        subject: json['subject'] as String?,
+        form: (json['form'] as num?)?.toInt(),
+        kind: json['kind'] as String?,
+        isPublished: json['is_published'] as bool? ?? false,
+        latestVersion: (json['latest_version'] as num?)?.toInt() ?? 0,
+        pages: (json['pages'] as num?)?.toInt() ?? 0,
+        versionCount: (json['version_count'] as num?)?.toInt() ?? 0,
+        currentVersion: json['current_version'] is Map<String, Object?>
+            ? StaffVersion.fromJson(json['current_version']! as Map<String, Object?>)
+            : null,
+      );
 }

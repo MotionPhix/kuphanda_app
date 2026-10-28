@@ -5,8 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\DownloadController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OfflineLibraryController;
+use App\Http\Controllers\Api\V1\StaffDocumentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +34,12 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
     Route::get('me', [AuthController::class, 'me'])->name('api.v1.me');
     Route::patch('me', [AuthController::class, 'updateProfile'])->name('api.v1.me.update');
 
+    // Push notification devices and inbox
+    Route::get('me/devices', [DeviceController::class, 'index'])->name('api.v1.devices.index');
+    Route::post('me/devices', [DeviceController::class, 'store'])->name('api.v1.devices.store');
+    Route::delete('me/devices', [DeviceController::class, 'destroy'])->name('api.v1.devices.destroy');
+    Route::get('me/notifications', [NotificationController::class, 'index'])->name('api.v1.notifications.index');
+
     // Catalogue
     Route::get('subjects', [CatalogController::class, 'subjects'])->name('api.v1.subjects.index');
     Route::get('documents', [CatalogController::class, 'documents'])->name('api.v1.documents.index');
@@ -49,6 +58,21 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
         ->name('api.v1.library.ack');
     Route::get('library/sync', [OfflineLibraryController::class, 'sync'])
         ->name('api.v1.library.sync');
+
+    // Library staff publishing (granted with `php artisan user:staff`)
+    // Class and library messaging. Staff can reach any audience; teachers are
+    // limited to students (checked in the controller).
+    Route::get('staff/notifications', [NotificationController::class, 'sent'])->name('api.v1.staff.notifications.index');
+    Route::post('staff/notifications', [NotificationController::class, 'store'])->name('api.v1.staff.notifications.store');
+
+    Route::middleware('staff')->prefix('staff')->group(function (): void {
+        Route::get('documents', [StaffDocumentController::class, 'index'])->name('api.v1.staff.documents');
+        Route::get('documents/{document}', [StaffDocumentController::class, 'versions'])->name('api.v1.staff.versions');
+        Route::post('documents/{document}/versions', [StaffDocumentController::class, 'storeVersion'])
+            ->name('api.v1.staff.versions.store');
+        Route::patch('documents/{document}/publication', [StaffDocumentController::class, 'updatePublication'])
+            ->name('api.v1.staff.publication');
+    });
 
     // Subscriptions, single-document purchases and PayChangu checkout
     Route::get('plans', [BillingController::class, 'plans'])->name('api.v1.plans.index');

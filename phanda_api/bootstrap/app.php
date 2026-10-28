@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnsureEmailVerified;
+use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\LogApiRequests;
 use Illuminate\Foundation\Application;
@@ -17,10 +18,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind a tunnel (ngrok, a load balancer) the forwarded scheme must be
+        // trusted, otherwise generated download URLs come out as http://. This
+        // is opt-in through TRUSTED_PROXIES so a direct deployment never trusts
+        // a spoofable X-Forwarded-* header.
+        // env() rather than config(): the container is not bound yet when this
+        // closure is registered.
+        $proxies = env('TRUSTED_PROXIES', '');
+
+        if (is_string($proxies) && $proxies !== '') {
+            $middleware->trustProxies(at: $proxies === '*' ? '*' : explode(',', $proxies));
+        }
+
         $middleware->alias([
             'force.json' => ForceJsonResponse::class,
             'log.api' => LogApiRequests::class,
             'verified' => EnsureEmailVerified::class,
+            'staff' => EnsureStaff::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

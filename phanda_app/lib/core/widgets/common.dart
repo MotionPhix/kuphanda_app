@@ -388,6 +388,7 @@ class StatTile extends StatelessWidget {
     this.caption,
     this.icon,
     this.tint,
+    this.height = 128,
   });
 
   final String label;
@@ -396,53 +397,78 @@ class StatTile extends StatelessWidget {
   final IconData? icon;
   final Color? tint;
 
+  /// Fixed so a row of tiles always shares a baseline and height, even when a
+  /// caption wraps on a narrow phone.
+  final double height;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = tint ?? theme.colorScheme.primary;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 6),
+    return SizedBox(
+      height: height,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: color),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
-              Expanded(
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
                 child: Text(
-                  label,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
+                  value,
+                  maxLines: 1,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: color,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    height: 1.05,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(color: color, fontSize: 24),
-          ),
-          if (caption != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              caption!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
             ),
+            if (caption != null) ...[
+              const SizedBox(height: 3),
+              Text(
+                caption!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.25,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -474,6 +500,7 @@ class AppCard extends StatelessWidget {
       borderRadius: radius,
       child: InkWell(
         onTap: onTap,
+        mouseCursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click,
         borderRadius: radius,
         child: Container(
           padding: padding,
@@ -608,27 +635,33 @@ class SheetBody extends StatelessWidget {
           right: 20,
           bottom: bottomInset + 20,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title, style: theme.textTheme.titleLarge),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            Flexible(child: SingleChildScrollView(child: child)),
-            if (actions.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Row(children: actions),
-            ],
-          ],
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(title, style: theme.textTheme.titleLarge),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Flexible(child: SingleChildScrollView(child: child)),
+                if (actions.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Row(children: actions),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

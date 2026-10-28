@@ -396,9 +396,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Kuphanda works without internet. Only the two starter '
-                          'guides include a PDF — attach official papers from your '
-                          'phone as you get them.',
+                          'A connection is needed to browse and subscribe. Documents you '
+                          'download stay readable when you are offline.',
                           style: theme.textTheme.bodySmall?.copyWith(height: 1.45),
                         ),
                       ),

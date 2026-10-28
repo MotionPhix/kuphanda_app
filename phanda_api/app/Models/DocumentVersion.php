@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * An immutable published file for a document. A new upload always creates a new
@@ -37,12 +38,21 @@ use Illuminate\Support\Carbon;
     'size_bytes',
     'page_count',
     'checksum',
+    'media_id',
     'notes',
     'published_at',
 ])]
 final class DocumentVersion extends Model
 {
     use HasFactory;
+
+    /**
+     * @return BelongsTo<Media, $this>
+     */
+    public function media(): BelongsTo
+    {
+        return $this->belongsTo(Media::class);
+    }
 
     /**
      * @return array<string, string>
