@@ -33,8 +33,121 @@
       "difficulty": 2,
       "text": "Figure 1 is a pie-chart representing sales of three commodities: tobacco, tea and coffee. Express coffee sales as a percentage of the total sales.",
       "figure": {
-        "asset": "assets/samples/figures/fig1-pie-chart.svg",
-        "alt": "Pie chart with tobacco labelled 208 degrees and tea labelled 107 degrees"
+        "type": "pieChart",
+        "title": "Tea, Coffee and Tobacco",
+        "valueUnit": "degrees",
+        "totalValue": 360,
+        "sourceNote": "Reconstructed from supplied image. Tea and Tobacco angles are visible; Coffee is the remainder: 360 - 107 - 208 = 45 degrees. No source quantities are known.",
+        "slices": [
+          {
+            "id": "tea",
+            "label": "Tea",
+            "value": 107,
+            "inferred": false,
+            "fill": {
+              "color": "#111111",
+              "pattern": "solid"
+            },
+            "labelColor": "#FFFFFF",
+            "showAngleLabel": true
+          },
+          {
+            "id": "coffee",
+            "label": "Coffee",
+            "value": 45,
+            "inferred": true,
+            "fill": {
+              "color": "#FFFFFF",
+              "pattern": "solid"
+            },
+            "labelColor": "#111111",
+            "showAngleLabel": false
+          },
+          {
+            "id": "tobacco",
+            "label": "Tobacco",
+            "value": 208,
+            "inferred": false,
+            "fill": {
+              "color": "#FFFFFF",
+              "pattern": "dots"
+            },
+            "labelColor": "#111111",
+            "showAngleLabel": true
+          }
+        ],
+        "layout": {
+          "viewBox": [
+            0,
+            0,
+            440,
+            220
+          ],
+          "center": [
+            220,
+            100
+          ],
+          "radiusX": 205,
+          "radiusY": 82,
+          "depth": 30,
+          "startAngleDegrees": -90,
+          "clockwise": true
+        },
+        "style": {
+          "strokeColor": "#171717",
+          "strokeWidth": 1.2,
+          "fontFamily": "Georgia",
+          "fontSize": 23,
+          "fontWeight": "bold",
+          "dotPattern": {
+            "spacing": 5,
+            "radius": 0.42,
+            "color": "#666666"
+          }
+        },
+        "labels": [
+          {
+            "sliceId": "tea",
+            "kind": "name",
+            "position": [
+              338,
+              80
+            ]
+          },
+          {
+            "sliceId": "tea",
+            "kind": "angle",
+            "position": [
+              278,
+              64
+            ]
+          },
+          {
+            "sliceId": "coffee",
+            "kind": "name",
+            "position": [
+              322,
+              143
+            ]
+          },
+          {
+            "sliceId": "tobacco",
+            "kind": "name",
+            "position": [
+              115,
+              82
+            ]
+          },
+          {
+            "sliceId": "tobacco",
+            "kind": "angle",
+            "position": [
+              158,
+              120
+            ]
+          }
+        ],
+        "renderingNotes": "Compute each sweep as value / totalValue * 360 degrees, accumulating from startAngleDegrees in slices order. Coordinates use x rightward, y downward; label positions are text baselines with centered alignment. Draw exposed front walls below the ellipse using depth, then draw top slices. The slice values are source angles, not source quantities."
       }
     },
     {

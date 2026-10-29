@@ -358,6 +358,10 @@ class _EmbeddedFigure extends StatelessWidget {
     final theme = Theme.of(context);
     // Declarative geometry wins over a file: it is data, so it scales with the
     // screen and follows the theme instead of being pinned to a rendered asset.
+    if (data['type'] == 'pieChart' || data['slices'] is List) {
+      return _PieFigure(data: data);
+    }
+
     if (data['points'] is Map && data['circle'] is Map) {
       return _GeometryFigure(data: data);
     }
@@ -823,4 +827,190 @@ class _GeometryPainter extends CustomPainter {
 
 extension on _GeometryPainter {
   Map<String, Object?> get data => model.data;
+}
+
+/// A pie chart drawn from values rather than a serialised drawing.
+///
+/// flutter_svg renders `<pattern>` inconsistently, which is why the stippled
+/// tobacco slice arrived blank on device. Here the slice geometry, the dot fill
+/// and the labels are all computed, so the figure is identical everywhere and
+/// can follow the theme.
+class _PieFigure extends StatelessWidget {
+  const _PieFigure({required this.data});
+
+  final Map<String, Object?> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final layout = (data['layout'] as Map?)?.cast<String, Object?>() ?? const {};
+    final viewBox = (layout['viewBox'] as List?) ?? const [0, 0, 440, 220];
+    final width = ((viewBox[2] as num).toDouble() - (viewBox[0] as num).toDouble());
+    final height = ((viewBox[3] as num).toDouble() - (viewBox[1] as num).toDouble());
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: AspectRatio(
+        aspectRatio: width <= 0 || height <= 0 ? 2 : width / height,
+        child: CustomPaint(
+          painter: _PiePainter(
+            data: data,
+            labelStyle: theme.textTheme.bodyMedium ?? const TextStyle(),
+            fallbackInk: theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PiePainter extends CustomPainter {
+  _PiePainter({
+    required this.data,
+    required this.labelStyle,
+    required this.fallbackInk,
+  });
+
+  final Map<String, Object?> data;
+  final TextStyle labelStyle;
+  final Color fallbackInk;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final layout = (data['layout'] as Map?)?.cast<String, Object?>() ?? const {};
+    final style = (data['style'] as Map?)?.cast<String, Object?>() ?? const {};
+    final viewBox = (layout['viewBox'] as List?) ?? const [0, 0, 440, 220];
+    final vbW = (viewBox[2] as num).toDouble() - (viewBox[0] as num).toDouble();
+    final vbH = (viewBox[3] as num).toDouble() - (viewBox[1] as num).toDouble();
+    if (vbW <= 0 || vbH <= 0) return;
+
+    final scale = math.min(size.width / vbW, size.height / vbH);
+    final originX = (size.width - vbW * scale) / 2;
+    final originY = (size.height - vbH * scale) / 2;
+    Offset map(List point) => Offset(
+          originX + ((point[0] as num).toDouble() - (viewBox[0] as num).toDouble()) * scale,
+          originY + ((point[1] as num).toDouble() - (viewBox[1] as num).toDouble()) * scale,
+        );
+
+    final centre = map((layout['center'] as List?) ?? const [220, 100]);
+    final rx = ((layout['radiusX'] as num?)?.toDouble() ?? 200) * scale;
+    final ry = ((layout['radiusY'] as num?)?.toDouble() ?? 80) * scale;
+    final depth = ((layout['depth'] as num?)?.toDouble() ?? 0) * scale;
+    final start = ((layout['startAngleDegrees'] as num?)?.toDouble() ?? -90) * math.pi / 180;
+
+    final strokeColor = _colour(style['strokeColor']) ?? fallbackInk;
+    final strokeWidth = ((style['strokeWidth'] as num?)?.toDouble() ?? 1.2) * scale;
+
+    final slices = (data['slices'] as List?) ?? const [];
+    final total = ((data['totalValue'] as num?)?.toDouble() ??
+            slices.fold<double>(0, (sum, s) => sum + ((s as Map)['value'] as num).toDouble()))
+        .clamp(1, double.infinity);
+
+    // The body of the pie gives the 3D edge; the top face carries the slices.
+    if (depth > 0) {
+      canvas.drawOval(
+        Rect.fromCenter(center: centre.translate(0, depth), width: rx * 2, height: ry * 2),
+        Paint()..color = const Color(0xFFE6E6E6),
+      );
+    }
+
+    final top = Rect.fromCenter(center: centre, width: rx * 2, height: ry * 2);
+    var angle = start;
+
+    for (final raw in slices) {
+      final slice = (raw as Map).cast<String, Object?>();
+      final sweep = ((slice['value'] as num).toDouble() / total) * 2 * math.pi;
+      final path = Path()
+        ..moveTo(centre.dx, centre.dy)
+        ..arcTo(top, angle, sweep, false)
+        ..close();
+
+      final fill = (slice['fill'] as Map?)?.cast<String, Object?>() ?? const {};
+      final colour = _colour(fill['color']) ?? Colors.white;
+
+      canvas
+        ..drawPath(path, Paint()..color = colour)
+        ..drawPath(
+          path,
+          Paint()
+            ..color = strokeColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = strokeWidth,
+        );
+
+      if (fill['pattern'] == 'dots') {
+        _dots(canvas, path, top, style);
+      }
+
+      angle += sweep;
+    }
+
+    for (final raw in (data['labels'] as List?) ?? const []) {
+      final label = (raw as Map).cast<String, Object?>();
+      final position = label['position'] as List?;
+      if (position == null) continue;
+
+      final slice = slices.cast<Map?>().firstWhere(
+            (s) => s?['id'] == label['sliceId'],
+            orElse: () => null,
+          );
+      final text = label['kind'] == 'angle'
+          ? '${(slice?['value'] as num?)?.round() ?? ''}°'
+          : '${slice?['label'] ?? ''}';
+      final ink = _colour(slice?['labelColor']) ?? fallbackInk;
+      final fontSize = ((style['fontSize'] as num?)?.toDouble() ?? 20) * scale;
+
+      final painter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: labelStyle.copyWith(
+            color: ink,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
+            fontFamily: style['fontFamily'] as String?,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      painter.paint(canvas, map(position) - Offset(painter.width / 2, painter.height / 2));
+    }
+  }
+
+  /// Draws the stipple inside a slice instead of relying on an SVG pattern.
+  void _dots(Canvas canvas, Path path, Rect top, Map<String, Object?> style) {
+    final spec = (style['dotPattern'] as Map?)?.cast<String, Object?>() ?? const {};
+    final spacing = ((spec['spacing'] as num?)?.toDouble() ?? 5) * (top.width / 410);
+    final radius = ((spec['radius'] as num?)?.toDouble() ?? 0.42) * (top.width / 410) * 3;
+    final colour = _colour(spec['color']) ?? const Color(0xFF666666);
+
+    canvas.save();
+    canvas.clipPath(path);
+
+    final paint = Paint()..color = colour;
+    for (var y = top.top; y < top.bottom; y += spacing) {
+      for (var x = top.left; x < top.right; x += spacing) {
+        if (math.pow(x - top.center.dx, 2) / math.pow(top.width / 2, 2) +
+                math.pow(y - top.center.dy, 2) / math.pow(top.height / 2, 2) <=
+            1) {
+          canvas.drawCircle(Offset(x, y), radius, paint);
+        }
+      }
+    }
+
+    canvas.restore();
+  }
+
+  Color? _colour(Object? value) {
+    if (value is! String || value.isEmpty) return null;
+
+    final hex = value.replaceFirst('#', '');
+    final parsed = int.tryParse(hex, radix: 16);
+    if (parsed == null) return null;
+
+    return Color(hex.length <= 6 ? 0xFF000000 | parsed : parsed);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PiePainter old) => old.data != data;
 }
