@@ -268,5 +268,40 @@ void main() {
       expect(find.text('2'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('shows the table a question refers to', (tester) async {
+      const document = BlockDocument(
+        title: 'Q7',
+        blocks: [
+          DocumentBlock(
+            type: 'question',
+            raw: {
+              'label': '7.',
+              'marks': 6,
+              'text': 'Table 1 shows farm gate and retail prices.',
+              'table': {
+                'rows': [
+                  ['Produce', 'Farm gate price (MK/kg)', 'Retail Price (MK/kg)'],
+                  ['Irish potatoes', '350.00', '700.00'],
+                  ['Onions', '600.00', '750.00'],
+                ],
+              },
+              'parts': [
+                {'label': 'i.', 'text': 'Calculate the marketing margins.', 'marks': 4},
+              ],
+            },
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+      );
+
+      expect(find.text('Farm gate price (MK/kg)'), findsOneWidget);
+      expect(find.text('Irish potatoes'), findsOneWidget);
+      expect(find.text('750.00'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

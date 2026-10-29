@@ -273,6 +273,18 @@ class _QuestionBlock extends StatelessWidget {
                 data: (block.raw['figure'] as Map).cast<String, Object?>(),
               ),
             ),
+          // "Table 1 shows..." is unanswerable without the table, so it travels
+          // with the question the same way a diagram does.
+          if (block.raw['table'] is Map)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: _TableBlock(
+                block: DocumentBlock(
+                  type: 'table',
+                  raw: (block.raw['table'] as Map).cast<String, Object?>(),
+                ),
+              ),
+            ),
           _PartsList(parts: block.parts),
           if (showAnswer && answer.isNotEmpty) ...[
             const SizedBox(height: 12),

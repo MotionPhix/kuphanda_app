@@ -4,7 +4,7 @@
   "provenance": {
     "source": "msce-agriculture-paper-1-2017.pdf",
     "pages": 13,
-    "note": "Parsed from the PDF text layer; answer lines, headers and the question-tick table were dropped."
+    "note": "Parsed from the PDF text layer; answer lines, headers and the question-tick table were dropped. Tables rebuilt from cell positions."
   },
   "blocks": [
     {
@@ -272,7 +272,31 @@
             }
           ]
         }
-      ]
+      ],
+      "table": {
+        "rows": [
+          [
+            "Produce",
+            "Farm gate price (MK/kg)",
+            "Retail Price (MK/kg)"
+          ],
+          [
+            "Irish potatoes",
+            "350.00",
+            "700.00"
+          ],
+          [
+            "Cabbages",
+            "80.50",
+            "180.75"
+          ],
+          [
+            "Onions",
+            "600.00",
+            "750.00"
+          ]
+        ]
+      }
     },
     {
       "type": "question",
