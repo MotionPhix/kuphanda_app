@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
 <path d="M 120 120 L 120.00 20.00 A 100 100 0 1 1 73.05 208.29 Z" fill="#E8EFE6" stroke="#2F3E2E" stroke-width="2"/>
 <path d="M 120 120 L 73.05 208.29 A 100 100 0 0 1 49.29 49.29 Z" fill="#2F3E2E" stroke="#2F3E2E" stroke-width="2"/>
 <path d="M 120 120 L 49.29 49.29 A 100 100 0 0 1 120.00 20.00 Z" fill="#FFFFFF" stroke="#2F3E2E" stroke-width="2"/>
-<text x="55" y="20" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#1B1B1B">Tobacco</text>
-<text x="55" y="42" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#1B1B1B">208°</text>
-<text x="158" y="150" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#FFFFFF">Tea</text>
-<text x="150" y="172" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#FFFFFF">107°</text>
-<text x="150" y="198" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#1B1B1B">Coffee</text>
+<text x="180.2" y="135.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#1B1B1B">Tobacco</text>
+<text x="180.2" y="161.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#1B1B1B">208°</text>
+<text x="58.7" y="129.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#FFFFFF">Tea</text>
+<text x="58.7" y="157.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#FFFFFF">107°</text>
+<text x="96.3" y="120.7" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#1B1B1B">Coffee</text>
 </svg>

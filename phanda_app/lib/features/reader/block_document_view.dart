@@ -530,12 +530,21 @@ class _FigureAsset extends StatelessWidget {
     final isVector = asset.toLowerCase().endsWith('.svg');
 
     if (isVector) {
-      return SvgPicture.asset(
-        asset,
+      // SvgPicture needs a finite width: with double.infinity inside a Column
+      // the height resolves to infinity and the figure paints as a blank block
+      // that pushes the rest of the paper off screen.
+      // Both dimensions are bounded: given an unbounded width the picture
+      // resolves to an unbounded height and paints as a blank block that pushes
+      // the rest of the paper off screen.
+      return SizedBox(
         width: double.infinity,
-        fit: BoxFit.fitWidth,
-        placeholderBuilder: (_,) =>
-            _FigurePlaceholder(label: caption ?? 'Figure loading'),
+        height: 220,
+        child: SvgPicture.asset(
+          asset,
+          fit: BoxFit.contain,
+          placeholderBuilder: (_) =>
+              _FigurePlaceholder(label: caption ?? 'Figure loading'),
+        ),
       );
     }
 
