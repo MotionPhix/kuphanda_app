@@ -1,0 +1,308 @@
+{
+  "title": "Agriculture Paper 1 — MSCE 2017 (Mock)",
+  "subtitle": "Mzuzu Diocese mock examination, M012/1, 100 marks, 2 hours.",
+  "provenance": {
+    "source": "msce-agriculture-paper-1-2017.pdf",
+    "pages": 13,
+    "note": "Parsed from the PDF text layer; answer lines, headers and the question-tick table were dropped."
+  },
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "Section A — short answers (60 marks)"
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "1.",
+      "marks": 3,
+      "text": "a. State any two ways of classifying weeds.",
+      "parts": [
+        {
+          "label": "b.",
+          "text": "(i) Give any one reason why it is important to classify weeds accurately.",
+          "marks": 1
+        },
+        {
+          "label": "ii.",
+          "text": "Describe any one cultural practice for controlling weeds.",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "2.",
+      "marks": 4,
+      "text": "a. Mention any two beef breeds of cattle",
+      "parts": [
+        {
+          "label": "b.",
+          "text": "State any two features that can be used to identify a beef breed of cattle",
+          "marks": 2
+        },
+        {
+          "label": "c.",
+          "text": "State any one way in which each of the following are avoided in cross-pollination of crops.",
+          "marks": null
+        },
+        {
+          "label": "i.",
+          "text": "Accidental self-pollination",
+          "marks": 1
+        },
+        {
+          "label": "ii.",
+          "text": "Pollination by other foreign pollen.",
+          "marks": 1
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "3.",
+      "marks": 7,
+      "text": "a. State any one importance of each of the following seed treatment procedures for pasture:",
+      "parts": [
+        {
+          "label": "i.",
+          "text": "Scarification",
+          "marks": 1
+        },
+        {
+          "label": "ii.",
+          "text": "",
+          "marks": null
+        },
+        {
+          "label": "I.",
+          "text": "noculation",
+          "marks": 1
+        },
+        {
+          "label": "iii.",
+          "text": "Pelleting",
+          "marks": 1
+        },
+        {
+          "label": "b.",
+          "text": "Explain any one way in which each of the following affects seed rate of pasture during pasture establishment:",
+          "marks": null
+        },
+        {
+          "label": "i.",
+          "text": "Method of sowing",
+          "marks": 2
+        },
+        {
+          "label": "ii.",
+          "text": "Seed size",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "4.",
+      "marks": 8,
+      "text": "a. Explain any one importance of each of the following in agricultural experimentation",
+      "parts": [
+        {
+          "label": "i.",
+          "text": "report writing",
+          "marks": 2
+        },
+        {
+          "label": "ii.",
+          "text": "calculating averages",
+          "marks": 2
+        },
+        {
+          "label": "b.",
+          "text": "State any two examples of environmental interference in agricultural experiments.",
+          "marks": 2
+        },
+        {
+          "label": "c.",
+          "text": "Describe any one way of reducing environmental interference in agricultural experiments.",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "5.",
+      "marks": 6,
+      "text": "a. State any two roles of estates in ensuring food security.",
+      "parts": [
+        {
+          "label": "b.",
+          "text": "Explain any two ways in which farmers can achieve food self-sufficiency at household level.",
+          "marks": 4
+        },
+        {
+          "label": "c.",
+          "text": "State any two factors that help to expand international agricultural trade in Malawi.",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "6.",
+      "marks": 3,
+      "text": "Form 4 students at Chule CDSS poured 260ml of soil in a measuring cylinder. The students also poured 140ml of water in the measuring cylinder. After 20 minutes they noted that the",
+      "parts": [
+        {
+          "label": "v.",
+          "text": "olume of soil and water was only 345ml.",
+          "marks": null
+        },
+        {
+          "label": "i.",
+          "text": "What was the aim of the experiment?",
+          "marks": 1
+        },
+        {
+          "label": "ii.",
+          "text": "Calculate the percentage of air contained in the soil sample above.",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "7.",
+      "marks": 3,
+      "text": "Table 1 shows farm gate and retail prices for some agricultural produce at Kalambwe Market. Use it to answer the questions that follow. Produce Farm gate price (MK/kg) Retail Price (MK/kg)",
+      "parts": [
+        {
+          "label": "I.",
+          "text": "rish potatoes 350.00 700.00 Cabbages 80.50 180.75 Onions 600.00 750.00",
+          "marks": null
+        },
+        {
+          "label": "i.",
+          "text": "Calculate the marketing margins for each of the following crops: (1) Irish potatoes (2) Onions.",
+          "marks": 2
+        },
+        {
+          "label": "ii.",
+          "text": "(1) Which produce in (i) has the smaller marketing margin? (2) State any one possible cause of the difference in marketing margins in (i) above.",
+          "marks": 1
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "8.",
+      "marks": 7,
+      "text": "A farmer bought a sprayer worthy K25,000.00 to be used for controlling pests in maize",
+      "parts": [
+        {
+          "label": "a.",
+          "text": "State one safety measure that should be observed when using a sprayer.",
+          "marks": 1
+        },
+        {
+          "label": "b.",
+          "text": "Assuming the sprayer has a life span of 10 years and a salvage value of K2, 000. 00, calculate the book value of the sprayer by the end of three years, using the straight line method.",
+          "marks": 4
+        },
+        {
+          "label": "c.",
+          "text": "State any two causes of depreciation of the sprayer calculated in b. above.",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "9.",
+      "marks": 5,
+      "text": "A farmer noticed the following symptoms on his crops in a garden: scorched leaf margins, weak stalks resulting into lodging and small fruits, seeds and tubers.",
+      "parts": [
+        {
+          "label": "i.",
+          "text": "",
+          "marks": null
+        },
+        {
+          "label": "I.",
+          "text": "dentify the nutrient lacking in the crops.",
+          "marks": 1
+        },
+        {
+          "label": "ii.",
+          "text": "Name any two inorganic fertilizers that can be supplied by the farmer to correct the deficiency symptoms.",
+          "marks": 2
+        },
+        {
+          "label": "iii.",
+          "text": "State any two ways how the nutrient is depleted from the soil.",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "10.",
+      "marks": 2,
+      "text": "a. State any three functions of roots.",
+      "parts": [
+        {
+          "label": "b.",
+          "text": "Explain any one reason why farmers are encouraged to plant deep rooted crops after shallow rooted crops when practising crop rotation?",
+          "marks": 2
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 7,
+      "text": "Section B — structured questions (40 marks)"
+    },
+    {
+      "type": "question",
+      "page": 7,
+      "label": "11.",
+      "marks": 10,
+      "text": "Explain any five roles of agro- based industries in supporting the growing population.",
+      "parts": []
+    },
+    {
+      "type": "question",
+      "page": 7,
+      "label": "12.",
+      "marks": 10,
+      "text": "With the aid of a well-labeled diagram, describe the reproductive system of a cow.",
+      "parts": []
+    },
+    {
+      "type": "question",
+      "page": 7,
+      "label": "13.",
+      "marks": 10,
+      "text": "Explain any five advantages of artificial insemination in livestock production.",
+      "parts": []
+    },
+    {
+      "type": "question",
+      "page": 7,
+      "label": "14.",
+      "marks": 10,
+      "text": "Farmers in Traditional authority Kaluluma have been privileged with the following resources: • Farm settlement program • Subsidy program • Agricultural Cooperative • Soil testing unit • Irrigation unit Explain any five ways in which farmers can use these facilities to increase agricultural production. END OF QUESTION PAPER NB: This paper contains 12 pages",
+      "parts": []
+    }
+  ]
+}
