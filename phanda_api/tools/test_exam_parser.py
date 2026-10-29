@@ -233,3 +233,74 @@ class UnlabelledQuestionTests(unittest.TestCase):
         self.assertEqual(question["stem"], "")
         self.assertEqual([p["label"] for p in question["parts"]], ["a."])
         self.assertEqual(question["parts"][0]["marks"], 2)
+
+class ReadingLinesTests(unittest.TestCase):
+    def test_drops_page_furniture_and_ruled_space(self):
+        text = "Name________________________________\nPage 3 of 6\nState two weeds.\n_______\nTurn over"
+
+        self.assertEqual(ep.reading_lines(text), ["State two weeds."])
+
+    def test_rejoins_an_allocation_split_over_two_lines(self):
+        text = "Scarification\n(1\nmark)"
+
+        self.assertEqual(ep.reading_lines(text), ["Scarification", "(1 mark)"])
+
+    def test_keeps_the_wording_of_a_question(self):
+        text = "Answer the following.\n2. a. Mention any two beef breeds"
+
+        self.assertEqual(
+            ep.reading_lines(text),
+            ["Answer the following.", "2. a. Mention any two beef breeds"],
+        )
+
+    def test_furniture_check_tolerates_blank_lines(self):
+        self.assertTrue(ep.is_furniture("   "))
+        self.assertFalse(ep.is_furniture("13. Calculate the value of x."))
+
+class SectionHeadingTests(unittest.TestCase):
+    def test_section_heading_is_not_read_as_a_question_allocation(self):
+        text = (
+            "10. a. State any three functions of roots.\n(3 marks)\n"
+            "Section B (40 marks)\n"
+            "11. Explain any five roles of agro-based industries.\n(10 marks)"
+        )
+
+        questions = ep.parse_questions(ep.reading_lines(text), first_number=10)
+
+        self.assertEqual([ep.question_marks(q) for q in questions], [3, 10])
+
+    def test_reading_lines_drops_the_heading_itself(self):
+        self.assertEqual(ep.reading_lines("Section A (60 marks)\n1. a. State"), ["1. a. State"])
+
+class JoinedNumberingTests(unittest.TestCase):
+    def test_letter_against_the_number_becomes_the_first_part(self):
+        lines = ["1a. Give any two examples of matter.", "(2 marks)"]
+
+        question = ep.parse_questions(lines, first_number=1)[0]
+
+        self.assertEqual(question["label"], "1.")
+        self.assertEqual([p["label"] for p in question["parts"]], ["a."])
+        self.assertEqual(ep.question_marks(question), 2)
+
+    def test_plain_numbering_still_reads_normally(self):
+        lines = ["3. Table 1 shows some elements.", "(4 marks)"]
+
+        question = ep.parse_questions(lines, first_number=3)[0]
+
+        self.assertEqual(question["parts"], [])
+        self.assertEqual(ep.question_marks(question), 4)
+
+class ParenthesisedLetterTests(unittest.TestCase):
+    def test_bracketed_letter_is_a_part_not_prose(self):
+        lines = ["(a) i. What does the symbol stand for?", "(1 mark)"]
+
+        parts = ep.parse_parts(lines)
+
+        self.assertEqual(parts[0]["label"], "(a)")
+        self.assertEqual(parts[0]["parts"][0]["label"], "i.")
+        self.assertEqual(ep.leaf_marks(parts[0]), 1)
+
+    def test_bracketed_roman_stays_roman(self):
+        parts = ep.parse_parts(["(i) Accidental self-pollination", "(1 mark)"])
+
+        self.assertEqual(parts[0]["label"], "(i)")

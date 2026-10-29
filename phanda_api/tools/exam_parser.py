@@ -26,8 +26,11 @@ BRACKETED = 2
 
 _ROMAN_TOKENS = {"i", "ii", "iii", "iv", "v", "vi", "vii", "viii"}
 
-_QUESTION = re.compile(r"^(\d{1,2})\.\s*(.*)$")
+# "12. a. State two" and "1a. Give two" both exist; the letter may sit against
+# the number, in which case it is the first part rather than part of the number.
+_QUESTION = re.compile(r"^(\d{1,2})\s*([a-h])?[\.\)]\s*(.*)$")
 _LETTERED = re.compile(r"^([a-h])\.\s*(.*)$")
+_LETTERED_PAREN = re.compile(r"^\(([a-h])\)\s*(.*)$", re.IGNORECASE)
 _ROMAN_PAREN = re.compile(r"^\(([ivx]{1,4})\)\s*(.*)$", re.IGNORECASE)
 _ROMAN_DOT = re.compile(r"^([ivx]{1,4})[.)]\s*(.*)$", re.IGNORECASE)
 _BRACKETED = re.compile(r"^\((\d{1,2})\)\s*(.*)$")
@@ -70,6 +73,12 @@ def classify(text: str) -> tuple[int, str, str] | None:
     match = _ROMAN_DOT.match(stripped)
     if match and match.group(1).lower() in _ROMAN_TOKENS:
         return ROMAN, f"{match.group(1).lower()}.", match.group(2).strip()
+
+    # "(a)" is a lettered part when it is not a roman numeral; (i), (v) and
+    # (x) were already claimed by the roman patterns above.
+    match = _LETTERED_PAREN.match(stripped)
+    if match:
+        return LETTERED, f"({match.group(1)})", match.group(2).strip()
 
     match = _LETTERED.match(stripped)
     if match:
@@ -220,7 +229,15 @@ def parse_questions(
 
         if match and number == expected:
             flush()
-            questions.append({"label": f"{number}.", "stem": match.group(2).strip(), "parts": [], "marks": None})
+            stem = match.group(3).strip()
+            inline = match.group(2)
+
+            # "1a. Give two examples" carries its first part on the question
+            # line; keep the letter so the part is not lost.
+            if inline:
+                stem = f"{inline}. {stem}".strip()
+
+            questions.append({"label": f"{number}.", "stem": stem, "parts": [], "marks": None})
             body = []
             expected += 1
             continue
@@ -236,3 +253,62 @@ def parse_questions(
             raise ValueError(f"parsed {seen} marks, paper states {expected_total}")
 
     return questions
+
+#: Page furniture that belongs to the paper, not to any question.
+FURNITURE = re.compile(
+    r"(Name_+|Page \d+ of \d+|Turn over|Continued|\u00a9|"
+    r"Answer all|maximum number of marks|spaces provided|Write your name|"
+    r"In the table provided|Hand in your paper)",
+    re.IGNORECASE,
+)
+
+_SEPARATOR = re.compile(r"^[_.\u2026/\-\s]+$")
+
+#: A section heading states the shared total for its questions ("Section B
+#: (40 marks)"). Kept in the stream it is read as the allocation of whichever
+#: question precedes it.
+_SECTION = re.compile(r"^SECTION\s+[A-D]\b", re.IGNORECASE)
+_SPLIT_HEAD = re.compile(r"^\((\d+)$")
+_SPLIT_TAIL = re.compile(r"^marks?\)$", re.IGNORECASE)
+
+
+def is_furniture(line: str) -> bool:
+    """True for headers, footers, ruled answer space and section headings."""
+    return (
+        not line.strip()
+        or bool(FURNITURE.search(line))
+        or bool(_SEPARATOR.match(line))
+        or bool(_SECTION.match(line))
+    )
+
+
+def reading_lines(text: str) -> list[str]:
+    """Turn one or more pages of text into the lines a paper is read from.
+
+    Keeps order, drops furniture, and rejoins an allocation the scan split over
+    two lines ("(2" then "marks)"), which otherwise reads as an unmarked
+    question.
+    """
+    raw = [line.strip() for line in text.splitlines() if line.strip()]
+    lines: list[str] = []
+    index = 0
+
+    while index < len(raw):
+        line = raw[index]
+
+        if index + 1 < len(raw):
+            head = _SPLIT_HEAD.match(line)
+            tail = _SPLIT_TAIL.match(raw[index + 1])
+
+            if head and tail:
+                count = head.group(1)
+                lines.append(f"({count} mark{'s' if count != '1' else ''})")
+                index += 2
+                continue
+
+        if not is_furniture(line):
+            lines.append(line)
+
+        index += 1
+
+    return lines
