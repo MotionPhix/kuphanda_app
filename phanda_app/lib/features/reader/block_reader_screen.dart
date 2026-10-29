@@ -77,6 +77,8 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
 
   @override
   void dispose() {
+    _reportProgress();
+    _state?.flush();
     _scroll
       ..removeListener(_reportProgress)
       ..dispose();
