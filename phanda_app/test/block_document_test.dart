@@ -126,10 +126,12 @@ void main() {
       // Stem text must be present for every question.
       expect(questions.every((q) => q.text.isNotEmpty), isTrue);
 
-      final marks = questions.map((q) => q.marks).whereType<int>();
-      expect(marks.reduce((a, b) => a + b), lessThanOrEqualTo(100));
-      // Two questions had their marks cut off in the scan and stay empty.
-      expect(questions.where((q) => q.marks == null), hasLength(2));
+      // Every question carries a weight and the paper reconciles to the 100
+      // marks printed on its cover. Q13 and Q17 are weighted by decision and
+      // say so through needs_review rather than passing as printed values.
+      expect(questions.where((q) => q.marks == null), isEmpty);
+      final marks = questions.map((q) => q.marks!);
+      expect(marks.reduce((a, b) => a + b), 100);
     });
 
     test('flags every question the scan left uncertain', () {
@@ -141,14 +143,23 @@ void main() {
           document.blocks.where((b) => b.raw['needs_review'] == true).toList();
 
       // Q5 had a printed value covered by handwriting; Q13 and Q17 have no
-      // allocation printed at all. None of the three may be guessed.
+      // allocation printed at all, so their weights are an explicit decision
+      // and stay flagged as such.
       expect(flagged.map((b) => b.label), containsAll(['5.', '13.', '17.']));
       expect(flagged.every((b) => (b.raw['review_note'] as String).isNotEmpty),
           isTrue);
 
-      final unallocated =
-          document.blocks.where((b) => b.type == 'question' && b.marks == null);
-      expect(unallocated.map((b) => b.label), containsAll(['13.', '17.']));
+      final questions =
+          document.blocks.where((b) => b.type == 'question').toList();
+      expect(questions.every((b) => b.marks != null), isTrue);
+      expect(
+        questions.fold<int>(0, (sum, b) => sum + (b.marks ?? 0)),
+        100,
+      );
+
+      final decided = questions.where((b) => b.label == '13.' || b.label == '17.');
+      expect(decided.map((b) => b.marks), [4, 5]);
+      expect(decided.first.raw['review_note'], contains('decided'));
     });
     testWidgets('lays out the full sample on a small phone without overflowing',
         (tester) async {
