@@ -23,7 +23,7 @@
       "label": "1.",
       "marks": 4,
       "difficulty": 2,
-      "text": "Simplify  $(3½ × 1½ − 3) ÷ 9$"
+      "text": "Simplify  $\\left(3\\frac{1}{2} \\times 1\\frac{1}{2} - 3\\right) \\div 9$"
     },
     {
       "type": "question",
@@ -156,7 +156,7 @@
       "label": "3.",
       "marks": 3,
       "difficulty": 1,
-      "text": "P is a point on the graph whose equation is $y = x^2 - 6x$. If the x-coordinate of P is 2, calculate its y coordinate."
+      "text": "P is a point on the graph whose equation is $y = x^{2} - 6x$. If the $x$-coordinate of P is 2, calculate its $y$ coordinate."
     },
     {
       "type": "question",
@@ -173,7 +173,7 @@
       "marks": 3,
       "difficulty": 3,
       "needs_review": true,
-      "text": "Given that angle θ is acute and that $log cos θ = 1.73$, evaluate $(cos θ)^2$.",
+      "text": "Given that angle $\\theta$ is acute and that $\\log \\cos \\theta = 1.73$, evaluate $(\\cos \\theta)^{2}$.",
       "review_note": "The printed value was partly covered by handwriting in the scan; confirm 1.73 against a clean copy."
     },
     {
@@ -182,7 +182,7 @@
       "label": "6.",
       "marks": 3,
       "difficulty": 2,
-      "text": "Factorise completely $1 - 16(1 - y)^2$, giving your answer in its simplest form."
+      "text": "Factorise completely $1 - 16(1 - y)^{2}$, giving your answer in its simplest form."
     },
     {
       "type": "question",
@@ -202,7 +202,7 @@
       "label": "8.",
       "marks": 4,
       "difficulty": 2,
-      "text": "Given that $a^7 ÷ (a^{-3} × a^2) = a^y$, find the value of y."
+      "text": "Given that $\\frac{a^{7}}{a^{-3} \\times a^{2}} = a^{y}$, find the value of $y$."
     },
     {
       "type": "question",
@@ -291,7 +291,7 @@
       "label": "10.",
       "marks": 3,
       "difficulty": 2,
-      "text": "Make $x$ the subject of the formula $4y = ax^2$."
+      "text": "Make $x$ the subject of the formula $4y = ax^{2}$."
     },
     {
       "type": "question",
@@ -311,7 +311,7 @@
       "label": "12.",
       "marks": 4,
       "difficulty": 3,
-      "text": "Solve for $x$: $log_x 125^{-1} = -3$."
+      "text": "Solve for $x$: $\\log_{x} 125^{-1} = -3$."
     },
     {
       "type": "question",
@@ -319,7 +319,7 @@
       "label": "13.",
       "marks": null,
       "difficulty": 2,
-      "text": "Given that $2x, x, x + 3$, ………… are terms in an Arithmetic Progression. Calculate the value of x."
+      "text": "Given that $2x,\\ x,\\ x + 3,\\ \\ldots$ are terms in an Arithmetic Progression. Calculate the value of $x$."
     },
     {
       "type": "heading",
@@ -344,7 +344,7 @@
       "label": "15.",
       "marks": 4,
       "difficulty": 2,
-      "text": "Simplify $∛(8a) + 2∛(a) - ∛(27a)$ giving your answer in the simplest form."
+      "text": "Simplify $\\sqrt[3]{8a} + 2\\sqrt[3]{a} - \\sqrt[3]{27a}$ giving your answer in its simplest form."
     },
     {
       "type": "question",
@@ -428,7 +428,7 @@
       "label": "24.",
       "marks": 4,
       "difficulty": 3,
-      "text": "When a polynomial $x^3 + kx^2 + x - k$ is divided by $(x - k)$ the remainder is 2. Calculate the value of k."
+      "text": "When a polynomial $x^{3} + kx^{2} + x - k$ is divided by $(x - k)$ the remainder is 2. Calculate the value of $k$."
     }
   ]
 }
