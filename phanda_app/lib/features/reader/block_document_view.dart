@@ -256,6 +256,16 @@ class _QuestionBlock extends StatelessWidget {
             block.text,
             style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
           ),
+          // A question and its diagram are one unit: the figure sits under the
+          // stem instead of being a separate block the author must keep in
+          // order.
+          if (block.raw['figure'] is Map)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: _EmbeddedFigure(
+                data: (block.raw['figure'] as Map).cast<String, Object?>(),
+              ),
+            ),
           for (final part in block.parts) ...[
             const SizedBox(height: 10),
             Row(
@@ -326,6 +336,54 @@ class _AnswerBlock extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// The diagram belonging to a question. Missing assets degrade to a labelled
+/// placeholder rather than an empty space, so a half-imported paper still reads.
+class _EmbeddedFigure extends StatelessWidget {
+  const _EmbeddedFigure({required this.data});
+
+  final Map<String, Object?> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final asset = data['asset'] as String?;
+    final caption = (data['alt'] ?? data['caption']) as String?;
+
+    if (asset == null || asset.isEmpty) {
+      return _FigurePlaceholder(label: caption ?? 'Figure not included');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: ColoredBox(
+            color: Colors.white,
+            child: Image.asset(
+              asset,
+              width: double.infinity,
+              fit: BoxFit.fitWidth,
+              errorBuilder: (_, _, _) =>
+                  _FigurePlaceholder(label: caption ?? 'Figure not available'),
+            ),
+          ),
+        ),
+        if (caption != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              caption,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
