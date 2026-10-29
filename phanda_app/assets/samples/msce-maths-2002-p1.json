@@ -23,7 +23,7 @@
       "label": "1.",
       "marks": 4,
       "difficulty": 2,
-      "text": "Simplify  $\\left(3\\frac{1}{2} \\times 1\\frac{1}{2} - 3\\right) \\div 9$"
+      "text": "Simplify $\\dfrac{\\left(3\\frac{1}{2} \\times 1\\frac{1}{2}\\right) - 3}{9}$"
     },
     {
       "type": "question",
