@@ -255,6 +255,22 @@ class _QuestionBlock extends StatelessWidget {
                       color: theme.colorScheme.onSecondaryContainer,
                     ),
                   ),
+                )
+              // A question the scan left unweighted says so, rather than
+              // reading as worth nothing.
+              else if (block.raw['needs_review'] == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Text(
+                    'marks unconfirmed',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -286,6 +302,18 @@ class _QuestionBlock extends StatelessWidget {
               ),
             ),
           _PartsList(parts: block.parts),
+          if (block.raw['needs_review'] == true &&
+              (block.raw['review_note'] as String?)?.isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            Text(
+              block.raw['review_note'] as String,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+            ),
+          ],
           if (showAnswer && answer.isNotEmpty) ...[
             const SizedBox(height: 12),
             _AnswerBlock(steps: answer),

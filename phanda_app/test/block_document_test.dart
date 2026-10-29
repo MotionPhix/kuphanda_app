@@ -132,7 +132,7 @@ void main() {
       expect(questions.where((q) => q.marks == null), hasLength(2));
     });
 
-    test('flags the one question the scan obscured', () {
+    test('flags every question the scan left uncertain', () {
       final source =
           File('assets/samples/msce-maths-2002-p1.json').readAsStringSync();
       final document = BlockDocument.fromJsonString(source);
@@ -140,9 +140,15 @@ void main() {
       final flagged =
           document.blocks.where((b) => b.raw['needs_review'] == true).toList();
 
-      expect(flagged, hasLength(1));
-      expect(flagged.single.label, '5.');
-      expect(flagged.single.raw['review_note'], isNotNull);
+      // Q5 had a printed value covered by handwriting; Q13 and Q17 have no
+      // allocation printed at all. None of the three may be guessed.
+      expect(flagged.map((b) => b.label), containsAll(['5.', '13.', '17.']));
+      expect(flagged.every((b) => (b.raw['review_note'] as String).isNotEmpty),
+          isTrue);
+
+      final unallocated =
+          document.blocks.where((b) => b.type == 'question' && b.marks == null);
+      expect(unallocated.map((b) => b.label), containsAll(['13.', '17.']));
     });
     testWidgets('lays out the full sample on a small phone without overflowing',
         (tester) async {
@@ -301,6 +307,33 @@ void main() {
       expect(find.text('Farm gate price (MK/kg)'), findsOneWidget);
       expect(find.text('Irish potatoes'), findsOneWidget);
       expect(find.text('750.00'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('says when a question has no mark allocation', (tester) async {
+      const document = BlockDocument(
+        title: 'Q13',
+        blocks: [
+          DocumentBlock(
+            type: 'question',
+            raw: {
+              'label': '13.',
+              'marks': null,
+              'needs_review': true,
+              'review_note': 'The scanned paper has no allocation printed here.',
+              'text': r'Given that $2x,\ x,\ x + 3$ are terms in an AP.',
+            },
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+      );
+
+      expect(find.text('marks unconfirmed'), findsOneWidget);
+      expect(find.text('The scanned paper has no allocation printed here.'),
+          findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

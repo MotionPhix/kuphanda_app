@@ -144,3 +144,18 @@ it('flags a nested leaf that has no mark', function (): void {
         ->and($report['issues'])->toHaveCount(1)
         ->and($report['issues'][0])->toContain('1 part(s) without marks');
 });
+it('reports a question with no allocation and no parts', function (): void {
+    $blocks = [[
+        'type' => 'question',
+        'label' => '13.',
+        'marks' => null,
+        'text' => 'Given that 2x, x, x + 3 are terms in an AP, find x.',
+        'parts' => [],
+    ]];
+
+    $report = app(BlockAudit::class)->inspect($blocks, 'Paper I, 100 marks');
+
+    expect($report['marks'])->toBe(0)
+        ->and($report['issues'])->toContain('13.: no mark allocation')
+        ->and($report['issues'])->toHaveCount(2);
+});

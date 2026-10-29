@@ -52,6 +52,12 @@ final class BlockAudit
                 $issues[] = sprintf('%s: %d part(s) without marks', $label, $missing);
             }
 
+            // A question with neither parts nor an allocation cannot be scored,
+            // and leaving it silent makes the paper look complete.
+            if ($parts === [] && $declared === null) {
+                $issues[] = sprintf('%s: no mark allocation', $label);
+            }
+
             if (trim((string) ($question['text'] ?? '')) === '') {
                 $issues[] = sprintf('%s: empty stem', $label);
             }

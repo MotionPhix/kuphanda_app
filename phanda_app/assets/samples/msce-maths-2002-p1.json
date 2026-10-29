@@ -319,7 +319,9 @@
       "label": "13.",
       "marks": null,
       "difficulty": 2,
-      "text": "Given that $2x,\\ x,\\ x + 3,\\ \\ldots$ are terms in an Arithmetic Progression. Calculate the value of $x$."
+      "text": "Given that $2x,\\ x,\\ x + 3,\\ \\ldots$ are terms in an Arithmetic Progression. Calculate the value of $x$.",
+      "needs_review": true,
+      "review_note": "The scanned paper has no mark allocation printed beside this question; confirm the weight against a clean copy."
     },
     {
       "type": "heading",
@@ -360,7 +362,9 @@
       "label": "17.",
       "marks": null,
       "difficulty": 3,
-      "text": "P is a set of points (x, y) which satisfies the three inequalities:  x ≥ 0;  x + y ≤ 4;  y ≥ x + 1.  Show on a graph the region represented by P."
+      "text": "P is a set of points (x, y) which satisfies the three inequalities:  x ≥ 0;  x + y ≤ 4;  y ≥ x + 1.  Show on a graph the region represented by P.",
+      "needs_review": true,
+      "review_note": "The scanned paper has no mark allocation printed beside this question; confirm the weight against a clean copy."
     },
     {
       "type": "question",
