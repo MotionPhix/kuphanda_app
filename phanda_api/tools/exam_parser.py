@@ -23,6 +23,7 @@ from typing import Iterable
 LETTERED = 0
 ROMAN = 1
 BRACKETED = 2
+NUMBERED = 3
 
 _ROMAN_TOKENS = {"i", "ii", "iii", "iv", "v", "vi", "vii", "viii"}
 
@@ -31,6 +32,10 @@ _ROMAN_TOKENS = {"i", "ii", "iii", "iv", "v", "vi", "vii", "viii"}
 _QUESTION = re.compile(r"^(\d{1,2})\s*([a-h])?[\.\)]\s*(.*)$")
 _LETTERED = re.compile(r"^([a-h])\.\s*(.*)$")
 _LETTERED_PAREN = re.compile(r"^\(([a-h])\)\s*(.*)$", re.IGNORECASE)
+#: A plain "1." inside a question body is a numbered sub-part (``d. i. 1.
+#: Fractioning``), never a new question: real question lines are consumed before
+#: the body is parsed.
+_NUMBERED = re.compile(r"^(\d{1,2})[.)]\s*(.*)$")
 _ROMAN_PAREN = re.compile(r"^\(([ivx]{1,4})\)\s*(.*)$", re.IGNORECASE)
 _ROMAN_DOT = re.compile(r"^([ivx]{1,4})[.)]\s*(.*)$", re.IGNORECASE)
 _BRACKETED = re.compile(r"^\((\d{1,2})\)\s*(.*)$")
@@ -64,27 +69,48 @@ def classify(text: str) -> tuple[int, str, str] | None:
 
     match = _BRACKETED.match(stripped)
     if match:
-        return BRACKETED, f"({match.group(1)})", match.group(2).strip()
+        return BRACKETED, f"({match.group(1)})", _clean(match.group(2))
 
     match = _ROMAN_PAREN.match(stripped)
     if match and match.group(1).lower() in _ROMAN_TOKENS:
-        return ROMAN, f"({match.group(1).lower()})", match.group(2).strip()
+        return ROMAN, f"({match.group(1).lower()})", _clean(match.group(2))
 
     match = _ROMAN_DOT.match(stripped)
     if match and match.group(1).lower() in _ROMAN_TOKENS:
-        return ROMAN, f"{match.group(1).lower()}.", match.group(2).strip()
+        return ROMAN, f"{match.group(1).lower()}.", _clean(match.group(2))
 
     # "(a)" is a lettered part when it is not a roman numeral; (i), (v) and
     # (x) were already claimed by the roman patterns above.
     match = _LETTERED_PAREN.match(stripped)
     if match:
-        return LETTERED, f"({match.group(1)})", match.group(2).strip()
+        return LETTERED, f"({match.group(1)})", _clean(match.group(2))
 
     match = _LETTERED.match(stripped)
     if match:
-        return LETTERED, f"{match.group(1)}.", match.group(2).strip()
+        return LETTERED, f"{match.group(1)}.", _clean(match.group(2))
+
+    match = _NUMBERED.match(stripped)
+    if match:
+        return NUMBERED, f"{match.group(1)}.", _clean(match.group(2))
 
     return None
+
+
+def _next_number(node: dict | None) -> int:
+    """The numbered sub-part this node is waiting for."""
+    if node is None:
+        return 1
+
+    # Inside a numbered sub-item, the next number is its sibling.
+    if node["level"] == NUMBERED:
+        return int(node["label"].rstrip(".")) + 1
+
+    return sum(1 for child in node["parts"] if child["level"] == NUMBERED) + 1
+
+
+def _clean(rest: str) -> str:
+    """Drop punctuation a label leaves behind, as in ``(i). Define the term``."""
+    return rest.lstrip(" .):;-\u2013\u2014").strip()
 
 
 def _new_part(level: int, label: str, text: str, marks: int | None) -> dict:
@@ -110,6 +136,9 @@ def parse_parts(lines: Iterable[str], max_depth: int = 3) -> list[dict]:
 
         text, marks = split_marks(line)
 
+        # "______(2 marks)" is an answer space with its allocation, not prose.
+        text = _RULED.sub(" ", text).strip()
+
         chain: list[tuple[int, str, str]] = []
         probe = text
         while probe and len(chain) < max_depth:
@@ -118,6 +147,15 @@ def parse_parts(lines: Iterable[str], max_depth: int = 3) -> list[dict]:
                 break
             chain.append(found)
             probe = found[2]
+
+        # A numbered line is only a sub-part when it continues the sequence and
+        # sits under an open part. "3." arriving where "1." was due is the
+        # paper's own numbering error, and treating it as a part would shadow
+        # its parent's marks.
+        if chain and chain[0][0] == NUMBERED:
+            wanted = _next_number(current)
+            if current is None or int(chain[0][1].rstrip(".")) != wanted:
+                chain = []
 
         if chain:
             for index, (level, label, rest) in enumerate(chain):
@@ -180,6 +218,37 @@ def question_marks(question: dict) -> int:
     return question.get("marks") or 0
 
 
+def _heads_question(rest: str, ahead: list[str], big: int = 5) -> bool:
+    """Does this numbered line start a question, or is it a numbered sub-item?
+
+    ``2. Creaking`` under part (i) of question 1 is indistinguishable from
+    question 2 by its number alone, so the decision is made by what a question
+    looks like: it opens with a lettered part, or it is followed by one, or it
+    carries a substantial allocation. A numbered sub-item has none of those.
+    """
+    # A numbered sub-item is a short noun phrase ("2. Creaking"); a question is
+    # a sentence. Length and a question mark separate them when the number alone
+    # cannot, and the ascending gate catches a wrong call because a sub-item
+    # never carries the next question's number by accident.
+    stripped = rest.strip()
+    if len(stripped) >= 40 or "?" in stripped:
+        return True
+
+    found = classify(rest)
+    if found and found[0] == LETTERED:
+        return True
+
+    for line in ahead:
+        text, marks = split_marks(line)
+        if marks is not None and marks >= big:
+            return True
+        found = classify(text)
+        if found and found[0] == LETTERED:
+            return True
+
+    return False
+
+
 def parse_questions(
     lines: Iterable[str],
     first_number: int = 1,
@@ -219,15 +288,23 @@ def parse_questions(
         question["stem"] = re.sub(r"\s+", " ", text).strip()
         question["marks"] = marks
 
-    for raw in lines:
+    for position, raw in enumerate(lines):
         line = raw.strip()
         if not line:
             continue
 
         match = _QUESTION.match(line)
         number = int(match.group(1)) if match else None
+        # The first question defines where the paper starts, so it is taken on
+        # its number alone; after that a heading has to look like one.
+        heads_question = number == expected and (
+            not questions
+            or _heads_question(
+                match.group(3) if match else "", lines[position + 1 : position + 4]
+            )
+        )
 
-        if match and number == expected:
+        if match and heads_question:
             flush()
             stem = match.group(3).strip()
             inline = match.group(2)
@@ -262,6 +339,7 @@ FURNITURE = re.compile(
     re.IGNORECASE,
 )
 
+_RULED = re.compile(r"_{3,}")
 _SEPARATOR = re.compile(r"^[_.\u2026/\-\s]+$")
 
 #: A section heading states the shared total for its questions ("Section B

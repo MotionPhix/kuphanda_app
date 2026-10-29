@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 from collections import Counter
 from pathlib import Path
 
@@ -56,6 +57,18 @@ def drop_cover(pages: list[str]) -> list[str]:
     return pages
 
 
+def file_hash(path: Path) -> str:
+    """Content fingerprint: the corpus keeps the same paper in several subject
+    folders, and counting every copy as a parsed paper flatters the result."""
+    digest = hashlib.sha1()
+
+    with path.open("rb") as handle:
+        while chunk := handle.read(1 << 20):
+            digest.update(chunk)
+
+    return digest.hexdigest()[:12]
+
+
 def parse_segment(root: Path, row: dict) -> dict:
     path = root / row["file"]
     pages = drop_cover(segment_pages(path, int(row["start"]), int(row["end"])))
@@ -69,6 +82,7 @@ def parse_segment(root: Path, row: dict) -> dict:
         "pages": row["pages"],
         "stated_marks": stated or "",
         "lines": len(lines),
+        "sha1": file_hash(path),
     }
 
     try:
@@ -133,7 +147,8 @@ def main() -> None:
     print("by genre:", dict(Counter(r.get("genre", "?") for r in results)))
 
     ok = [r for r in results if r["status"] == "ok"]
-    print(f"reconciled exactly: {len(ok)}")
+    distinct = len({r.get("sha1") for r in ok})
+    print(f"reconciled exactly: {len(ok)} rows, {distinct} distinct files")
 
     for result in results:
         if result["status"] != "ok":
