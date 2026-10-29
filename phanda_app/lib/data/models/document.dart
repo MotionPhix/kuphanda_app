@@ -159,6 +159,8 @@ class Document {
       language: language,
       tags: tags,
       personal: personal,
+      format: format,
+      hasBlocks: hasBlocks,
     );
   }
 
@@ -186,6 +188,11 @@ class Document {
         'language': language,
         'tags': tags,
         'personal': personal,
+        // Cached copies need these too, otherwise a stored document reverts to
+        // pdf + hasBlocks=false and a structured paper looks unreadable until
+        // the next successful sync.
+        'format': format,
+        'hasBlocks': hasBlocks,
       };
 
   static Document fromJson(Map<String, Object?> json) {

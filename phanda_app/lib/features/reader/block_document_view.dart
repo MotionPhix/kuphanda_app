@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/models/block_document.dart';
 
@@ -364,12 +365,9 @@ class _EmbeddedFigure extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           child: ColoredBox(
             color: Colors.white,
-            child: Image.asset(
-              asset,
-              width: double.infinity,
-              fit: BoxFit.fitWidth,
-              errorBuilder: (_, _, _) =>
-                  _FigurePlaceholder(label: caption ?? 'Figure not available'),
+            child: _FigureAsset(
+              asset: asset,
+              caption: caption,
             ),
           ),
         ),
@@ -513,6 +511,40 @@ class _TableBlock extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Draws a diagram from either a vector or a raster asset.
+///
+/// SVG is the preferred form: geometry stays sharp at any density and takes the
+/// theme's colours, where a scan is pinned to the pixels it was cropped from.
+class _FigureAsset extends StatelessWidget {
+  const _FigureAsset({required this.asset, this.caption});
+
+  final String asset;
+  final String? caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final isVector = asset.toLowerCase().endsWith('.svg');
+
+    if (isVector) {
+      return SvgPicture.asset(
+        asset,
+        width: double.infinity,
+        fit: BoxFit.fitWidth,
+        placeholderBuilder: (_,) =>
+            _FigurePlaceholder(label: caption ?? 'Figure loading'),
+      );
+    }
+
+    return Image.asset(
+      asset,
+      width: double.infinity,
+      fit: BoxFit.fitWidth,
+      errorBuilder: (_, _, _) =>
+          _FigurePlaceholder(label: caption ?? 'Figure not available'),
     );
   }
 }

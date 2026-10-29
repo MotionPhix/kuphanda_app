@@ -33,7 +33,7 @@
       "difficulty": 2,
       "text": "Figure 1 is a pie-chart representing sales of three commodities: tobacco, tea and coffee. Express coffee sales as a percentage of the total sales.",
       "figure": {
-        "asset": "assets/samples/figures/fig1-pie-chart.png",
+        "asset": "assets/samples/figures/fig1-pie-chart.svg",
         "alt": "Pie chart with tobacco labelled 208 degrees and tea labelled 107 degrees"
       }
     },
