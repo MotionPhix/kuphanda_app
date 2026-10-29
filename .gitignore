@@ -83,3 +83,7 @@ phanda_api/.qodo/
 phanda_api/.claude/
 phanda_api/CLAUDE.md
 phanda_api/backlog/
+
+# Python tooling
+__pycache__/
+*.pyc
