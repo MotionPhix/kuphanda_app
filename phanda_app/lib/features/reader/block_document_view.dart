@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../core/widgets/math_text.dart';
 import '../../data/models/block_document.dart';
 
 /// Renders a reflowable document on any screen width.
@@ -73,7 +74,7 @@ class _BlockView extends StatelessWidget {
       case 'heading':
         return Padding(
           padding: const EdgeInsets.only(top: 20, bottom: 8),
-          child: Text(
+          child: MathText(
             block.text,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
@@ -84,7 +85,7 @@ class _BlockView extends StatelessWidget {
       case 'paragraph':
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: SelectableText(
+          child: MathText(
             block.text,
             style: theme.textTheme.bodyLarge?.copyWith(height: 1.55),
           ),
@@ -258,7 +259,7 @@ class _QuestionBlock extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
+          MathText(
             block.text,
             style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
           ),
