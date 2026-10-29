@@ -72,19 +72,9 @@ def parse_segment(root: Path, row: dict) -> dict:
     }
 
     try:
-        questions = ep.parse_questions(lines, expected_total=stated)
-    except ValueError as error:
-        parsed = str(error)
-        result.update(
-            {
-                "status": "mismatch",
-                "parsed_marks": parsed.split()[1] if " " in parsed else "",
-                "questions": "",
-                "notes": parsed,
-            }
-        )
-
-        return result
+        # No expected_total here: a mismatch is a finding to record, not an
+        # exception, and the question count still tells us how the paper read.
+        questions = ep.parse_questions(lines)
     except Exception as error:  # noqa: BLE001 - recorded, not swallowed
         result.update(
             {"status": "error", "parsed_marks": "", "questions": "", "notes": str(error)[:120]}
@@ -95,11 +85,22 @@ def parse_segment(root: Path, row: dict) -> dict:
     total = sum(ep.question_marks(q) for q in questions)
     unweighted = sum(1 for q in questions if not (q.get("parts") or q.get("marks")))
 
+    # Not every paper is a numbered question paper. English and Chichewa papers
+    # are task sheets ("NOTE MAKING", "COMPOSITION") and have no questions to
+    # find; grouping them separately stops them looking like parser failures.
+    if len(questions) >= 5:
+        genre = "numbered"
+    elif not questions:
+        genre = "tasks"
+    else:
+        genre = "partial"
+
     result.update(
         {
             "status": "ok" if total == (stated or total) else "mismatch",
             "parsed_marks": total,
             "questions": len(questions),
+            "genre": genre,
             "notes": f"{unweighted} unweighted" if unweighted else "",
         }
     )
@@ -129,6 +130,7 @@ def main() -> None:
 
     print(f"written {RESULTS} ({len(results)} papers)")
     print("by status:", dict(Counter(r["status"] for r in results)))
+    print("by genre:", dict(Counter(r.get("genre", "?") for r in results)))
 
     ok = [r for r in results if r["status"] == "ok"]
     print(f"reconciled exactly: {len(ok)}")
