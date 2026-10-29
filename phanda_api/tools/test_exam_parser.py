@@ -304,3 +304,16 @@ class ParenthesisedLetterTests(unittest.TestCase):
         parts = ep.parse_parts(["(i) Accidental self-pollination", "(1 mark)"])
 
         self.assertEqual(parts[0]["label"], "(i)")
+
+class JoinedPartLabelTests(unittest.TestCase):
+    def test_letter_and_bracketed_roman_without_a_separator(self):
+        # "5. a(i) Define the term transport?" — the letter hugs the roman.
+        lines = ["5. a(i) Define the term transport?", "____(1mark)"]
+
+        question = ep.parse_questions(lines, first_number=5)[0]
+        part = question["parts"][0]
+
+        self.assertEqual(part["label"], "a.")
+        self.assertEqual(part["parts"][0]["label"], "(i)")
+        self.assertEqual(part["parts"][0]["text"], "Define the term transport?")
+        self.assertEqual(ep.question_marks(question), 1)

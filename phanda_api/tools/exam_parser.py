@@ -36,6 +36,8 @@ _LETTERED_PAREN = re.compile(r"^\(([a-h])\)\s*(.*)$", re.IGNORECASE)
 #: Fractioning``), never a new question: real question lines are consumed before
 #: the body is parsed.
 _NUMBERED = re.compile(r"^(\d{1,2})[.)]\s*(.*)$")
+#: "a(i)" — a letter and a bracketed roman with nothing between them.
+_LETTERED_ROMAN = re.compile(r"^([a-h])\s*(\([ivx]{1,4}\))\s*(.*)$", re.IGNORECASE)
 _ROMAN_PAREN = re.compile(r"^\(([ivx]{1,4})\)\s*(.*)$", re.IGNORECASE)
 _ROMAN_DOT = re.compile(r"^([ivx]{1,4})[.)]\s*(.*)$", re.IGNORECASE)
 _BRACKETED = re.compile(r"^\((\d{1,2})\)\s*(.*)$")
@@ -81,6 +83,15 @@ def classify(text: str) -> tuple[int, str, str] | None:
 
     # "(a)" is a lettered part when it is not a roman numeral; (i), (v) and
     # (x) were already claimed by the roman patterns above.
+    match = _LETTERED_ROMAN.match(stripped)
+    if match and match.group(2)[1:-1].lower() in _ROMAN_TOKENS:
+        # Hand the roman back as its own label so the chain keeps its depth.
+        return (
+            LETTERED,
+            f"{match.group(1)}.",
+            f"{match.group(2).lower()} {_clean(match.group(3))}".strip(),
+        )
+
     match = _LETTERED_PAREN.match(stripped)
     if match:
         return LETTERED, f"({match.group(1)})", _clean(match.group(2))
