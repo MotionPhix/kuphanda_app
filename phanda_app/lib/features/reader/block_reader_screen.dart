@@ -4,6 +4,7 @@ import '../../app.dart';
 import '../../core/widgets/common.dart';
 import '../../data/api/api_models.dart';
 import '../../data/models/block_document.dart';
+import '../../state/app_state.dart';
 import 'block_document_view.dart';
 
 /// Reads a document in its structured form.
@@ -29,16 +30,58 @@ class BlockReaderScreen extends StatefulWidget {
 class _BlockReaderScreenState extends State<BlockReaderScreen> {
   Future<BlockDocument>? _document;
   bool _showAnswers = false;
+  final ScrollController _scroll = ScrollController();
+  int _lastReported = -1;
+  AppState? _state;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // AppScope is an inherited widget, so it is only safe to read here.
+    // AppScope is an inherited widget, so it is only safe to read here. Lookups
+    // are not allowed from a scroll callback, so the state is cached for the
+    // progress listener.
+    _state = AppScope.of(context);
     _document ??= _load();
   }
 
   Future<BlockDocument> _load() =>
       AppScope.of(context).loadBlockDocument(widget.documentId);
+
+  /// Progress for a reflowable document follows the scroll, not fixed pages.
+  /// Reporting page 1 of 6 forever is what made every book look stuck at 17%.
+  void _reportProgress() {
+    if (!_scroll.hasClients) return;
+
+    final state = _state;
+    if (state == null) return;
+    final max = _scroll.position.maxScrollExtent;
+    final fraction = max <= 0 ? 1.0 : (_scroll.offset / max).clamp(0.0, 1.0);
+    final percent = (fraction * 100).round();
+
+    if (percent == _lastReported) return;
+
+    _lastReported = percent;
+    state.recordProgress(
+      documentId: widget.documentId,
+      page: (fraction * 6).ceil().clamp(1, 6),
+      totalPages: 6,
+      fraction: fraction,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_reportProgress);
+  }
+
+  @override
+  void dispose() {
+    _scroll
+      ..removeListener(_reportProgress)
+      ..dispose();
+    super.dispose();
+  }
 
   void _retry() {
     setState(() => _document = _load());

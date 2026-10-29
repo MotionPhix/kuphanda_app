@@ -611,12 +611,14 @@ class AppState extends ChangeNotifier {
     required int page,
     required int totalPages,
     int seconds = 0,
+    double? fraction,
   }) {
     final existing = _snapshot.progress[documentId] ??
         ReadingProgress(documentId: documentId, totalPages: totalPages);
     final safeTotal = totalPages <= 0 ? existing.totalPages : totalPages;
     final safePage = page.clamp(1, safeTotal <= 0 ? 1 : safeTotal);
-    final completed = safeTotal > 0 && safePage >= safeTotal;
+    final completed = (safeTotal > 0 && safePage >= safeTotal) ||
+        (fraction != null && fraction >= 0.995);
 
     _snapshot.progress[documentId] = existing.copyWith(
       currentPage: safePage,
@@ -624,6 +626,7 @@ class AppState extends ChangeNotifier {
       secondsSpent: existing.secondsSpent + seconds,
       lastReadAt: _clock(),
       completed: existing.completed || completed,
+      fraction: fraction,
     );
 
     if (seconds > 0) {

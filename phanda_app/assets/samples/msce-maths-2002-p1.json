@@ -79,8 +79,8 @@
       "difficulty": 3,
       "text": "In Figure 2, DB is perpendicular to the line ABC, AE = 25 cm, BC = 15 cm, angle EAB = 30°, and angle BCD = 45°. Calculate the length of DE.",
       "figure": {
-        "asset": "assets/samples/figures/fig2-triangle.png",
-        "alt": "Triangle ABC with perpendicular DB and point E on DB"
+        "asset": "assets/samples/figures/fig2-triangle.svg",
+        "alt": "Triangle with DB perpendicular to ABC, AE 25 cm, angle EAB 30 degrees, angle BCD 45 degrees"
       }
     },
     {
@@ -99,8 +99,77 @@
       "difficulty": 3,
       "text": "In Figure 3, D is the midpoint of the minor arc BDC, angle ABC = 40° and angle ACB = 60°. Calculate angle DAC.",
       "figure": {
-        "asset": "assets/samples/figures/fig3-circle-angles.png",
-        "alt": "Circle through A, B, C and D with chords drawn and angles 40 and 60 degrees marked"
+        "kind": "geometry",
+        "circle": {
+          "center": [
+            180,
+            190
+          ],
+          "radius": 155
+        },
+        "points": {
+          "A": [
+            180,
+            35
+          ],
+          "B": [
+            33,
+            238
+          ],
+          "C": [
+            327,
+            238
+          ],
+          "D": [
+            180,
+            345
+          ]
+        },
+        "lines": [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "A",
+            "C"
+          ],
+          [
+            "B",
+            "C"
+          ],
+          [
+            "A",
+            "D"
+          ]
+        ],
+        "angles": [
+          {
+            "points": [
+              "A",
+              "B",
+              "C"
+            ],
+            "label": "40°"
+          },
+          {
+            "points": [
+              "B",
+              "C",
+              "A"
+            ],
+            "label": "60°"
+          },
+          {
+            "points": [
+              "C",
+              "A",
+              "D"
+            ],
+            "label": null
+          }
+        ],
+        "alt": "Circle with triangle ABC and diameter AD; angle ABC 40 degrees, angle ACB 60 degrees"
       }
     },
     {
@@ -119,8 +188,8 @@
       "difficulty": 3,
       "text": "In Figure 4, O is the centre of the circle, TA is a tangent, BC is parallel to TA and angle BCT = 37°. Calculate the value of the angle marked y.",
       "figure": {
-        "asset": "assets/samples/figures/fig4-tangent-circle.png",
-        "alt": "Circle centre O with tangent TA, chord BC parallel to TA and angle y marked"
+        "asset": "assets/samples/figures/fig4-tangent-circle.svg",
+        "alt": "Circle centre O with tangent TA, BC parallel to TA, angle BCT 37 degrees"
       }
     },
     {

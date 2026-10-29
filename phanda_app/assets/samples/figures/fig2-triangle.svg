@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="915" height="565" viewBox="0 0 915 565" role="img" aria-labelledby="title desc">
+<title id="title">Triangles ABE and BCD</title><desc id="desc">A, B and C lie on a horizontal line. B, E and D lie on a vertical line. AE is 25 cm; BC is 15 cm. Angle EAB is 30 degrees, BCD is 45 degrees, and DBC is a right angle. Not to scale.</desc>
+<g fill="none" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M 50 495 L 860 495"/>
+<path d="M 520 495 L 520 60"/>
+<path d="M 50 495 L 520 207"/>
+<path d="M 520 60 L 860 495"/>
+<path d="M 152.31840738359034 432.3027631351616 A 120 120 0 0 1 170.0 495.0" stroke-width="1.8"/>
+<path d="M 771.0 495.0 A 89 89 0 0 1 805.1920406440896 424.87805200052645" stroke-width="1.8"/>
+<path d="M 520 470 L 545 470 L 545 495" stroke-width="1.8"/>
+<g stroke-width="1.2"><path d="M 520 506 V 550 M 860 506 V 550 M 524 532 H 624 M 752 532 H 856"/></g>
+</g><g fill="black"><path d="M 520 532 L 543 525 L 539 532 L 543 539 Z"/><path d="M 860 532 L 837 525 L 841 532 L 837 539 Z"/></g>
+<g font-family="Times New Roman, Georgia, serif" font-size="35" fill="black" text-anchor="middle">
+<text x="19" y="520">A</text>
+<text x="500" y="541">B</text>
+<text x="887" y="520">C</text>
+<text x="520" y="36">D</text>
+<text x="542" y="219">E</text>
+<text x="209" y="468">30°</text>
+<text x="739" y="459">45°</text>
+<text x="266" y="341" transform="rotate(-31.5 266 341)">25 cm</text><text x="690" y="546">15 cm</text></g></svg>

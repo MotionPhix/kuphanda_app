@@ -13,6 +13,7 @@ class ReadingProgress {
     this.secondsSpent = 0,
     this.lastReadAt,
     this.completed = false,
+    this.fraction,
   });
 
   final String documentId;
@@ -22,8 +23,14 @@ class ReadingProgress {
   final DateTime? lastReadAt;
   final bool completed;
 
+  /// 0-1 through the document as measured by the reader, used when pages are a
+  /// poor proxy: a reflowable book has one scroll, not fixed pages.
+  final double? fraction;
+
   /// 0–100, clamped.
   double get percent {
+    final measured = fraction;
+    if (measured != null) return (measured * 100).clamp(0, 100).toDouble();
     if (totalPages <= 0) return 0;
     final ratio = (currentPage / totalPages) * 100;
     return ratio.clamp(0, 100).toDouble();
@@ -37,6 +44,7 @@ class ReadingProgress {
     int? secondsSpent,
     DateTime? lastReadAt,
     bool? completed,
+    double? fraction,
   }) {
     return ReadingProgress(
       documentId: documentId,
@@ -45,6 +53,7 @@ class ReadingProgress {
       secondsSpent: secondsSpent ?? this.secondsSpent,
       lastReadAt: lastReadAt ?? this.lastReadAt,
       completed: completed ?? this.completed,
+      fraction: fraction ?? this.fraction,
     );
   }
 
@@ -55,6 +64,7 @@ class ReadingProgress {
         'secondsSpent': secondsSpent,
         'lastReadAt': lastReadAt?.toIso8601String(),
         'completed': completed,
+        'fraction': fraction,
       };
 
   static ReadingProgress fromJson(Map<String, Object?> json) {

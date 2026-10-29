@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="725" height="615" viewBox="0 0 725 615" role="img" aria-labelledby="title desc">
+<title id="title">Circle with tangent at T</title><desc id="desc">Circle centered at O. OB, OC and OT are radii. BC is extended rightward; TC is a chord. TA is a tangent at T. Angle OCB is labeled y degrees and BCT is 37 degrees. Schematic, not to scale.</desc>
+<g stroke="black" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="298" cy="284" r="273"/>
+<path d="M 298 284 L 51 408"/>
+<path d="M 298 284 L 545 408"/>
+<path d="M 298 284 L 298 557"/>
+<path d="M 51 408 L 545 408"/>
+<path d="M 298 557 L 545 408"/>
+<path d="M 545 408 H 703 M 72 557 H 621"/>
+<path d="M 470.8227029243235 370.76119499034866 A 83 83 0 0 0 462.0 408.0" stroke-width="1.8"/>
+<path d="M 478.0 408.0 A 67 67 0 0 0 487.6301129351476 442.6077456383117" stroke-width="1.8"/>
+</g><g fill="black"><path d="M 703 408 L 668 399 L 675 408 L 668 417 Z"/><path d="M 621 557 L 586 548 L 593 557 L 586 566 Z"/></g>
+<g font-family="Times New Roman, Georgia, serif" font-size="36" fill="black" text-anchor="middle">
+<text x="298" y="260">O</text>
+<text x="24" y="428">B</text>
+<text x="561" y="447">C</text>
+<text x="298" y="600">T</text>
+<text x="650" y="569">A</text>
+<text x="433" y="394" font-style="italic">y°</text>
+<text x="449" y="452" font-style="italic">37°</text>
+</g></svg>

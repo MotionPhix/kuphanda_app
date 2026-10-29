@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -15,17 +17,20 @@ class BlockDocumentView extends StatelessWidget {
     required this.document,
     this.showAnswers = false,
     this.padding = const EdgeInsets.fromLTRB(20, 8, 20, 40),
+    this.controller,
   });
 
   final BlockDocument document;
   final bool showAnswers;
   final EdgeInsets padding;
+  final ScrollController? controller;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return ListView(
+      controller: controller,
       padding: padding,
       children: [
         Text(
@@ -351,6 +356,12 @@ class _EmbeddedFigure extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Declarative geometry wins over a file: it is data, so it scales with the
+    // screen and follows the theme instead of being pinned to a rendered asset.
+    if (data['points'] is Map && data['circle'] is Map) {
+      return _GeometryFigure(data: data);
+    }
+
     final asset = data['asset'] as String?;
     final caption = (data['alt'] ?? data['caption']) as String?;
 
@@ -556,4 +567,260 @@ class _FigureAsset extends StatelessWidget {
           _FigurePlaceholder(label: caption ?? 'Figure not available'),
     );
   }
+}
+
+/// Draws a geometry diagram from points, segments and angles than from pixels.
+///
+/// The whole figure is a few hundred bytes of numbers, so it scales with the
+/// screen, prints crisply and can be re-themed. This is the format worth asking
+/// authors for when a diagram is line art rather than a photograph.
+class _GeometryFigure extends StatelessWidget {
+  const _GeometryFigure({required this.data});
+
+  final Map<String, Object?> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final box = _GeometryModel.bounds(data);
+    final aspect = box.width <= 0 || box.height <= 0
+        ? 1.0
+        : (box.width / box.height).clamp(0.4, 2.5);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: AspectRatio(
+        aspectRatio: aspect,
+        child: CustomPaint(
+          painter: _GeometryPainter(
+            model: _GeometryModel(data),
+            ink: theme.colorScheme.onSurface,
+            labelStyle: theme.textTheme.bodyMedium ?? const TextStyle(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Parsed geometry. Kept separate from painting so the maths can be tested.
+class _GeometryModel {
+  _GeometryModel(this.data)
+      : points = _points(data),
+        center = _circleCenter(data),
+        radius = _radius(data);
+
+  final Map<String, Object?> data;
+  final Map<String, Offset> points;
+  final Offset center;
+  final double radius;
+
+  static Map<String, Offset> _points(Map<String, Object?> data) {
+    final raw = data['points'];
+    if (raw is! Map) return const {};
+
+    return {
+      for (final entry in raw.entries)
+        if (entry.value is List && (entry.value as List).length >= 2)
+          entry.key.toString(): Offset(
+            ((entry.value as List)[0] as num).toDouble(),
+            ((entry.value as List)[1] as num).toDouble(),
+          ),
+    };
+  }
+
+  static Offset _circleCenter(Map<String, Object?> data) {
+    final circle = data['circle'];
+    if (circle is Map && circle['center'] is List) {
+      final c = circle['center'] as List;
+      return Offset((c[0] as num).toDouble(), (c[1] as num).toDouble());
+    }
+    return Offset.zero;
+  }
+
+  static double _radius(Map<String, Object?> data) {
+    final circle = data['circle'];
+    if (circle is Map && circle['radius'] is num) {
+      return (circle['radius'] as num).toDouble();
+    }
+    return 0;
+  }
+
+  List<List<String>> get lines {
+    final raw = data['lines'];
+    if (raw is! List) return const [];
+
+    return [
+      for (final line in raw)
+        if (line is List && line.length >= 2) [line[0].toString(), line[1].toString()],
+    ];
+  }
+
+  List<({String a, String vertex, String b, String? label})> get angles {
+    final raw = data['angles'];
+    if (raw is! List) return const [];
+
+    return [
+      for (final angle in raw)
+        if (angle is Map && angle['points'] is List && (angle['points'] as List).length >= 3)
+          (
+            a: (angle['points'] as List)[0].toString(),
+            vertex: (angle['points'] as List)[1].toString(),
+            b: (angle['points'] as List)[2].toString(),
+            label: angle['label'] as String?,
+          ),
+    ];
+  }
+
+  /// The drawing area in model units, padded so labels are never clipped.
+  static Rect bounds(Map<String, Object?> data) {
+    final model = _GeometryModel(data);
+    var left = model.center.dx - model.radius;
+    var top = model.center.dy - model.radius;
+    var right = model.center.dx + model.radius;
+    var bottom = model.center.dy + model.radius;
+
+    for (final p in model.points.values) {
+      left = left < p.dx ? left : p.dx;
+      top = top < p.dy ? top : p.dy;
+      right = right > p.dx ? right : p.dx;
+      bottom = bottom > p.dy ? bottom : p.dy;
+    }
+
+    const pad = 26.0;
+    return Rect.fromLTRB(left - pad, top - pad, right + pad, bottom + pad);
+  }
+}
+
+class _GeometryPainter extends CustomPainter {
+  _GeometryPainter({
+    required this.model,
+    required this.ink,
+    required this.labelStyle,
+  });
+
+  final _GeometryModel model;
+  final Color ink;
+  final TextStyle labelStyle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final box = _GeometryModel.bounds(model.data);
+    if (box.width <= 0 || box.height <= 0) return;
+
+    final scale = (size.width / box.width) < (size.height / box.height)
+        ? size.width / box.width
+        : size.height / box.height;
+    final dx = (size.width - box.width * scale) / 2;
+    final dy = (size.height - box.height * scale) / 2;
+
+    Offset toCanvas(Offset p) =>
+        Offset((p.dx - box.left) * scale + dx, (p.dy - box.top) * scale + dy);
+
+    final stroke = Paint()
+      ..color = ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+
+    if (model.radius > 0) {
+      canvas.drawCircle(toCanvas(model.center), model.radius * scale, stroke);
+    }
+
+    for (final line in model.lines) {
+      final a = model.points[line[0]];
+      final b = model.points[line[1]];
+      if (a != null && b != null) canvas.drawLine(toCanvas(a), toCanvas(b), stroke);
+    }
+
+    final dot = Paint()..color = ink;
+    for (final entry in model.points.entries) {
+      canvas.drawCircle(toCanvas(entry.value), 2.2, dot);
+      _label(canvas, entry.key, toCanvas(entry.value), model.center, scale);
+    }
+
+    for (final angle in model.angles) {
+      _arc(canvas, angle.a, angle.vertex, angle.b, angle.label, toCanvas, scale);
+    }
+  }
+
+  void _label(Canvas canvas, String text, Offset at, Offset center, double scale) {
+    final outward = at - (Offset(center.dx, center.dy));
+    final normalised = outward.distance == 0 ? Offset.zero : outward / outward.distance;
+    final position = at + normalised * 15;
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: labelStyle.copyWith(
+          color: ink,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    painter.paint(
+      canvas,
+      position - Offset(painter.width / 2, painter.height / 2),
+    );
+  }
+
+  void _arc(
+    Canvas canvas,
+    String a,
+    String vertex,
+    String b,
+    String? label,
+    Offset Function(Offset) toCanvas,
+    double scale,
+  ) {
+    final p1 = model.points[a];
+    final v = model.points[vertex];
+    final p2 = model.points[b];
+    if (p1 == null || v == null || p2 == null) return;
+
+    final centre = toCanvas(v);
+    final start = math.atan2(p1.dy - v.dy, p1.dx - v.dx);
+    final end = math.atan2(p2.dy - v.dy, p2.dx - v.dx);
+    var sweep = end - start;
+
+    while (sweep <= -math.pi) {
+      sweep += 2 * math.pi;
+    }
+    while (sweep > math.pi) {
+      sweep -= 2 * math.pi;
+    }
+
+    final radius = 26.0 * scale.clamp(0.6, 2.0);
+    canvas.drawArc(
+      Rect.fromCircle(center: centre, radius: radius),
+      start,
+      sweep,
+      false,
+      Paint()
+        ..color = ink
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1,
+    );
+
+    if (label == null) return;
+
+    final mid = start + sweep / 2;
+    final at = centre + Offset(math.cos(mid), math.sin(mid)) * (radius + 12);
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: labelStyle.copyWith(color: ink, fontSize: 12)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    painter.paint(canvas, at - Offset(painter.width / 2, painter.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _GeometryPainter old) => old.data != data;
+}
+
+extension on _GeometryPainter {
+  Map<String, Object?> get data => model.data;
 }
