@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\Document;
+use App\Services\Library\BlockAudit;
 use Illuminate\Console\Command;
 
 /**
- * Checks that a structured paper adds up before it is trusted.
+ * Checks that structured papers add up before they are trusted.
  *
- * A wrong mark total is worse than no total: a learner practises against it and
- * a teacher cannot award a fair score. This reports rather than repairs, because
- * only a human knows whether a missing 2 marks belongs to part (b) or (c).
+ * The rules live in BlockAudit so this command, the publisher and the tests all
+ * agree; a second copy of the arithmetic here is how a paper can pass one check
+ * and fail another.
  */
 final class AuditBlockDocuments extends Command
 {
@@ -20,7 +21,7 @@ final class AuditBlockDocuments extends Command
 
     protected $description = 'Verify that block documents reconcile their marks and structure';
 
-    public function handle(): int
+    public function handle(BlockAudit $audit): int
     {
         $query = Document::query()->whereNotNull('blocks');
 
@@ -39,66 +40,22 @@ final class AuditBlockDocuments extends Command
         $failures = 0;
 
         foreach ($documents as $document) {
-            $blocks = $document->blocks['blocks'] ?? [];
-            $questions = array_values(array_filter(
-                $blocks,
-                static fn (array $block): bool => ($block['type'] ?? null) === 'question'
+            $report = $audit->inspect(
+                $document->blocks['blocks'] ?? [],
+                $document->blocks['subtitle'] ?? null,
+            );
+
+            $status = $report['issues'] === [] ? '<fg=green>ok</>' : '<fg=yellow>needs review</>';
+
+            $this->line(sprintf(
+                '%s — %d questions, %d marks: %s',
+                $document->id,
+                $report['questions'],
+                $report['marks'],
+                $status,
             ));
 
-            $sum = 0;
-            $issues = [];
-
-            foreach ($questions as $question) {
-                $label = $question['label'] ?? '?';
-                $parts = $question['parts'] ?? [];
-                $partSum = 0;
-                $missing = 0;
-
-                foreach ($parts as $part) {
-                    if (! isset($part['marks'])) {
-                        $missing++;
-                        continue;
-                    }
-
-                    $partSum += (int) $part['marks'];
-                }
-
-                $declared = isset($question['marks']) ? (int) $question['marks'] : null;
-
-                if ($parts !== [] && $declared !== null && $partSum !== $declared) {
-                    $issues[] = sprintf(
-                        '%s: parts total %d but question says %d',
-                        $label,
-                        $partSum,
-                        $declared
-                    );
-                }
-
-                if ($missing > 0) {
-                    $issues[] = sprintf('%s: %d part(s) without marks', $label, $missing);
-                }
-
-                $sum += $declared ?? $partSum;
-
-                if (trim((string) ($question['text'] ?? '')) === '') {
-                    $issues[] = sprintf('%s: empty stem', $label);
-                }
-            }
-
-            $expected = null;
-
-            if (preg_match('/(\d{2,3})\s*marks/', (string) $document->blocks['subtitle'] ?? '', $match) === 1) {
-                $expected = (int) $match[1];
-            }
-
-            if ($expected !== null && $sum !== $expected) {
-                $issues[] = sprintf('total %d marks, document states %d (short by %d)', $sum, $expected, $expected - $sum);
-            }
-
-            $status = $issues === [] ? '<fg=green>ok</>' : '<fg=yellow>needs review</>';
-            $this->line(sprintf('%s — %d questions, %d marks: %s', $document->id, count($questions), $sum, $status));
-
-            foreach ($issues as $issue) {
+            foreach ($report['issues'] as $issue) {
                 $this->line('    '.$issue);
                 $failures++;
             }

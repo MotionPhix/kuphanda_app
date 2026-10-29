@@ -91,3 +91,56 @@ it('allows a deliberate override', function (): void {
 
     expect($document->fresh()->is_published)->toBeTrue();
 });
+it('counts nested sub-parts and ignores unmarked containers', function (): void {
+    $blocks = [[
+        'type' => 'question',
+        'label' => '7.',
+        'marks' => 6,
+        'text' => 'Table 1 shows farm gate and retail prices.',
+        'parts' => [[
+            'label' => 'i.',
+            'text' => 'Calculate the marketing margins for each crop:',
+            'marks' => null,
+            'parts' => [
+                ['label' => '(1)', 'text' => 'Irish potatoes', 'marks' => 2],
+                ['label' => '(2)', 'text' => 'Onions.', 'marks' => 2],
+            ],
+        ], [
+            'label' => 'ii.',
+            'text' => '',
+            'marks' => null,
+            'parts' => [
+                ['label' => '(1)', 'text' => 'Which produce has the smaller margin?', 'marks' => 1],
+                ['label' => '(2)', 'text' => 'State one possible cause.', 'marks' => 1],
+            ],
+        ]],
+    ]];
+
+    $report = app(BlockAudit::class)->inspect($blocks, 'Mock paper, 6 marks');
+
+    expect($report['marks'])->toBe(6)
+        ->and($report['issues'])->toBe([]);
+});
+
+it('flags a nested leaf that has no mark', function (): void {
+    $blocks = [[
+        'type' => 'question',
+        'label' => '3.',
+        'marks' => null,
+        'text' => 'Seed treatment.',
+        'parts' => [[
+            'label' => 'a.',
+            'text' => 'Importance of each:',
+            'parts' => [
+                ['label' => 'i.', 'text' => 'Scarification', 'marks' => 1],
+                ['label' => 'ii.', 'text' => 'Inoculation'],
+            ],
+        ]],
+    ]];
+
+    $report = app(BlockAudit::class)->inspect($blocks);
+
+    expect($report['marks'])->toBe(1)
+        ->and($report['issues'])->toHaveCount(1)
+        ->and($report['issues'][0])->toContain('1 part(s) without marks');
+});

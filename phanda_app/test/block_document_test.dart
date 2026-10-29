@@ -172,5 +172,101 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('renders nested parts and indents each level', (tester) async {
+      const document = BlockDocument(
+        title: 'Q7',
+        blocks: [
+          DocumentBlock(
+            type: 'question',
+            raw: {
+              'label': '7.',
+              'marks': 6,
+              'text': 'Table 1 shows farm gate and retail prices.',
+              'parts': [
+                {
+                  'label': 'i.',
+                  'text': 'Calculate the marketing margins:',
+                  'parts': [
+                    {'label': '(1)', 'text': 'Irish potatoes', 'marks': 2},
+                    {'label': '(2)', 'text': 'Onions.', 'marks': 2},
+                  ],
+                },
+                {
+                  'label': 'ii.',
+                  'text': '',
+                  'parts': [
+                    {
+                      'label': '(1)',
+                      'text': 'Which produce has the smaller margin?',
+                      'marks': 1,
+                    },
+                    {
+                      'label': '(2)',
+                      'text': 'State one possible cause.',
+                      'marks': 1,
+                    },
+                  ],
+                },
+              ],
+            },
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+      );
+
+      expect(find.text('i.'), findsOneWidget);
+      expect(find.text('ii.'), findsOneWidget);
+      // Both sub-lists share the same labels, so each appears twice.
+      expect(find.text('(1)'), findsNWidgets(2));
+      expect(find.text('(2)'), findsNWidgets(2));
+      expect(find.text('6 marks'), findsOneWidget);
+
+      // The second level must be visibly inset, otherwise a learner cannot tell
+      // (1) from (2) apart from i.
+      final parentLeft =
+          tester.getTopLeft(find.text('Calculate the marketing margins:')).dx;
+      final childLeft = tester.getTopLeft(find.text('Irish potatoes')).dx;
+      expect(childLeft, greaterThan(parentLeft));
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('does not invent a mark for a container part', (tester) async {
+      const document = BlockDocument(
+        title: 'Q3',
+        blocks: [
+          DocumentBlock(
+            type: 'question',
+            raw: {
+              'label': '3.',
+              'marks': 2,
+              'text': 'Seed treatment for pasture.',
+              'parts': [
+                {
+                  'label': 'a.',
+                  'text': 'Importance of each:',
+                  'marks': null,
+                  'parts': [
+                    {'label': 'i.', 'text': 'Scarification', 'marks': 2},
+                  ],
+                },
+              ],
+            },
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+      );
+
+      expect(find.text('2 marks'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

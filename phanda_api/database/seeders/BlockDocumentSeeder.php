@@ -22,11 +22,20 @@ final class BlockDocumentSeeder extends Seeder
 
     private const PAPER_FILE = 'blocks-msce-maths-2002-p1.json';
 
+    private const AGRICULTURE_ID = 'ref-msce-agriculture-2017-p1';
+
+    private const AGRICULTURE_FILE = 'blocks-msce-agriculture-2017-p1.json';
+
     public function run(): void
     {
         // Independent of the mechanics sample so a partially seeded database
         // still gets the published paper.
         $this->publishPaper();
+
+        // Stored unpublished on purpose: the paper only reaches learners if
+        // `documents:publish` accepts its audit, so a parse regression cannot
+        // slip into the catalogue through a seeder run.
+        $this->storeAgriculturePaper();
 
         $document = Document::query()->find(self::TARGET);
 
@@ -119,5 +128,48 @@ final class BlockDocumentSeeder extends Seeder
         );
 
         $this->command?->info('Published '.self::PAPER_ID.'.');
+    }
+
+    /**
+     * Imports the parsed Agriculture paper as a draft.
+     */
+    private function storeAgriculturePaper(): void
+    {
+        $path = database_path('seeders/files/'.self::AGRICULTURE_FILE);
+        $raw = @file_get_contents($path);
+
+        if ($raw === false) {
+            $this->command?->warn('Paper skipped: '.self::AGRICULTURE_FILE.' is missing.');
+
+            return;
+        }
+
+        /** @var array<string, mixed> $json */
+        $json = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+
+        Document::query()->updateOrCreate(
+            ['id' => self::AGRICULTURE_ID],
+            [
+                'subject_id' => 'agriculture',
+                'title' => $json['title'] ?? 'Agriculture Paper 1',
+                'form' => 4,
+                'kind' => 'pastPaper',
+                'format' => 'blocks',
+                'blocks' => [
+                    'subtitle' => $json['subtitle'] ?? null,
+                    'blocks' => $json['blocks'] ?? [],
+                ],
+                'description' => 'Mock Paper 1 with nested parts, reflowable on a phone.',
+                'pages' => 13,
+                'year' => 2017,
+                'paper_number' => 1,
+                'access_tier' => 'free',
+                'price_mwk' => 0,
+                'author' => 'Mzuzu Diocese',
+                'language' => 'English',
+            ],
+        );
+
+        $this->command?->info('Stored draft '.self::AGRICULTURE_ID.'.');
     }
 }

@@ -33,14 +33,13 @@ final class BlockAudit
             $partSum = 0;
             $missing = 0;
 
+            // Marks belong to answer-bearing leaves. A part that only groups
+            // sub-parts ("c. State any one way in which each of the following
+            // ...") carries no mark of its own, and inventing one to satisfy a
+            // total is exactly how a paper ends up wrong.
             foreach ($parts as $part) {
-                if (! isset($part['marks'])) {
-                    $missing++;
-
-                    continue;
-                }
-
-                $partSum += (int) $part['marks'];
+                $missing += $this->unmarkedLeaves($part);
+                $partSum += $this->leafMarks($part);
             }
 
             $declared = isset($question['marks']) ? (int) $question['marks'] : null;
@@ -74,5 +73,49 @@ final class BlockAudit
         }
 
         return ['questions' => count($questions), 'marks' => $sum, 'issues' => $issues];
+    }
+
+    /**
+     * Marks carried by one part, counting only answer-bearing leaves.
+     *
+     * @param  array<string, mixed>  $part
+     */
+    private function leafMarks(array $part): int
+    {
+        $children = $part['parts'] ?? [];
+
+        if (is_array($children) && $children !== []) {
+            $total = 0;
+
+            foreach ($children as $child) {
+                $total += is_array($child) ? $this->leafMarks($child) : 0;
+            }
+
+            return $total;
+        }
+
+        return (int) ($part['marks'] ?? 0);
+    }
+
+    /**
+     * Leaves that should carry a mark but do not.
+     *
+     * @param  array<string, mixed>  $part
+     */
+    private function unmarkedLeaves(array $part): int
+    {
+        $children = $part['parts'] ?? [];
+
+        if (is_array($children) && $children !== []) {
+            $missing = 0;
+
+            foreach ($children as $child) {
+                $missing += is_array($child) ? $this->unmarkedLeaves($child) : 0;
+            }
+
+            return $missing;
+        }
+
+        return isset($part['marks']) ? 0 : 1;
     }
 }

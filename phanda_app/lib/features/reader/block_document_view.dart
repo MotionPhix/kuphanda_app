@@ -273,33 +273,81 @@ class _QuestionBlock extends StatelessWidget {
                 data: (block.raw['figure'] as Map).cast<String, Object?>(),
               ),
             ),
-          for (final part in block.parts) ...[
-            const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 30,
-                  child: Text(
-                    part.label ?? '',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    part.text,
-                    style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          _PartsList(parts: block.parts),
           if (showAnswer && answer.isNotEmpty) ...[
             const SizedBox(height: 12),
             _AnswerBlock(steps: answer),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Question parts, nested as deep as the paper goes.
+///
+/// A structured paper nests parts: "7. i. (1) Irish potatoes". Each level is
+/// indented rather than numbered into a flat list, because the numbering is the
+/// exam's own and rewriting it would mislead a learner about what to answer.
+class _PartsList extends StatelessWidget {
+  const _PartsList({required this.parts, this.depth = 0});
+
+  final List<DocumentBlock> parts;
+  final int depth;
+
+  @override
+  Widget build(BuildContext context) {
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.only(left: depth == 0 ? 0 : 14, top: depth == 0 ? 10 : 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final part in parts)
+            Padding(
+              padding: EdgeInsets.only(top: depth == 0 ? 10 : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: depth == 0 ? 30 : 34,
+                        child: Text(
+                          part.label ?? '',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: MathText(
+                          part.text,
+                          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                        ),
+                      ),
+                      if (part.marks != null) ...[
+                        const SizedBox(width: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${part.marks}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  _PartsList(parts: part.parts, depth: depth + 1),
+                ],
+              ),
+            ),
         ],
       ),
     );
