@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="285" viewBox="0 0 1050 285" role="img" aria-labelledby="title desc">
+<title id="title">Parallel lines and transversals</title><desc id="desc">Four parallel horizontal lines AB, CD, EF and GH. QR crosses them at Q, X, Y and R. SU crosses EF at T and meets GH at U. UD connects U to D. Measurements SU 9 cm and UD 8 cm; a 5 cm label appears above EF to the right of T. Schematic, not to scale.</desc>
+<defs><marker id="dimensionArrow" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 5 L 10 1 L 7 5 L 10 9 Z" fill="black"/></marker></defs>
+<g stroke="black" fill="none" stroke-linecap="round">
+<path d="M 170.00 30.00 L 1006.00 30.00" stroke-width="1.4"/>
+<path d="M 120.00 95.00 L 969.00 95.00" stroke-width="1.4"/>
+<path d="M 79.00 164.00 L 968.00 164.00" stroke-width="1.4"/>
+<path d="M 38.00 233.00 L 936.00 233.00" stroke-width="1.4"/>
+<path d="M 475.00 30.00 L 362.00 233.00" stroke-width="2"/>
+<path d="M 644.00 30.00 L 797.00 233.00" stroke-width="2"/>
+<path d="M 797.00 233.00 L 969.00 95.00" stroke-width="2"/>
+<path d="M 644.00 30.00 L 624.83 44.45" stroke-width="0.9"/>
+<path d="M 797.00 233.00 L 777.83 247.45" stroke-width="0.9"/>
+<path d="M 624.83 44.45 L 777.83 247.45" stroke-width="1" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>
+<path d="M 797.00 233.00 L 812.65 252.50" stroke-width="0.9"/>
+<path d="M 969.00 95.00 L 984.65 114.50" stroke-width="0.9"/>
+<path d="M 812.65 252.50 L 984.65 114.50" stroke-width="1" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>
+</g><g fill="black">
+<path d="M 811.5 30 L 786.5 25 L 790 30 L 786.5 35 Z"/>
+<path d="M 815.5 95 L 790.5 90 L 794 95 L 790.5 100 Z"/>
+<path d="M 825.5 164 L 800.5 159 L 804 164 L 800.5 169 Z"/>
+<path d="M 879.5 233 L 854.5 228 L 858 233 L 854.5 238 Z"/>
+</g><g font-family="Times New Roman, Georgia, serif" font-size="24" fill="black" text-anchor="middle">
+<text x="148" y="38">A</text>
+<text x="1028" y="36">B</text>
+<text x="99" y="102">C</text>
+<text x="988" y="94">D</text>
+<text x="61" y="172">E</text>
+<text x="982" y="172">F</text>
+<text x="18" y="241">G</text>
+<text x="951" y="241">H</text>
+<text x="466" y="21">Q</text>
+<text x="645" y="22">S</text>
+<text x="348" y="224">R</text>
+<text x="795" y="276">U</text>
+<text x="426" y="86">X</text>
+<text x="386" y="154">Y</text>
+<text x="737" y="189">T</text>
+<g transform="translate(696 146) rotate(53)"><rect x="-28" y="-21" width="56" height="26" fill="white"/><text>9 cm</text></g>
+<g transform="translate(815 148) rotate(0)"><rect x="-28" y="-21" width="56" height="26" fill="white"/><text>5 cm</text></g>
+<g transform="translate(905 190) rotate(-39)"><rect x="-28" y="-21" width="56" height="26" fill="white"/><text>8 cm</text></g>
+</g></svg>

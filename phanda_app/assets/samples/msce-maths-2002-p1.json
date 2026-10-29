@@ -221,7 +221,7 @@
       "difficulty": 3,
       "text": "In Figure 5, AB is parallel to CD, EF and GH. The parallel lines AB, CD, EF and GH intersect QR such that QX = XY = YR. SU = 9 cm, DU = 8 cm and TV = 5 cm. Prove that angle TUV = 90°.",
       "figure": {
-        "asset": "assets/samples/figures/fig5-parallel-lines.png",
+        "asset": "assets/samples/figures/fig5-parallel-lines.svg",
         "alt": "Four parallel lines crossed by two transversals with lengths marked"
       }
     },
@@ -265,7 +265,7 @@
       "difficulty": 3,
       "text": "Figure 6 shows travel graphs of a minibus that leaves Mzuzu at 07:00 hours and arrives in Blantyre at 15:00 hours, and a car that leaves Blantyre at 07:30 hours and arrives in Mzuzu at 14:30 hours. From Mzuzu the minibus travels at a constant speed and arrives in Lilongwe at 10:30 hours and immediately proceeds to Blantyre at another constant speed. From Blantyre the car travels at a constant speed and arrives in Lilongwe at 10:00 hours. At noon the car leaves for Mzuzu at a constant speed. Calculate the average speed of the minibus during the time when the car stopped in Lilongwe.",
       "figure": {
-        "asset": "assets/samples/figures/fig6-travel-graph.png",
+        "asset": "assets/samples/figures/fig6-travel-graph.svg",
         "alt": "Distance-time graph from Blantyre to Mzuzu via Lilongwe for a minibus and a car"
       }
     },
@@ -293,7 +293,7 @@
       "difficulty": 3,
       "text": "In Figure 7, triangle ABC is similar to triangle BAD. If the area of triangle ABC = 72 cm², the area of triangle BAD = 200 cm² and BC = 6 cm, calculate the length of AD.",
       "figure": {
-        "asset": "assets/samples/figures/fig7-similar-triangles.png",
+        "asset": "assets/samples/figures/fig7-similar-triangles.svg",
         "alt": "Two triangles sharing side AB with diagonals drawn"
       }
     },
@@ -305,7 +305,7 @@
       "difficulty": 3,
       "text": "In Figure 8, triangle ABC is isosceles in which AB = AC and angle BAC = 140°. AB and AC are produced to D and E respectively. The bisectors of angle CBD and angle BCE meet at O. Calculate angle BOC.",
       "figure": {
-        "asset": "assets/samples/figures/fig8-isosceles.png",
+        "asset": "assets/samples/figures/fig8-isosceles.svg",
         "alt": "Isosceles triangle with base angles produced and bisectors meeting at O"
       }
     },

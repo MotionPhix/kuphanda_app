@@ -154,6 +154,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
           return BlockDocumentView(
             document: document,
             showAnswers: _showAnswers,
+              controller: _scroll,
           );
         },
       ),

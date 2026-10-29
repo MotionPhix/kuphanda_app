@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="910" height="630" viewBox="0 0 455 315" role="img" aria-labelledby="title desc">
+<title id="title">Triangles ABD and ABC with crossing diagonals</title>
+<desc id="desc">A and B form a horizontal base. D is above and to the right of A; C is above and to the right of B. Segments AD, DB, AC and CB join the vertices. AC and DB cross at an unmarked, unlabeled intersection. Schematic, not to scale.</desc>
+<g fill="none" stroke="black" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+<line x1="31" y1="277" x2="386" y2="277"/>
+<line x1="31" y1="277" x2="133" y2="42"/>
+<line x1="133" y1="42" x2="386" y2="277"/>
+<line x1="31" y1="277" x2="433" y2="42"/>
+<line x1="433" y1="42" x2="386" y2="277"/>
+</g><g fill="black" font-family="Times New Roman, Georgia, serif" font-size="25" text-anchor="middle">
+<text x="14" y="303">A</text>
+<text x="404" y="303">B</text>
+<text x="438" y="28">C</text>
+<text x="133" y="26">D</text>
+</g></svg>

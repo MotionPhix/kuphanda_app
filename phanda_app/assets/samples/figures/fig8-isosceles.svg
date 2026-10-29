@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1147.5" height="330" viewBox="0 0 765 220" role="img" aria-labelledby="title desc">
+<title id="title">Isosceles triangle ACB</title><desc id="desc">AC and AB have matching single ticks. Angle CAB is labeled 140 degrees. AC extends through C to E, and AB extends through B to D. C and B are joined to O below CB. Small unlabeled arcs mark the base angles. Not to scale.</desc>
+<g fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M 22.000 192.000 L 378.000 30.000"/>
+<path d="M 378.000 30.000 L 739.000 193.000"/>
+<path d="M 301.000 65.000 L 455.000 65.000"/>
+<path d="M 301.000 65.000 L 378.000 184.000"/>
+<path d="M 455.000 65.000 L 378.000 184.000"/>
+<path d="M 356.151 39.931 A 24 24 0 0 0 399.849 39.931" stroke-width="1"/>
+<path d="M 319.207 56.724 A 20 20 0 0 1 321.000 65.000" stroke-width="1"/>
+<path d="M 435.000 65.000 A 20 20 0 0 1 436.793 56.724" stroke-width="1"/>
+<path d="M 337.431 42.948 L 341.569 52.052"/>
+<path d="M 414.431 52.052 L 418.569 42.948"/>
+</g><g fill="black" font-family="Times New Roman, Georgia, serif" font-size="15" text-anchor="middle">
+<text x="377" y="22">A</text>
+<text x="291" y="60">C</text>
+<text x="465" y="60">B</text>
+<text x="378" y="205">O</text>
+<text x="12" y="204">E</text>
+<text x="749" y="205">D</text>
+<text x="378" y="60">140°</text></g></svg>
