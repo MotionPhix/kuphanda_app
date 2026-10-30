@@ -185,17 +185,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
-                if (!entry.onDevice && guide == null && !locked && !document.hasBlocks) ...[
-                  InfoBanner(
-                    tone: BannerTone.warning,
-                    icon: Icons.attach_file_rounded,
-                    title: 'Catalogue record — no file attached',
-                    message:
-                        'Kuphanda stores the details so you can find the paper. Attach the official '
-                        'PDF from this device to read it offline.',
-                  ),
-                  const SizedBox(height: 12),
-                ],
                 _PrimaryActions(
                   state: state,
                   document: document,
@@ -204,9 +193,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   progress: progress,
                   locked: locked,
                   busy: _busy,
-                  onRead: () => _openReader(context, state, document, entry, guide),
-                  onAttach: () => _attach(context, state, document),
-                  onDownload: () => _download(context, state, document),
+                   onRead: () => _openReader(context, state, document, entry, guide),
+                   onDownload: () => _download(context, state, document),
                   onPass: () => _openPass(context),
                 ),
                 if (state.hasRemoteFile(document.id)) ...[
@@ -268,9 +256,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       case 'remove-file':
         final confirmed = await confirmAction(
           context,
-          title: 'Remove the file?',
-          message: 'The document stays in your catalogue and your progress is kept. '
-              'You can attach the PDF again later.',
+           title: 'Remove the file?',
+           message: 'The document stays in your library and your progress is kept. '
+               'Add the file again whenever you want it on this phone.',
           confirmLabel: 'Remove',
         );
         if (confirmed) {
@@ -388,25 +376,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     titleController.dispose();
   }
 
-  Future<void> _attach(BuildContext context, AppState state, Document document) async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      final picked = await state.pickPdf();
-      if (picked == null) return;
-      await state.attachPdf(document.id, picked);
-      if (context.mounted) {
-        showSnack(context, '${picked.fileName} is now available offline.');
-      }
-    } on FormatException catch (error) {
-      if (context.mounted) showSnack(context, error.message, error: true);
-    } catch (error) {
-      if (context.mounted) showSnack(context, 'Could not attach the file: $error', error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
   Future<void> _download(BuildContext context, AppState state, Document document) async {
     if (_busy) return;
     setState(() => _busy = true);
@@ -475,7 +444,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (state.hasRemoteFile(document.id)) {
         _download(context, state, document);
       } else {
-        _attach(context, state, document);
+        showSnack(
+          context,
+          'This paper has no readable version yet — it is still being prepared.',
+        );
       }
       return;
     }
@@ -720,7 +692,6 @@ class _PrimaryActions extends StatelessWidget {
     required this.locked,
     required this.busy,
     required this.onRead,
-    required this.onAttach,
     required this.onDownload,
     required this.onPass,
   });
@@ -733,7 +704,6 @@ class _PrimaryActions extends StatelessWidget {
   final bool locked;
   final bool busy;
   final VoidCallback onRead;
-  final VoidCallback onAttach;
   final VoidCallback onDownload;
   final VoidCallback onPass;
 
@@ -782,9 +752,13 @@ class _PrimaryActions extends StatelessWidget {
       icon = Icons.download_rounded;
       action = onDownload;
     } else {
-      label = 'Attach the PDF';
-      icon = Icons.attach_file_rounded;
-      action = onAttach;
+      // Everything Kuphanda publishes is either read as blocks or downloaded as
+      // a file we host. There is no state where a learner supplies the file for
+      // a catalogue paper, so this is honest about the record rather than
+      // offering an action the learner cannot usefully complete.
+      label = 'Not readable yet';
+      icon = Icons.hourglass_empty_rounded;
+      action = null;
     }
 
     return Column(
@@ -1066,7 +1040,11 @@ class _Overview extends StatelessWidget {
             Text('Details', style: theme.textTheme.titleSmall),
             const Spacer(),
             Text(
-              entry.onDevice ? 'Available offline' : 'File not attached',
+              entry.onDevice
+                  ? 'Available offline'
+                  : document.hasBlocks
+                      ? 'Structured content'
+                      : 'Not on this phone',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: entry.onDevice ? AppColors.green : theme.colorScheme.onSurfaceVariant,
               ),

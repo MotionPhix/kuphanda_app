@@ -545,15 +545,20 @@ class AppState extends ChangeNotifier {
   void _releaseRetiredSampleProfile(AppSnapshot snapshot) {
     final profile = snapshot.profile;
 
-    // Never touch a snapshot that belongs to a real account, and require the
-    // whole sample identity — a partial match is someone's real profile.
-    final isRetiredSample = snapshot.accountId == null &&
-        snapshot.accountEmail == null &&
+    // The whole identity must match. A partial match is somebody's real
+    // profile; the full match is a fabricated one, so the worst case here is a
+    // genuine Chisomo Banda at Bwaila in Form 4 typing their name once more.
+    //
+    // Deliberately not conditioned on being signed out: the shortcut also ran
+    // while a session was live, which is exactly how it stranded a signed-in
+    // learner — their account was fine, their profile was now the sample, and
+    // onboarding was marked complete.
+    final isRetiredSample =
         profile.name == _retiredSampleProfile.name &&
-        profile.givenName == _retiredSampleProfile.givenName &&
-        profile.familyName == _retiredSampleProfile.familyName &&
-        profile.school == _retiredSampleProfile.school &&
-        profile.form == _retiredSampleProfile.form;
+            profile.givenName == _retiredSampleProfile.givenName &&
+            profile.familyName == _retiredSampleProfile.familyName &&
+            profile.school == _retiredSampleProfile.school &&
+            profile.form == _retiredSampleProfile.form;
 
     if (!isRetiredSample) return;
 
@@ -775,21 +780,6 @@ class AppState extends ChangeNotifier {
     if (!isStaff) throw const ApiException('Staff access is required.');
 
     await _api!.setStaffPublication(documentId, published);
-  }
-
-  Future<void> attachPdf(String documentId, PickedPdf picked) async {
-    final document = documentById(documentId);
-    if (document == null) throw StateError('Unknown document');
-
-    final previous = _snapshot.assets[documentId];
-    if (previous != null && previous.path != null) {
-      await _files.delete(previous);
-    }
-
-    final asset = await _files.store(documentId: documentId, picked: picked);
-    _snapshot.assets[documentId] = asset;
-    notifyListeners();
-    await _persistNow();
   }
 
   Future<Document> importPdf({

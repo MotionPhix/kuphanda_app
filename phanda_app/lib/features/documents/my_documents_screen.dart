@@ -8,9 +8,8 @@ import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/document_card.dart';
 import '../../data/models/document.dart';
-import '../../data/models/subject.dart';
-import '../../data/store/document_files.dart';
 import '../../state/app_state.dart';
+import 'import_document.dart';
 import 'sync_card.dart';
 
 enum _DocumentsFilter {
@@ -33,7 +32,6 @@ class MyDocumentsScreen extends StatefulWidget {
 class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   _DocumentsFilter _filter = _DocumentsFilter.offline;
   final _searchController = TextEditingController();
-  bool _busy = false;
 
   @override
   void dispose() {
@@ -75,15 +73,9 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                 subtitle: 'Library downloads and personal PDFs on this phone.',
                 actions: [
                   FilledButton.icon(
-                    onPressed: _busy ? null : () => _importDocument(context, state),
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Import'),
+                    onPressed: () => importDocumentFlow(context, state),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add a paper'),
                   ),
                 ],
               ),
@@ -123,10 +115,10 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                       : 'No files on this device',
                   message: _filter == _DocumentsFilter.saved
                       ? 'Tap the bookmark on any document to keep it here.'
-                      : 'Import a PDF from your phone, or open a catalogue record and attach '
-                          'the official paper. The two starter guides are already included.',
+                      : 'Add a paper or notes you already have on this phone — give it a name '
+                          'and it joins your library. The two starter guides are included.',
                   actionLabel: 'Import a PDF',
-                  onAction: () => _importDocument(context, state),
+                  onAction: () => importDocumentFlow(context, state),
                 )
               else ...[
                 Text(
@@ -158,143 +150,12 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     );
   }
 
-  Future<void> _importDocument(BuildContext context, AppState state) async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      final picked = await state.pickPdf();
-      if (picked == null || !context.mounted) return;
-
-      final controller = TextEditingController(text: _titleFromFile(picked.fileName));
-      var subjectId = state.profile.subjectIds.isEmpty
-          ? kSubjects.first.id
-          : state.profile.subjectIds.first;
-      var form = state.profile.form;
-      var kind = DocumentKind.notes;
-
-      final shouldImport = await showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        builder: (sheetContext) => StatefulBuilder(
-          builder: (sheetContext, setSheetState) => SheetBody(
-            title: 'Import a document',
-            subtitle: '${picked.fileName} · ${formatBytes(picked.sizeBytes)}',
-            actions: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(sheetContext, false),
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(sheetContext, true),
-                  child: const Text('Add to library'),
-                ),
-              ),
-            ],
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    prefixIcon: Icon(Icons.title_rounded),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('Subject', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final subject in kSubjects)
-                      ChoiceChip(
-                        label: Text(subject.shortName),
-                        selected: subjectId == subject.id,
-                        onSelected: (_) => setSheetState(() {
-                          subjectId = subject.id;
-                          if (!subject.forms.contains(form) && subject.forms.isNotEmpty) {
-                            form = subject.forms.first;
-                          }
-                        }),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text('Form', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final option in <int>[1, 2, 3, 4])
-                      ChoiceChip(
-                        label: Text('Form $option'),
-                        selected: form == option,
-                        onSelected: (_) => setSheetState(() => form = option),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text('Type', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final option in DocumentKind.values)
-                      ChoiceChip(
-                        label: Text(option.label),
-                        selected: kind == option,
-                        onSelected: (_) => setSheetState(() => kind = option),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'The file is copied into Kuphanda’s private folder. Removing it here does '
-                  'not touch the original.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      if (shouldImport == true) {
-        final document = await state.importPdf(
-          picked: picked,
-          title: controller.text,
-          subjectId: subjectId,
-          form: form,
-          kind: kind,
-        );
-        if (context.mounted) {
-          showSnack(context, '“${document.title}” is on this device.');
-        }
-      }
-      controller.dispose();
-    } on FormatException catch (error) {
-      if (context.mounted) showSnack(context, error.message, error: true);
-    } catch (error) {
-      if (context.mounted) showSnack(context, 'Could not import the file: $error', error: true);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
   Future<void> _removeFile(BuildContext context, AppState state, LibraryEntry entry) async {
     final confirmed = await confirmAction(
       context,
       title: 'Remove from this device?',
-      message: '“${entry.document.title}” stays in the catalogue and your progress is kept. '
-          'Attach the PDF again to keep reading.',
+      message: '“${entry.document.title}” stays in your library and your progress is kept. '
+          'Add the file again whenever you want it on this phone.',
       confirmLabel: 'Remove file',
     );
     if (confirmed) {
@@ -400,15 +261,3 @@ class _FileMenu extends StatelessWidget {
   }
 }
 
-String _titleFromFile(String fileName) {
-  final base = fileName.replaceAll(RegExp(r'\.pdf$', caseSensitive: false), '');
-  final cleaned = base.replaceAll(RegExp(r'[_-]+'), ' ').trim();
-  if (cleaned.isEmpty) return 'Imported document';
-  return cleaned
-      .split(RegExp(r'\s+'))
-      .map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}')
-      .join(' ');
-}
-
-/// Kept for the import sheet's preview when a picker returns a bare name.
-String fileNameFromPick(PickedPdf picked) => picked.fileName;

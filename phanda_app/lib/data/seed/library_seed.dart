@@ -288,9 +288,8 @@ List<Document> buildCatalogue({DateTime? now}) {
         form: form,
         kind: DocumentKind.pastPaper,
         description:
-            '$qualification ${subject.name}, $session $year, Paper $paper. Attach the official '
-            'question paper to work through it under timed conditions, then mark it with the '
-            'matching scheme.',
+            '$qualification ${subject.name}, $session $year, Paper $paper. Work through the '
+            'questions under timed conditions, then mark them against the matching scheme.',
         pages: 16 + ((paperIndex * 5) % 24),
         year: year,
         paperNumber: paper,

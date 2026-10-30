@@ -151,8 +151,8 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       ),
       body: _loadError != null || _controller == null
           ? _ReaderError(
-              message: _loadError?.toString() ?? 'This document has no file attached.',
-              hint: 'Attach the official PDF from the document screen, then try again.',
+              message: _loadError?.toString() ?? 'This document has no file on this phone.',
+              hint: 'Download it from the document screen, then try again.',
             )
           : Column(
               children: [

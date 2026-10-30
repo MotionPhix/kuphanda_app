@@ -113,10 +113,24 @@ void main() {
     expect(progress!.fraction, 0.5);
   });
 
-  test('a real learner with the same name is left alone', () async {
+  test('a signed-in learner holding the sample profile is released too',
+      () async {
+    // The shortcut could be pressed while a session was live, and that is the
+    // state it stranded: account intact, profile replaced by the sample.
     final snapshot = _retiredSampleSnapshot();
     snapshot.accountId = 4;
     snapshot.accountEmail = 'kingscrib1@gmail.com';
+
+    final state = await _initialized(snapshot);
+
+    expect(state.profile.onboardingComplete, isFalse);
+    expect(state.progressFor('ref-msce-agriculture-2017-p1'), isNotNull);
+  });
+
+  test('a partial match is treated as someone real and left alone', () async {
+    final snapshot = _retiredSampleSnapshot();
+    // Same name, a different school: a plausible real learner.
+    snapshot.profile = snapshot.profile.copyWith(school: 'Bwaila Day Secondary');
 
     final state = await _initialized(snapshot);
 

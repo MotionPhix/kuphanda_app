@@ -255,11 +255,13 @@ class DocumentTile extends StatelessWidget {
                             color: AppColors.green,
                             compact: true,
                           )
-                        else
-                          Pill(
-                            label: 'Add PDF',
-                            icon: Icons.attach_file_rounded,
-                            color: theme.colorScheme.onSurfaceVariant,
+                        // Everything Kuphanda publishes is read in the app or
+                        // downloaded; there is nothing for a learner to attach.
+                        else if (document.hasBlocks)
+                          const Pill(
+                            label: 'Readable',
+                            icon: Icons.menu_book_outlined,
+                            color: AppColors.green,
                             compact: true,
                           ),
                         if (document.year != null && document.kind != DocumentKind.pastPaper)

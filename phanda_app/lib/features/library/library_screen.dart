@@ -10,6 +10,7 @@ import '../../core/widgets/document_card.dart';
 import '../../data/library_query.dart';
 import '../../data/models/document.dart';
 import '../../data/models/subject.dart';
+import '../documents/import_document.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -75,6 +76,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       '${plural(state.documents.length, 'document')} · '
                       '${state.offlineDocuments.length} on this device',
                   actions: [
+                    // The only upload in the app: a paper of the learner's own,
+                    // named in a form. Nothing is ever attached to our records.
+                    IconButton(
+                      onPressed: () => importDocumentFlow(context, state),
+                      tooltip: 'Add your own paper',
+                      icon: const Icon(Icons.add_rounded),
+                    ),
                     IconButton(
                       onPressed: _openFilters,
                       tooltip: 'Filters',
@@ -240,8 +248,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: EmptyState(
                 icon: Icons.search_off_rounded,
                 title: 'Nothing matches',
-                message: 'Try a different subject, form or search term. '
-                    'Some records need a PDF attached before they can be read.',
+                message: 'Try a different subject, form or search term.',
                 actionLabel: 'Clear filters',
                 onAction: () => _update(const LibraryQuery()),
               ),
@@ -513,14 +520,6 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
                     contentPadding: EdgeInsets.zero,
                   ),
               ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Catalogue records without a file still appear here — open one to '
-            'attach the official PDF.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
