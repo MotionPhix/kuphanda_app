@@ -72,3 +72,19 @@ it('exposes the counts so the app can stop saying "6 pages"', function (): void 
         ->and($payload['questions'])->toBe(2)
         ->and($payload['block_marks'])->toBe(9);
 });
+
+it('reports the papers we ship in the units their subtitle promises', function (string $file, int $questions, int $marks): void {
+    // Pinned against the seeded payloads, not a fixture: if an edit changes how
+    // many questions a paper has, the number a learner reads changes with it and
+    // this fails first.
+    $payload = json_decode((string) file_get_contents(database_path('seeders/files/'.$file)), true);
+
+    $document = statsDocument(['blocks' => $payload]);
+    $stats = app(DocumentStats::class)->for($document);
+
+    expect($stats['questions'])->toBe($questions)
+        ->and($stats['marks'])->toBe($marks);
+})->with([
+    'maths 2002 paper I' => ['blocks-msce-maths-2002-p1.json', 24, 100],
+    'agriculture 2017 paper I' => ['blocks-msce-agriculture-2017-p1.json', 14, 100],
+]);
