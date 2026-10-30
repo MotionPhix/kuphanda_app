@@ -93,7 +93,7 @@ class ClassDetailScreen extends StatelessWidget {
                         style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
                       ),
                       Text(
-                        '${group.memberCount} learners',
+                        plural(group.memberCount, 'learner'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.75),
                         ),

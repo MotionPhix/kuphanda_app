@@ -54,8 +54,8 @@ class ClassesScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               InfoBanner(
-                message: 'A class code is six characters, like KPH4A2. Codes work without '
-                    'email, which is what most schools need.',
+                message: 'A class code is six characters and comes from your teacher. '
+                    'Codes work without email, which is what most schools need.',
                 icon: Icons.tag_rounded,
                 actionLabel: isTeacher ? 'Create a class' : null,
                 onAction: isTeacher ? () => _createClass(context, state) : null,
@@ -167,7 +167,7 @@ class ClassesScreen extends StatelessWidget {
                   style: const TextStyle(letterSpacing: 4, fontWeight: FontWeight.w600),
                   decoration: InputDecoration(
                     labelText: 'Class code',
-                    hintText: 'KPH4A2',
+                    hintText: 'Six characters',
                     errorText: error,
                     prefixIcon: const Icon(Icons.tag_rounded),
                   ),
@@ -348,7 +348,7 @@ class _ClassCard extends StatelessWidget {
                     Text(group.name, style: theme.textTheme.titleSmall),
                     const SizedBox(height: 2),
                     Text(
-                      '${group.teacherName} · ${group.memberCount} learners',
+                      '${group.teacherName} · ${plural(group.memberCount, 'learner')}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

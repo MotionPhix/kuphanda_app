@@ -1010,7 +1010,7 @@ class AppState extends ChangeNotifier {
   Future<ClassActionResult> joinClass(String rawCode) async {
     final code = rawCode.trim().toUpperCase();
     if (code.length != 6) {
-      return const ClassActionResult.error('A class code has six characters, like KPH4A2.');
+      return const ClassActionResult.error('A class code has six characters.');
     }
     if (_snapshot.classes.any((group) => group.code == code)) {
       return const ClassActionResult.error('You have already joined this class.');
