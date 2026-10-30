@@ -645,6 +645,10 @@ class SheetBody extends StatelessWidget {
         ),
         child: Align(
           alignment: Alignment.topCenter,
+          heightFactor: 1,
+          // Without an explicit factor an Align takes the biggest height it is
+          // offered, and a scroll-controlled sheet offers the whole screen — so
+          // a short form sat in a screen-tall sheet with dead space beneath it.
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620),
             child: Column(

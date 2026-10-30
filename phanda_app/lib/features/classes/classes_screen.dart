@@ -176,8 +176,10 @@ class ClassesScreen extends StatelessWidget {
                   },
                 ),
                 Text(
-                  'Demo codes you can try: KPH4A2 (Form 4 sciences), KPH4M8 '
-                  '(Form 4 mathematics), KPH2B7 (Form 2 mathematics).',
+                  // The three demo codes this used to list no longer exist: the
+                  // class and its code are created by a teacher now.
+                  'Your teacher reads the code out in class. It is six characters '
+                  'and works without an email address.',
                   style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
                         color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
                       ),
