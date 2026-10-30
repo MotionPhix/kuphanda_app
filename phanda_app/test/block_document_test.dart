@@ -238,7 +238,10 @@ void main() {
       expect(find.text('i.'), findsOneWidget);
       expect(find.text('ii.'), findsOneWidget);
       // Both sub-lists share the same labels, so each appears twice.
-      expect(find.text('(1)'), findsNWidgets(2));
+      // "ii." carries no text of its own, so the paper prints it on the same
+      // line as its first item and the reader does the same.
+      expect(find.text('(1)'), findsOneWidget);
+      expect(find.text('ii. (1)'), findsOneWidget);
       expect(find.text('(2)'), findsNWidgets(2));
       expect(find.text('6 marks'), findsOneWidget);
 

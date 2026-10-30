@@ -73,7 +73,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         ],
       ),
       body: ListView(
-        padding: EdgeInsets.zero,
+        // The last two detail rows were disappearing under the system bar.
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewPaddingOf(context).bottom,
+        ),
         children: [
           ResponsivePage(
             child: Column(

@@ -30,9 +30,13 @@ class BlockDocumentView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // The last question must clear the system navigation bar; without this
+    // the final row sits underneath it and cannot be read.
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+
     return ListView(
       controller: controller,
-      padding: padding,
+      padding: padding.add(EdgeInsets.only(bottom: bottomInset)),
       children: [
         Text(
           document.title,
@@ -258,20 +262,25 @@ class _QuestionBlock extends StatelessWidget {
                 )
               // A question the scan left unweighted says so, rather than
               // reading as worth nothing.
-              else if (block.raw['needs_review'] == true)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: theme.colorScheme.outlineVariant),
-                  ),
-                  child: Text(
-                    'marks unconfirmed',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
+               else if (block.raw['needs_review'] == true)
+                 Flexible(
+                   child: Container(
+                     padding:
+                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                     decoration: BoxDecoration(
+                       borderRadius: BorderRadius.circular(20),
+                       border: Border.all(color: theme.colorScheme.outlineVariant),
+                     ),
+                     child: Text(
+                       'marks unconfirmed',
+                       maxLines: 1,
+                       overflow: TextOverflow.ellipsis,
+                       style: theme.textTheme.labelSmall?.copyWith(
+                         color: theme.colorScheme.onSurfaceVariant,
+                       ),
+                     ),
+                   ),
+                 ),
             ],
           ),
           const SizedBox(height: 6),
@@ -330,10 +339,15 @@ class _QuestionBlock extends StatelessWidget {
 /// indented rather than numbered into a flat list, because the numbering is the
 /// exam's own and rewriting it would mislead a learner about what to answer.
 class _PartsList extends StatelessWidget {
-  const _PartsList({required this.parts, this.depth = 0});
+  const _PartsList({required this.parts, this.depth = 0, this.prefix});
 
   final List<DocumentBlock> parts;
   final int depth;
+
+  /// A heading label ("b.") that the paper prints on the same line as its
+  /// first sub-part, so it is carried into that child instead of standing
+  /// alone above a gap.
+  final String? prefix;
 
   @override
   Widget build(BuildContext context) {
@@ -346,9 +360,16 @@ class _PartsList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final part in parts)
-            Padding(
-              padding: EdgeInsets.only(top: depth == 0 ? 10 : 0),
+          for (final (index, part) in parts.indexed)
+            Builder(builder: (context) {
+              // A part that only introduces sub-parts ("b." over "(i)" and
+              // "(ii)") has no text of its own. Rendered like a normal row it
+              // left a stray letter floating above a gap, so it reads as a
+              // group heading instead.
+              final isHeading = part.text.trim().isEmpty && part.parts.isNotEmpty;
+
+              return Padding(
+              padding: EdgeInsets.only(top: depth == 0 ? (isHeading ? 8 : 10) : 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -358,18 +379,26 @@ class _PartsList extends StatelessWidget {
                       SizedBox(
                         width: depth == 0 ? 30 : 34,
                         child: Text(
-                          part.label ?? '',
+                          index == 0 && prefix != null
+                              ? '$prefix ${part.label ?? ''}'
+                              : part.label ?? '',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
+                            color: isHeading
+                                ? theme.colorScheme.onSurfaceVariant
+                                : null,
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: MathText(
-                          part.text,
-                          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-                        ),
-                      ),
+                      if (!isHeading)
+                        Expanded(
+                          child: MathText(
+                            part.text,
+                            style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                          ),
+                        )
+                      else
+                        const Spacer(),
                       if (part.marks != null) ...[
                         const SizedBox(width: 6),
                         Padding(
@@ -384,10 +413,15 @@ class _PartsList extends StatelessWidget {
                       ],
                     ],
                   ),
-                  _PartsList(parts: part.parts, depth: depth + 1),
+                  _PartsList(
+                    parts: part.parts,
+                    depth: depth + 1,
+                    prefix: isHeading ? part.label : null,
+                  ),
                 ],
               ),
-            ),
+            );
+            }),
         ],
       ),
     );

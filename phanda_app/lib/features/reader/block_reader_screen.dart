@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -34,6 +36,11 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
   int _lastReported = -1;
   AppState? _state;
 
+  /// A blank spinner for the length of an HTTP timeout reads as a broken app,
+  /// so a slow request says so and offers the error screen early.
+  Timer? _slowTimer;
+  bool _slow = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -44,13 +51,25 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
     _document ??= _load();
   }
 
-  Future<BlockDocument> _load() =>
-      AppScope.of(context).loadBlockDocument(widget.documentId);
+  Future<BlockDocument> _load() {
+    _slowTimer?.cancel();
+    _slow = false;
+    _slowTimer = Timer(const Duration(seconds: 6), () {
+      if (mounted) setState(() => _slow = true);
+    });
+
+    return AppScope.of(context).loadBlockDocument(widget.documentId).whenComplete(() {
+      _slowTimer?.cancel();
+    });
+  }
 
   /// Progress for a reflowable document follows the scroll, not fixed pages.
   /// Reporting page 1 of 6 forever is what made every book look stuck at 17%.
   void _reportProgress() {
-    if (!_scroll.hasClients) return;
+    // Before the list has been laid out maxScrollExtent is 0, which is not the
+    // same as "the reader reached the end": reading it that way marked every
+    // paper 100% read the moment it was opened.
+    if (!_scroll.hasClients || !_scroll.position.hasContentDimensions) return;
 
     final state = _state;
     if (state == null) return;
@@ -77,6 +96,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
 
   @override
   void dispose() {
+    _slowTimer?.cancel();
     _reportProgress();
     _state?.flush();
     _scroll
@@ -110,7 +130,24 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
         future: _document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  if (_slow) ...[
+                    const SizedBox(height: 18),
+                    Text(
+                      'Still loading. A slow connection can take up to 25 seconds.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            );
           }
 
           if (snapshot.hasError) {
