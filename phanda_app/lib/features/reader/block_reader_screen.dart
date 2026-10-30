@@ -35,6 +35,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
   final ScrollController _scroll = ScrollController();
   int _lastReported = -1;
   bool _restored = false;
+  bool _resumeScheduled = false;
   AppState? _state;
 
   /// A blank spinner for the length of an HTTP timeout reads as a broken app,
@@ -59,10 +60,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
       if (mounted) setState(() => _slow = true);
     });
 
-    return AppScope.of(context).loadBlockDocument(widget.documentId).then((loaded) {
-      _scheduleResume();
-      return loaded;
-    }).whenComplete(() {
+    return AppScope.of(context).loadBlockDocument(widget.documentId).whenComplete(() {
       _slowTimer?.cancel();
     });
   }
@@ -72,20 +70,42 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
   /// The percentage was recorded but never read back, so "Continue reading ·
   /// 19%" opened at question 1: a warm screen looked fine because the scroll
   /// position was still in memory, and a cold open always started over.
+  /// Called from the frame that builds the list, not from the future: the
+  /// callback has to run after that frame, or the scroll controller has no
+  /// client yet and the jump is dropped without a trace.
   void _scheduleResume() {
+    if (_restored || _resumeScheduled) return;
+    _resumeScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resumeScheduled = false;
+      _resume();
+    });
+  }
+
+  void _resume({int attemptsLeft = 3}) {
     if (_restored) return;
 
     final progress = _state?.progressFor(widget.documentId);
     final fraction = progress?.fraction;
-    if (fraction == null || fraction <= 0.01) return;
 
-    // A finished paper is worth reopening at the start rather than at its last
-    // line; there is nothing left below to continue into.
-    if (progress!.completed) return;
+    // Nothing to resume, or a finished paper: it should open at the start, since
+    // there is nothing below its last line to continue into.
+    if (fraction == null || fraction <= 0.01 || (progress?.completed ?? false)) {
+      _restored = true;
+      return;
+    }
+
+    if (!mounted || !_scroll.hasClients) {
+      if (attemptsLeft > 0) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _resume(attemptsLeft: attemptsLeft - 1));
+      }
+      return;
+    }
 
     _restored = true;
-    // The list has no extent until it has been laid out once.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToFraction(fraction));
+    _jumpToFraction(fraction);
   }
 
   void _jumpToFraction(double fraction, {int attemptsLeft = 3}) {
@@ -242,6 +262,8 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
               ),
             );
           }
+
+          _scheduleResume();
 
           return Column(
             children: [

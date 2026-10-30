@@ -65,6 +65,9 @@ Future<AppState> _stateWithProgress(double fraction) async {
         'user': {'id': 5, 'name': 'Test', 'email': 'test@kuphanda.test'},
       });
     }
+    // A real fetch resolves between frames, which is the ordering that made the
+    // first version of this drop its jump: the controller had no client yet.
+    await Future<void>.delayed(const Duration(milliseconds: 80));
     return _json({'data': _longPaper()});
   });
 
