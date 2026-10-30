@@ -6,6 +6,7 @@ import '../../core/navigation.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../data/api/api_models.dart';
 import '../../data/models/classroom.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
@@ -230,12 +231,17 @@ class ClassesScreen extends StatelessWidget {
                       setSheetState(() => error = 'Give the class a name of at least 3 characters.');
                       return;
                     }
-                    final group = await state.createClass(
-                      name: name,
-                      form: form,
-                      subjectId: subjectId,
-                      teacherName: state.profile.name,
-                    );
+                    final ClassGroup group;
+                    try {
+                      group = await state.createClass(
+                        name: name,
+                        form: form,
+                        subjectId: subjectId,
+                      );
+                    } on ApiException catch (failure) {
+                      setSheetState(() => error = failure.message);
+                      return;
+                    }
                     if (sheetContext.mounted) {
                       Navigator.pop(sheetContext);
                     }

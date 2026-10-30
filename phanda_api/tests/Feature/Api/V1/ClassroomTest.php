@@ -46,7 +46,8 @@ it('gives a new class a code that can be read out loud', function (): void {
 
     $response->assertStatus(201)
         ->assertJsonPath('data.name', 'Form 4A — Sciences')
-        ->assertJsonPath('data.member_count', 0);
+        ->assertJsonPath('data.member_count', 0)
+        ->assertJsonPath('data.is_owner', true);
 
     $code = $response->json('data.code');
 
@@ -77,6 +78,7 @@ it('lets a learner join with the code and see the class', function (): void {
         ->assertStatus(200)
         ->assertJsonPath('data.code', $code)
         ->assertJsonPath('data.member_count', 1)
+        ->assertJsonPath('data.is_owner', false)
         ->assertJsonPath('data.teacher_name', $teacher->name);
 
     $this->actingAs($student)->getJson('/api/v1/classrooms')

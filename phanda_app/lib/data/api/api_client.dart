@@ -173,6 +173,46 @@ class ApiClient {
     return RemoteClassroom.fromJson(_dataMap(body));
   }
 
+
+  Future<RemoteClassroom> createClass({
+    required String name,
+    required int form,
+    String? subjectId,
+  }) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/classrooms'),
+        headers: _headers,
+        body: jsonEncode({
+          'name': name,
+          'form': form,
+          'subject_id': ?subjectId,
+        }),
+      ),
+    );
+
+    return RemoteClassroom.fromJson(_dataMap(body));
+  }
+
+  Future<RemoteClassroom> assignPaper({
+    required String classroomId,
+    required String documentId,
+    DateTime? dueDate,
+  }) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/classrooms/$classroomId/assignments'),
+        headers: _headers,
+        body: jsonEncode({
+          'document_id': documentId,
+          if (dueDate != null) 'due_date': dueDate.toIso8601String().split('T').first,
+        }),
+      ),
+    );
+
+    return RemoteClassroom.fromJson(_dataMap(body));
+  }
+
   Future<void> leaveClass(String classroomId) async {
     await _send(
       () => _http.delete(_uri('/classrooms/$classroomId/leave'), headers: _headers),

@@ -550,6 +550,7 @@ class RemoteClassroom {
         subjectId: json['subject_id'] as String? ?? 'mathematics',
         teacherName: json['teacher_name'] as String? ?? 'Teacher',
         memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
+        isMine: json['is_owner'] as bool? ?? false,
         createdAt: createdAt,
       ),
       assignments: assignments,

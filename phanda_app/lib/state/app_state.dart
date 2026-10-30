@@ -1041,43 +1041,50 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Creates a class on the service, which issues the code. A learner on another
+  /// phone can only find this class if it exists server-side.
   Future<ClassGroup> createClass({
     required String name,
     required int form,
-    required String subjectId,
-    required String teacherName,
+    String? subjectId,
   }) async {
-    final group = ClassGroup(
-      id: 'class-${_clock().microsecondsSinceEpoch}',
-      name: name.trim(),
-      code: _generateCode(),
-      form: form,
-      subjectId: subjectId,
-      teacherName: teacherName.trim().isEmpty ? profile.name : teacherName.trim(),
-      memberCount: 1,
-      createdAt: _clock(),
-      isMine: true,
-    );
-    _snapshot.classes.add(group);
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to create a class.');
+    }
+
+    final classroom = await _api!.createClass(name: name, form: form, subjectId: subjectId);
+    _snapshot.classes.add(classroom.group);
     notifyListeners();
     await _persistNow();
-    return group;
+
+    return classroom.group;
   }
 
-  String _generateCode() {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final random = _clock().microsecondsSinceEpoch;
-    final buffer = StringBuffer('KPH');
-    for (var index = 0; index < 3; index++) {
-      buffer.write(alphabet[(random >> (index * 5)) % alphabet.length]);
+  /// Sets a paper for a class the signed-in teacher runs.
+  Future<void> assignPaper({
+    required String classroomId,
+    required String documentId,
+    DateTime? dueDate,
+  }) async {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in to set reading.');
     }
-    var candidate = buffer.toString();
-    var attempt = 0;
-    while (_snapshot.classes.any((group) => group.code == candidate)) {
-      attempt++;
-      candidate = 'KPH${(random + attempt * 7919) % 999}'.padRight(6, 'X');
-    }
-    return candidate;
+
+    final classroom = await _api!.assignPaper(
+      classroomId: classroomId,
+      documentId: documentId,
+      dueDate: dueDate,
+    );
+
+    _snapshot.classes
+      ..removeWhere((group) => group.id == classroom.group.id)
+      ..add(classroom.group);
+    _snapshot.assignments
+      ..removeWhere((assignment) => assignment.classId == classroom.group.id)
+      ..addAll(classroom.assignments);
+
+    notifyListeners();
+    await _persistNow();
   }
 
   Future<void> addAssignment({

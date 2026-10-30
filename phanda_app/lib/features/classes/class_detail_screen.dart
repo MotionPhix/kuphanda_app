@@ -275,14 +275,12 @@ class _AddAssignmentSheet extends StatefulWidget {
 
 class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
   final _searchController = TextEditingController();
-  final _noteController = TextEditingController();
   Document? _selected;
   late DateTime _dueDate = DateTime.now().add(const Duration(days: 3));
 
   @override
   void dispose() {
     _searchController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
@@ -295,9 +293,7 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
         .take(30)
         .toList();
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SheetBody(
+    return SheetBody(
         title: 'Set reading',
         subtitle: '${widget.group.name} · due ${formatDate(_dueDate)}',
         maxHeightFactor: 0.9,
@@ -316,12 +312,18 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
                   ? null
                   : () async {
                       final picked = _selected!;
-                      await widget.state.addAssignment(
-                        classId: widget.group.id,
-                        documentId: picked.id,
-                        dueDate: _dueDate,
-                        note: _noteController.text,
-                      );
+                      try {
+                        await widget.state.assignPaper(
+                          classroomId: widget.group.id,
+                          documentId: picked.id,
+                          dueDate: _dueDate,
+                        );
+                      } catch (error) {
+                        if (context.mounted) {
+                          showSnack(context, 'Could not set reading: $error', error: true);
+                        }
+                        return;
+                      }
                       if (context.mounted) {
                         Navigator.pop(context);
                         showSnack(context, 'Reading set: ${picked.title}');
@@ -353,14 +355,6 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _noteController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                hintText: 'Instructions for the class (optional)',
-              ),
-            ),
             const SizedBox(height: 16),
             Text('Choose a document', style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
@@ -391,7 +385,6 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
                     ),
             ),
           ],
-        ),
       ),
     );
   }
