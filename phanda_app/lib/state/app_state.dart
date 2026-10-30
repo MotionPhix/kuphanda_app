@@ -572,12 +572,33 @@ class AppState extends ChangeNotifier {
   /// look empty. It claimed minutes nobody studied — on the device it read
   /// "1h 43m this week" for an account that had opened the app twice — which is
   /// the one claim this screen exists to make honestly.
+  /// The four days the old seeder wrote: minutes and session count, in order of
+  /// the days it produced. Kept here so the pattern can be recognised without
+  /// guessing at minutes somebody really studied.
+  static const _seededStudyPattern = <(int, int)>[(35, 2), (20, 1), (48, 3), (15, 1)];
+
   bool _clearDemoStudyHistory(AppSnapshot snapshot) {
-    if (!snapshot.demoStudyHistory) return false;
+    if (snapshot.studyDays.isEmpty) return false;
+
+    // Snapshots written by a build that flagged its own seeding, or by one that
+    // did not but carries the pattern exactly.
+    if (!snapshot.demoStudyHistory && !_looksSeeded(snapshot.studyDays)) {
+      return false;
+    }
 
     snapshot.studyDays.clear();
     snapshot.demoStudyHistory = false;
     return true;
+  }
+
+  bool _looksSeeded(List<StudyDay> days) {
+    if (days.length != _seededStudyPattern.length) return false;
+
+    String signature(Iterable<(int, int)> pairs) =>
+        (pairs.map((pair) => '${pair.$1}x${pair.$2}').toList()..sort()).join(',');
+
+    final actual = days.map((day) => (day.seconds ~/ 60, day.sessions));
+    return signature(actual) == signature(_seededStudyPattern);
   }
 
   /// Undoes the damage of releasing a signed-in learner: their profile was

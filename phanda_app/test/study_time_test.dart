@@ -105,4 +105,57 @@ void main() {
     expect(state.stats.weekMinutes, 0);
     expect(state.stats.currentStreak, 0);
   });
+
+  test('the old seeded days are recognised without a flag', () async {
+    // Installs that predate the flag still carry the four days the seeder wrote.
+    // They are matched by the exact minutes-and-sessions signature, so a day
+    // somebody really studied is never swept away.
+    final seeded = AppSnapshot(
+      studyDays: [
+        StudyDay(date: '2026-10-29', seconds: 35 * 60, sessions: 2),
+        StudyDay(date: '2026-10-28', seconds: 20 * 60, sessions: 1),
+        StudyDay(date: '2026-10-26', seconds: 48 * 60, sessions: 3),
+        StudyDay(date: '2026-10-25', seconds: 15 * 60, sessions: 1),
+      ],
+    );
+
+    final store = MemoryStateStore();
+    await store.write(seeded);
+
+    final state = AppState(
+      store: store,
+      files: _NoFiles(),
+      tokenStore: MemoryTokenStore(),
+      clock: () => DateTime(2026, 10, 30, 12, 30),
+    );
+    await state.initialize();
+
+    expect(state.stats.weekMinutes, 0);
+    expect(state.stats.currentStreak, 0);
+  });
+
+  test('a real study day is never mistaken for seeded history', () async {
+    final real = AppSnapshot(
+      studyDays: [
+        StudyDay(date: '2026-10-29', seconds: 35 * 60, sessions: 2),
+        StudyDay(date: '2026-10-28', seconds: 20 * 60, sessions: 1),
+        StudyDay(date: '2026-10-26', seconds: 48 * 60, sessions: 3),
+        // Four minutes instead of fifteen: this is somebody's actual evening.
+        StudyDay(date: '2026-10-25', seconds: 4 * 60, sessions: 1),
+      ],
+    );
+
+    final store = MemoryStateStore();
+    await store.write(real);
+
+    final state = AppState(
+      store: store,
+      files: _NoFiles(),
+      tokenStore: MemoryTokenStore(),
+      clock: () => DateTime(2026, 10, 30, 12, 30),
+    );
+    await state.initialize();
+
+    expect(state.stats.weekMinutes, greaterThan(0));
+  });
 }
