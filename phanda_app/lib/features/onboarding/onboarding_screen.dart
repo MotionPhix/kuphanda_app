@@ -582,7 +582,9 @@ class _WelcomeStep extends StatelessWidget {
           ),
           const SizedBox(height: 36),
           FilledButton(onPressed: onStart, child: const Text('Get started')),
-
+          // The payment line is a footnote, not part of the button: without a
+          // gap of its own it sat against the button's lower edge.
+          const SizedBox(height: 18),
           Center(
             child: Text(
               'Mobile money payments · Powered by PayChangu',

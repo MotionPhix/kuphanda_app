@@ -128,4 +128,38 @@ void main() {
     );
     expect(contentBottom - caption.bottom, greaterThan(8));
   });
+
+  testWidgets('the payment line under Get started is not glued to it',
+      (tester) async {
+    _phoneWithSystemBar(tester);
+
+    final state = AppState(
+      store: MemoryStateStore(),
+      files: _NoFiles(),
+      tokenStore: MemoryTokenStore(),
+    );
+    await state.initialize();
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const OnboardingScreen(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final button = tester.getRect(find.widgetWithText(FilledButton, 'Get started'));
+    final footnote = tester.getRect(
+      find.text('Mobile money payments · Powered by PayChangu'),
+    );
+
+    // Removing the sign-in shortcut left the footnote hard against the button;
+    // it belongs to the page, not to the button's lower edge.
+    expect(footnote.top - button.bottom, greaterThanOrEqualTo(12),
+        reason: 'only ${footnote.top - button.bottom} dp between the button and '
+            'the payment line');
+    expect(footnote.top - button.bottom, lessThan(40),
+        reason: 'the footnote drifted ${footnote.top - button.bottom} dp away');
+  });
 }
