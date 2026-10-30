@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1050" height="285" viewBox="0 0 1050 285" role="img" aria-labelledby="title desc">
 <title id="title">Parallel lines and transversals</title><desc id="desc">Four parallel horizontal lines AB, CD, EF and GH. QR crosses them at Q, X, Y and R. SU crosses EF at T and meets GH at U. UD connects U to D. Measurements SU 9 cm and UD 8 cm; a 5 cm label appears above EF to the right of T. Schematic, not to scale.</desc>
-<defs><marker id="dimensionArrow" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 5 L 10 1 L 7 5 L 10 9 Z" fill="black"/></marker></defs>
 <g stroke="black" fill="none" stroke-linecap="round">
 <path d="M 170.00 30.00 L 1006.00 30.00" stroke-width="1.4"/>
 <path d="M 120.00 95.00 L 969.00 95.00" stroke-width="1.4"/>
@@ -11,11 +10,11 @@
 <path d="M 797.00 233.00 L 969.00 95.00" stroke-width="2"/>
 <path d="M 644.00 30.00 L 624.83 44.45" stroke-width="0.9"/>
 <path d="M 797.00 233.00 L 777.83 247.45" stroke-width="0.9"/>
-<path d="M 624.83 44.45 L 777.83 247.45" stroke-width="1" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>
+<path d="M 624.83 44.45 L 777.83 247.45" stroke-width="1"/>
 <path d="M 797.00 233.00 L 812.65 252.50" stroke-width="0.9"/>
 <path d="M 969.00 95.00 L 984.65 114.50" stroke-width="0.9"/>
-<path d="M 812.65 252.50 L 984.65 114.50" stroke-width="1" marker-start="url(#dimensionArrow)" marker-end="url(#dimensionArrow)"/>
-</g><g fill="black">
+<path d="M 812.65 252.50 L 984.65 114.50" stroke-width="1"/>
+</g><g fill="black"><polygon points="620.01,38.06 622.27,46.38 621.46,39.98 627.39,42.52"/><polygon points="782.65,253.84 774.46,242.98 775.27,249.38 780.39,245.52"/><polygon points="806.41,257.51 814.65,255.00 808.28,256.00 810.65,250.00"/><polygon points="990.89,109.49 980.28,118.00 986.65,117.00 982.65,112.00"/>
 <path d="M 811.5 30 L 786.5 25 L 790 30 L 786.5 35 Z"/>
 <path d="M 815.5 95 L 790.5 90 L 794 95 L 790.5 100 Z"/>
 <path d="M 825.5 164 L 800.5 159 L 804 164 L 800.5 169 Z"/>

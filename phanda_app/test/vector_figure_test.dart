@@ -6,18 +6,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kuphanda/data/models/block_document.dart';
 import 'package:kuphanda/features/reader/block_document_view.dart';
 
-void main() {
-  test('the redrawn pie chart is valid SVG', () {
-    final source =
-        File('assets/samples/figures/fig1-pie-chart.svg').readAsStringSync();
+/// Figures the renderer cannot draw correctly, expressed as SVG elements.
+///
+/// `flutter_svg` does not implement these; it logs `unhandled element` and
+/// paints the figure without them. That is how the tobacco sector of the pie
+/// chart lost its stipple and how the dimension arrows on the parallel-lines
+/// figure lost their heads — both silently, both only visible on a device.
+final _unsupported = RegExp(
+  r'<(marker|pattern|mask|filter|foreignObject|image)\b',
+  caseSensitive: false,
+);
 
-    expect(source, contains('<svg'));
-    expect(source, contains('slice-tobacco'));
-    // Guards against a vector export that quietly grew a raster payload.
-    expect(source.length, lessThan(20000));
+/// Every SVG a sample paper actually points at.
+Set<String> _referencedFigures() {
+  final references = <String>{};
+  final pattern = RegExp(r'"asset":\s*"([^"]+\.svg)"');
+
+  for (final paper in Directory('assets/samples').listSync()) {
+    if (paper is! File || !paper.path.endsWith('.json')) continue;
+    for (final match in pattern.allMatches(paper.readAsStringSync())) {
+      references.add(match.group(1)!);
+    }
+  }
+
+  return references;
+}
+
+void main() {
+  test('no paper references a figure flutter_svg would half-draw', () {
+    final references = _referencedFigures();
+    expect(references, isNotEmpty, reason: 'the papers point at no figures');
+
+    for (final asset in references) {
+      final file = File(asset);
+      expect(file.existsSync(), isTrue, reason: '$asset is referenced but missing');
+
+      final source = file.readAsStringSync();
+      final hit = _unsupported.firstMatch(source);
+
+      expect(
+        hit,
+        isNull,
+        reason: '$asset uses <${hit?.group(1)}>, which flutter_svg drops '
+            'without failing — bake the effect into geometry instead',
+      );
+      expect(source, contains('viewBox'),
+          reason: '$asset must scale from its viewBox, not a fixed pixel size');
+    }
   });
 
-  testWidgets('a vector figure renders without throwing on a narrow screen',
+  testWidgets('a referenced vector figure renders on a narrow screen',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1.0;
@@ -28,13 +66,13 @@ void main() {
       blocks: const [
         DocumentBlock(
           type: 'question',
-          page: 1,
+          page: 7,
           raw: {
-            'text': 'Figure 1 is a pie-chart of three commodities.',
+            'text': 'The diagram shows four parallel lines crossed by QR and SU.',
             'marks': 4,
             'figure': {
-              'asset': 'assets/samples/figures/fig1-pie-chart.svg',
-              'alt': 'Pie chart: tobacco 208, tea 107',
+              'asset': 'assets/samples/figures/fig5-parallel-lines.svg',
+              'alt': 'Four parallel lines AB, CD, EF, GH with transversals QR and SU',
             },
           },
         ),
