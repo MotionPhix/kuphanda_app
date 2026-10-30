@@ -20,6 +20,7 @@ import '../data/notifications/push_service.dart';
 import '../data/seed/classroom_seed.dart';
 import '../data/seed/curriculum_seed.dart';
 import '../data/seed/library_seed.dart';
+import '../data/store/block_cache.dart';
 import '../data/store/document_files.dart';
 import '../data/store/snapshot.dart';
 import '../data/store/state_store.dart';
@@ -86,14 +87,17 @@ class AppState extends ChangeNotifier {
     DateTime Function()? clock,
     ApiClient? api,
     TokenStore? tokenStore,
+    BlockDocumentCache? blockCache,
   })  : _store = store,
         _files = files,
         _clock = clock ?? DateTime.now,
         _api = api,
-        _tokenStore = tokenStore ?? SecureTokenStore();
+        _tokenStore = tokenStore ?? SecureTokenStore(),
+        _blockCache = blockCache;
 
   final StateStore _store;
   final DocumentFiles _files;
+  final BlockDocumentCache? _blockCache;
   final DateTime Function() _clock;
   final TokenStore _tokenStore;
   ApiClient? _api;
@@ -1278,13 +1282,29 @@ class AppState extends ChangeNotifier {
   // Billing and subscriptions
   // ---------------------------------------------------------------------------
 
-  /// Loads the reflowable version of a document. Throws [ApiException] when
-  /// the account is not entitled or the document has no blocks.
-  Future<BlockDocument> loadBlockDocument(String documentId) {
+  /// Loads the reflowable version of a document, keeping a copy on the phone.
+  ///
+  /// A connection failure falls back to that copy, so a paper already opened
+  /// stays readable in a blackout. A refusal does not: 401, 403 and the
+  /// entitlement failures must still reach the learner, or a lapsed subscription
+  /// would keep serving papers from the cache.
+  Future<BlockDocument> loadBlockDocument(String documentId) async {
     if (!isSignedIn) {
       throw const ApiException('Sign in to read this paper.');
     }
-    return _api!.fetchBlockDocument(documentId);
+
+    try {
+      final document = await _api!.fetchBlockDocument(documentId);
+      await _blockCache?.write(documentId, document);
+      return document;
+    } on ApiException catch (error) {
+      final offline = error.isNetworkError || (error.statusCode ?? 0) >= 500;
+      if (offline) {
+        final cached = await _blockCache?.read(documentId);
+        if (cached != null) return cached;
+      }
+      rethrow;
+    }
   }
 
   /// Pulls the recent messages addressed to this learner's audiences. A failure

@@ -60,6 +60,15 @@ class FileStateStore implements StateStore {
     return files;
   }
 
+  Future<Directory> blocksDirectory() async {
+    final directory = await _rootDir();
+    final blocks = Directory('${directory.path}${Platform.pathSeparator}blocks');
+    if (!await blocks.exists()) {
+      await blocks.create(recursive: true);
+    }
+    return blocks;
+  }
+
   @override
   Future<AppSnapshot?> read() async {
     try {

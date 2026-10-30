@@ -89,6 +89,16 @@ class BlockDocument {
 
   final List<DocumentBlock> blocks;
 
+  /// Round-trips through [fromMap]. Used to keep a copy on disk so a paper stays
+  /// readable without a connection; the payload is written unchanged, because
+  /// anything dropped here is content the learner loses offline.
+  Map<String, Object?> toMap() => <String, Object?>{
+        'title': title,
+        if (subtitle != null) 'subtitle': subtitle,
+        if (sourceAsset != null) 'source_asset': sourceAsset,
+        'blocks': blocks.map((block) => block.raw).toList(),
+      };
+
   factory BlockDocument.fromMap(Map<String, Object?> json) {
     final rawBlocks = json['blocks'];
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'data/notifications/push_service.dart';
+import 'data/store/block_cache.dart';
 import 'data/store/document_files.dart';
 import 'data/store/state_store.dart';
 import 'state/app_state.dart';
@@ -27,6 +28,9 @@ Future<void> main() async {
   final state = AppState(
     store: store,
     files: LocalDocumentFiles(store),
+    // Keeps every structured paper that has been opened, so it reopens in a
+    // blackout rather than at a spinner.
+    blockCache: LocalBlockDocumentCache(store),
   );
   await state.initialize();
 
