@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../profile/sign_in_sheet.dart';
 import '../../core/theme.dart';
 import '../../data/api/api_models.dart';
 import '../../data/auth/google_sign_in_service.dart';
@@ -481,7 +482,16 @@ class _WelcomeStep extends StatelessWidget {
           ),
           const SizedBox(height: 36),
           FilledButton(onPressed: onStart, child: const Text('Get started')),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          // Signing out returns here, so this is the way back in: an existing
+          // learner should not have to fill the form again to reach the sheet.
+          Center(
+            child: TextButton(
+              onPressed: () => showSignInSheet(context, AppScope.of(context)),
+              child: const Text('I already have an account'),
+            ),
+          ),
+          const SizedBox(height: 4),
           Center(
             child: Text(
               'Mobile money payments · Powered by PayChangu',

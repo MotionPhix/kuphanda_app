@@ -70,6 +70,11 @@ class _KuphandaAppState extends State<KuphandaApp> with WidgetsBindingObserver {
         builder: (context, _) {
           final profile = state.profile;
           return MaterialApp(
+            // A new key on each side of the sign-in line rebuilds the navigator.
+            // Without it the gate changes the root while whatever screen was
+            // pushed — Profile, a paper, a class — stays on top, so signing out
+            // left the previous person's screen staring back at them.
+            key: ValueKey<bool>(state.isSignedIn),
             title: 'Kuphanda',
             debugShowCheckedModeBanner: false,
             theme: buildAppTheme(Brightness.light),

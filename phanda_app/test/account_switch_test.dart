@@ -210,4 +210,25 @@ void main() {
     expect(find.text('Home'), findsNothing);
     expect(find.text('Library'), findsNothing);
   });
+
+  testWidgets('the landing page can sign an existing account in', (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    final state = await _state();
+    await tester.pumpWidget(KuphandaApp(state: state));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('I already have an account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('I already have an account'));
+    await tester.pumpAndSettle();
+
+    // The sheet, not the onboarding form: signing out returns here, and a
+    // learner should not have to retype their details to get back in.
+    expect(find.text('Sign in'), findsWidgets);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+  });
 }
