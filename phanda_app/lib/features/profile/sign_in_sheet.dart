@@ -83,7 +83,9 @@ Future<void> showSignInSheet(BuildContext context, AppState state) async {
           children: [
             TextField(
               controller: email,
-              autofocus: true,
+              // No autofocus: it throws the keyboard up over a four-field form
+              // and hands the screen to Android's autofill chooser before the
+              // learner has read the sheet.
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
               decoration: const InputDecoration(
