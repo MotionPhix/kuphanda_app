@@ -73,6 +73,8 @@ class Document {
     this.personal = false,
     this.format = 'pdf',
     this.hasBlocks = false,
+    this.questionCount,
+    this.blockMarks,
   });
 
   final String id;
@@ -106,6 +108,30 @@ class Document {
 
   /// True for documents the learner imported themselves.
   final bool personal;
+
+  /// Questions and marks counted from the blocks themselves. A structured paper
+  /// has no meaningful page count — `pages` describes the scan it was built
+  /// from — so these are what the library and detail screens show instead.
+  final int? questionCount;
+  final int? blockMarks;
+
+  /// Marks to quote: the declared total when the record has one, otherwise the
+  /// sum counted from the blocks.
+  int? get displayMarks => totalMarks ?? (hasBlocks ? blockMarks : null);
+
+  /// How much there is to do, in the units a learner counts in.
+  ///
+  /// `pages` is an import artefact — the maths paper claims six pages while
+  /// holding twenty-four questions — so a structured paper is described by its
+  /// questions and marks instead.
+  String get extentLabel {
+    final questions = questionCount;
+    if (hasBlocks && questions != null && questions > 0) {
+      final marks = displayMarks;
+      return marks == null ? '$questions questions' : '$questions questions · $marks marks';
+    }
+    return '$pages pages';
+  }
 
   /// `pdf`, `blocks` or `hybrid`. Only the latter two can reflow.
   final String format;
@@ -161,6 +187,8 @@ class Document {
       personal: personal,
       format: format,
       hasBlocks: hasBlocks,
+      questionCount: questionCount,
+      blockMarks: blockMarks,
     );
   }
 
@@ -193,6 +221,8 @@ class Document {
         // the next successful sync.
         'format': format,
         'hasBlocks': hasBlocks,
+        'questionCount': questionCount,
+        'blockMarks': blockMarks,
       };
 
   static Document fromJson(Map<String, Object?> json) {
@@ -225,7 +255,11 @@ class Document {
           const <String>[],
       personal: json['personal'] as bool? ?? false,
       format: json['format'] as String? ?? 'pdf',
-      hasBlocks: json['has_blocks'] as bool? ?? false,
+      // toJson has always written `hasBlocks`; this read `has_blocks`, so every
+      // cached structured paper reloaded as an unreadable PDF record.
+      hasBlocks: (json['hasBlocks'] as bool?) ?? (json['has_blocks'] as bool?) ?? false,
+      questionCount: (json['questionCount'] as num?)?.toInt(),
+      blockMarks: (json['blockMarks'] as num?)?.toInt(),
     );
   }
 }

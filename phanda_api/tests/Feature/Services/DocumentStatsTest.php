@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Resources\DocumentResource;
+use App\Models\Document;
+use App\Models\Subject;
+use App\Services\Library\DocumentStats;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+function statsDocument(array $overrides = []): Document
+{
+    Subject::query()->firstOrCreate(
+        ['id' => 'mathematics'],
+        ['name' => 'Mathematics', 'short_name' => 'Maths', 'forms' => [1, 2, 3, 4], 'sort_order' => 1],
+    );
+
+    return Document::query()->create(array_merge([
+        'id' => 'stats-'.uniqid(),
+        'subject_id' => 'mathematics',
+        'title' => 'Paper I',
+        'form' => 4,
+        'kind' => 'pastPaper',
+        'format' => 'blocks',
+        'pages' => 6,
+        'access_tier' => 'free',
+        'is_published' => true,
+        'latest_version' => 0,
+        'blocks' => [
+            'subtitle' => 'Paper I, 9 marks, 2 hours.',
+            'blocks' => [
+                ['type' => 'callout', 'text' => 'Answer all questions.'],
+                [
+                    'type' => 'question',
+                    'label' => '1.',
+                    'marks' => 4,
+                    'text' => 'Simplify.',
+                    'parts' => [
+                        ['label' => 'a.', 'text' => 'First.', 'marks' => 2],
+                        ['label' => 'b.', 'text' => 'Second.', 'marks' => 2],
+                    ],
+                ],
+                ['type' => 'question', 'label' => '2.', 'marks' => 5, 'text' => 'Solve.', 'parts' => []],
+            ],
+        ],
+    ], $overrides));
+}
+
+it('counts questions and marks rather than pages', function (): void {
+    $document = statsDocument();
+    $stats = app(DocumentStats::class)->for($document);
+
+    expect($stats)->not->toBeNull()
+        ->and($stats['questions'])->toBe(2)
+        ->and($stats['marks'])->toBe(9);
+});
+
+it('reports nothing to count for a document with no blocks', function (): void {
+    $document = statsDocument(['blocks' => null, 'format' => 'pdf']);
+
+    expect(app(DocumentStats::class)->for($document))->toBeNull();
+});
+
+it('exposes the counts so the app can stop saying "6 pages"', function (): void {
+    $document = statsDocument();
+
+    $payload = (new DocumentResource($document))->resolve();
+
+    expect($payload['pages'])->toBe(6)
+        ->and($payload['questions'])->toBe(2)
+        ->and($payload['block_marks'])->toBe(9);
+});

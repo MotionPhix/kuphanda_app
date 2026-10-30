@@ -18,6 +18,10 @@ final class DocumentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // A structured paper is counted in questions and marks, not scanned
+        // pages: "6 pages" describes the source file, not what a learner reads.
+        $stats = app(\App\Services\Library\DocumentStats::class)->for($this->resource);
+
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -27,6 +31,8 @@ final class DocumentResource extends JsonResource
             'kind' => $this->kind,
             'format' => $this->format,
             'has_blocks' => ! empty($this->blocks['blocks'] ?? null),
+            'questions' => $stats['questions'] ?? null,
+            'block_marks' => $stats['marks'] ?? null,
             'description' => $this->description,
             'pages' => $this->pages,
             'year' => $this->year,

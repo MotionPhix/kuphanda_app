@@ -79,6 +79,8 @@ class RemoteDocument {
       // a catalogue-only record with no file, so it could not be opened.
       format: (json['format'] as String?) ?? 'pdf',
       hasBlocks: json['has_blocks'] as bool? ?? false,
+      questionCount: (json['questions'] as num?)?.toInt(),
+      blockMarks: (json['block_marks'] as num?)?.toInt(),
     );
 
     return RemoteDocument(

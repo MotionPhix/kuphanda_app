@@ -157,7 +157,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                 ),
                               const SizedBox(height: 8),
                               Text(
-                                '${document.pages} pages · ${document.author}',
+                                '${document.extentLabel} · ${document.author}',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -1063,11 +1063,14 @@ class _Overview extends StatelessWidget {
               if (document.paperNumber != null)
                 KeyValueRow(label: 'Paper', value: 'Paper ${document.paperNumber}'),
               if (document.session != null) KeyValueRow(label: 'Session', value: document.session!),
-              if (document.totalMarks != null)
-                KeyValueRow(label: 'Total marks', value: '${document.totalMarks}'),
+              if (document.hasBlocks && document.questionCount != null)
+                KeyValueRow(label: 'Questions', value: '${document.questionCount}'),
+              if (document.displayMarks != null)
+                KeyValueRow(label: 'Total marks', value: '${document.displayMarks}'),
               if (document.durationMinutes != null)
                 KeyValueRow(label: 'Duration', value: formatMinutes(document.durationMinutes!)),
-              KeyValueRow(label: 'Pages', value: '${document.pages}'),
+              // A page count only means something for a PDF.
+              if (!document.hasBlocks) KeyValueRow(label: 'Pages', value: '${document.pages}'),
               KeyValueRow(label: 'Language', value: document.language),
               if (document.publisher != null) KeyValueRow(label: 'Publisher', value: document.publisher!),
               KeyValueRow(label: 'Added', value: formatDate(document.addedAt)),
