@@ -159,3 +159,47 @@ it('reports a question with no allocation and no parts', function (): void {
         ->and($report['issues'])->toContain('13.: no mark allocation')
         ->and($report['issues'])->toHaveCount(2);
 });
+
+it('refuses to publish a record with nothing to read', function (): void {
+    // The catalogue picked up rows that describe a paper but carry no content:
+    // no blocks, no file. Publishing one puts a dead entry in the library.
+    $document = structured([
+        'format' => 'pdf',
+        'blocks' => null,
+        'latest_version' => 0,
+    ]);
+
+    expect(fn () => app(DocumentPublisher::class)->publish($document))
+        ->toThrow(RuntimeException::class, 'nothing to read');
+
+    expect($document->fresh()->is_published)->toBeFalse();
+});
+
+it('still allows an unreadable record to be forced through', function (): void {
+    $document = structured([
+        'format' => 'pdf',
+        'blocks' => null,
+        'latest_version' => 0,
+    ]);
+
+    app(DocumentPublisher::class)->publish($document, force: true);
+
+    expect($document->fresh()->is_published)->toBeTrue();
+});
+
+it('treats a guide as readable, because its sections ship with the app', function (): void {
+    // guide-bio-genetics has no blocks and no file server-side, yet the app
+    // renders it from bundled guide content. Flagging it would unpublish a
+    // document that works.
+    $document = structured([
+        'format' => 'pdf',
+        'blocks' => null,
+        'latest_version' => 0,
+        'kind' => 'studyGuide',
+        'guide_id' => 'bio-genetics',
+    ]);
+
+    app(DocumentPublisher::class)->publish($document);
+
+    expect($document->fresh()->is_published)->toBeTrue();
+});
