@@ -162,4 +162,17 @@ describe('Me', function (): void {
 
         $response->assertStatus(401);
     });
+
+    it('answers 401 even when the client forgets the JSON accept header', function (): void {
+        // Without an Accept header Laravel redirects a guest to route('login'),
+        // which does not exist in an API-only app — so this used to be a 500
+        // that pointed at the wrong problem entirely.
+        $response = $this->get('/api/v1/me');
+
+        $response->assertStatus(401)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ]);
+    });
 });

@@ -6,9 +6,13 @@ use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\LogApiRequests;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,7 +40,29 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => EnsureEmailVerified::class,
             'staff' => EnsureStaff::class,
         ]);
+
+        // There is no login route to redirect a guest to — this app is API
+        // only. Left alone, Authenticate resolves route('login') first and
+        // throws RouteNotFoundException, so any unauthenticated call without
+        // "Accept: application/json" became a 500 blaming a missing route.
+        $middleware->redirectGuestsTo(
+            fn (Request $request): ?string => $request->is('api/*') ? null : '/login'
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Authenticate redirects a guest to route('login') unless the request
+        // expects JSON. This app is API-only, so that route does not exist: a
+        // request that merely omits "Accept: application/json" got a 500 whose
+        // stack trace pointed at a missing login route, hiding the real answer
+        // (401). Answer the API as JSON whatever header the client sent.
+        $exceptions->render(function (AuthenticationException $e, Request $request): ?JsonResponse {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], Response::HTTP_UNAUTHORIZED);
+        });
     })->create();
