@@ -21,7 +21,9 @@ class ClassesScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final gutter = pageGutter(context);
     final classes = state.classes;
-    final isTeacher = state.profile.role == StudentRole.teacher;
+    // Staff can run a class even if their local profile says student: the
+    // service is the authority on who may create one.
+    final isTeacher = state.isStaff || state.profile.role == StudentRole.teacher;
 
     return ListView(
       padding: EdgeInsets.zero,
