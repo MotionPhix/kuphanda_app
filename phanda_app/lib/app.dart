@@ -39,16 +39,35 @@ class KuphandaApp extends StatefulWidget {
 }
 
 class _KuphandaAppState extends State<KuphandaApp> with WidgetsBindingObserver {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  late bool _wasSignedIn = widget.state.isSignedIn;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.state.addListener(_onSessionChanged);
   }
 
   @override
   void dispose() {
+    widget.state.removeListener(_onSessionChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Crossing the sign-in line has to close whatever was pushed on the other
+  /// side — Profile, a paper, a class — or signing out leaves the previous
+  /// person's screen staring back at them. It pops back to the root rather than
+  /// rebuilding the whole navigator: a rebuild would also throw away the
+  /// onboarding step the learner is standing on the moment they sign in.
+  void _onSessionChanged() {
+    final signedIn = widget.state.isSignedIn;
+    if (signedIn == _wasSignedIn) return;
+    _wasSignedIn = signedIn;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    });
   }
 
   @override
@@ -70,11 +89,7 @@ class _KuphandaAppState extends State<KuphandaApp> with WidgetsBindingObserver {
         builder: (context, _) {
           final profile = state.profile;
           return MaterialApp(
-            // A new key on each side of the sign-in line rebuilds the navigator.
-            // Without it the gate changes the root while whatever screen was
-            // pushed — Profile, a paper, a class — stays on top, so signing out
-            // left the previous person's screen staring back at them.
-            key: ValueKey<bool>(state.isSignedIn),
+            navigatorKey: _navigatorKey,
             title: 'Kuphanda',
             debugShowCheckedModeBanner: false,
             theme: buildAppTheme(Brightness.light),

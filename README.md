@@ -94,8 +94,11 @@ never overwritten.
 Confirmed names and school are saved to the account with PATCH /api/v1/me.
 Offline edits stay on the device and are retried on the next save.
 
-Onboarding asks for first and last name separately and offers
-**Continue with Google** to prefill them; both stay editable.
+Onboarding signs the learner in before it asks anything: **Get started** leads
+to a sign-in gate with **Sign in with email** and **Continue with Google**, and
+only then to the details step, where first and last name are asked for
+separately and prefilled from the account; both stay editable. An account that
+already carries a school skips the details and the subject picker entirely.
 
 Students cannot create classes. The role is chosen at setup, and the
 create-class actions are hidden (and guarded) for students; only teachers see

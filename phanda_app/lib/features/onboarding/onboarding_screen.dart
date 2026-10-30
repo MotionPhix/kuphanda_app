@@ -35,6 +35,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _subjects.addAll(subjectsForForm(4).take(4).map((subject) => subject.id));
   }
 
+  /// Set once the learner types in the name fields, so their words are never
+  /// overwritten by a profile that arrives a moment later.
+  bool _detailsEdited = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Whoever signs in — the gate, Google, or a test driving the state — the
+    // details step opens on their own name rather than an empty form. The
+    // account's name can arrive a moment after the session does, so this keeps
+    // offering until the form has been touched.
+    if (AppScope.of(context).isSignedIn && !_detailsEdited) _adoptAccount();
+  }
+
   @override
   void dispose() {
     _firstController.dispose();
@@ -77,7 +91,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
+  /// Fills the details step from the account that just signed in, so a learner
+  /// sees their own name and school instead of an empty form. Anything they
+  /// have already typed wins.
+  void _adoptAccount() {
+    final profile = AppScope.read(context).profile;
+    final first = profile.firstName;
+    if (_firstController.text.trim().isEmpty &&
+        first.isNotEmpty &&
+        first != 'learner') {
+      _firstController.text = first;
+    }
+    if (_lastController.text.trim().isEmpty && profile.lastName.isNotEmpty) {
+      _lastController.text = profile.lastName;
+    }
+    if (_schoolController.text.trim().isEmpty && profile.school.isNotEmpty) {
+      _schoolController.text = profile.school;
+    }
+  }
+
   void _next() {
+    if (!AppScope.read(context).isSignedIn) return;
     if (_step == 1 &&
         (_firstController.text.trim().isEmpty || _lastController.text.trim().isEmpty)) {
       setState(() => _nameError = 'Add both your first and last name.');
@@ -153,9 +187,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 220),
+                    // Top-aligned, so the short sign-in step starts where the
+                    // longer forms do instead of floating in the middle of the
+                    // screen.
+                    layoutBuilder: (current, previous) => Stack(
+                      alignment: Alignment.topCenter,
+                      children: [...previous, ?current],
+                    ),
                     child: switch (_step) {
                       0 => _WelcomeStep(onStart: () => setState(() => _step = 1)),
-                      1 => _buildDetails(theme),
+                      // The step after Get started is the account, not the
+                      // form: nothing the learner types here is worth keeping
+                      // until there is someone to keep it for.
+                      1 => AppScope.of(context).isSignedIn
+                          ? _buildDetails(theme)
+                          : _buildSignInGate(theme),
                       _ => _buildSubjects(theme),
                     },
                   ),
@@ -166,6 +212,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
+  }
+
+  /// The account comes before the details: a name typed into a phone nobody is
+  /// signed in on cannot be attached to anyone, and a second phone would never
+  /// find that learner again.
+  Widget _buildSignInGate(ThemeData theme) {
+    return SingleChildScrollView(
+      key: const ValueKey('gate'),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Sign in to continue', style: theme.textTheme.headlineMedium),
+          const SizedBox(height: 6),
+          Text(
+            'Your papers, classes and progress belong to your account. Use the '
+            'email your school gave you, or continue with Google.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 26),
+          FilledButton(
+            onPressed: _googleBusy ? null : _signInWithEmail,
+            child: const Text('Sign in with email'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _googleBusy ? null : _useGoogle,
+            icon: _googleBusy
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('G', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: const Text('Continue with Google'),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Next you will add your name, school and form.',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _signInWithEmail() async {
+    await showSignInSheet(context, AppScope.read(context));
   }
 
   Widget _buildDetails(ThemeData theme) {
@@ -188,26 +286,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: _googleBusy ? null : _useGoogle,
-            icon: _googleBusy
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('G', style: TextStyle(fontWeight: FontWeight.w700)),
-            label: const Text('Continue with Google'),
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              'or enter your name',
-              style: theme.textTheme.labelSmall?.copyWith(
+          const SizedBox(height: 12),
+          // The account is already behind this form, so the line says whose
+          // details these are rather than offering another way in.
+          Row(
+            children: [
+              Icon(
+                Icons.verified_user_outlined,
+                size: 16,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Signed in as ${AppScope.of(context).accountEmail ?? 'your account'}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -219,6 +317,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   onChanged: (_) {
+                    _detailsEdited = true;
                     if (_nameError != null) setState(() => _nameError = null);
                   },
                   decoration: InputDecoration(
@@ -235,6 +334,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   onChanged: (_) {
+                    _detailsEdited = true;
                     if (_nameError != null) setState(() => _nameError = null);
                   },
                   decoration: const InputDecoration(
@@ -325,16 +425,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onSelectionChanged: (selection) => setState(() => _role = selection.first),
           ),
           const SizedBox(height: 28),
-          // One of the two sign-in routes first: a learner types their details
-          // once the account behind them exists, so nothing here is invented and
-          // a second phone can find the same person.
-          if (AppScope.of(context).isSignedIn)
-            FilledButton(onPressed: _next, child: const Text('Continue'))
-          else
-            FilledButton(
-              onPressed: () => showSignInSheet(context, AppScope.of(context)),
-              child: const Text('Sign in to continue'),
-            ),
+          FilledButton(onPressed: _next, child: const Text('Continue')),
         ],
       ),
     );
@@ -606,3 +697,5 @@ class _ChoiceCard extends StatelessWidget {
     );
   }
 }
+
+

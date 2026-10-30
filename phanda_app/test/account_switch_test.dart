@@ -247,17 +247,95 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
-    // Name, school and form are collected once the account exists; until then
-    // the only way forward is email and password, or Google.
+    // Name, school and form are collected once the account exists. Until then
+    // there is no form to fill in — only the two ways to sign in.
     expect(find.text('Sign in to continue'), findsOneWidget);
+    expect(find.text('Sign in with email'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Who should we call you?'), findsNothing);
     expect(find.text('Continue'), findsNothing);
 
-    await tester.ensureVisible(find.text('Sign in to continue'));
+    await tester.ensureVisible(find.text('Sign in with email'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sign in to continue'));
+    await tester.tap(find.text('Sign in with email'));
     await tester.pumpAndSettle();
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Use Google instead'), findsOneWidget);
   });
+
+  testWidgets('signing in on the gate moves on to the details step',
+      (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    // A newly registered account carries no school, so the details still have
+    // to be collected after signing in.
+    const fresh = {
+      'id': 9,
+      'name': 'Chisomo Banda',
+      'first_name': 'Chisomo',
+      'last_name': 'Banda',
+      'email': 'newlearner@kuphanda.test',
+      'school': '',
+      'plan': 'free',
+      'is_staff': false,
+    };
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/login')) {
+        return _json({
+          'data': {'token': 'fresh-token', 'user': fresh},
+        });
+      }
+      if (request.url.path.endsWith('/me')) {
+        return _json({'data': fresh});
+      }
+      return _json({'data': []});
+    });
+
+    final state = AppState(
+      store: MemoryStateStore(),
+      files: _NoFiles(),
+      api: ApiClient(
+        baseUrl: 'https://example.test/api/v1',
+        token: null,
+        httpClient: client,
+      ),
+      tokenStore: MemoryTokenStore(),
+    );
+    await state.initialize();
+    state.stopAutoSync();
+
+    await tester.pumpWidget(KuphandaApp(state: state));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Get started'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign in with email'), findsOneWidget);
+
+    await state.signIn(
+      email: 'newlearner@kuphanda.test',
+      password: 'KphNew2026',
+    );
+    // Signing in arms the fifteen-minute sync timer; stop it so teardown does
+    // not fail on a pending timer rather than on the step change.
+    state.stopAutoSync();
+    await tester.pumpAndSettle();
+
+    // The learner stays in onboarding and lands on the form, filled in from the
+    // account — not back at the landing page they just left.
+    expect(find.text('Get started'), findsNothing);
+    expect(find.text('Who should we call you?'), findsOneWidget);
+    // The controllers carry the account's name, not the hints that say Chisomo.
+    final names = tester.widgetList<TextField>(find.byType(TextField)).toList();
+    expect(names.first.controller?.text, 'Chisomo');
+    expect(names[1].controller?.text, 'Banda');
+    expect(find.text('Continue'), findsOneWidget);
+  });
 }
+
+
+
