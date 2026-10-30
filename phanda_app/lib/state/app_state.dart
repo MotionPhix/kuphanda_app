@@ -13,6 +13,7 @@ import '../data/models/classroom.dart';
 import '../data/models/document.dart';
 import '../data/models/profile.dart';
 import '../data/models/reading.dart';
+import '../data/models/reading_tally.dart';
 import '../data/models/study_guide.dart';
 import '../data/models/subject.dart';
 import '../data/notifications/push_service.dart';
@@ -409,6 +410,9 @@ class AppState extends ChangeNotifier {
   }
 
   DocumentAsset? assetFor(String documentId) => _snapshot.assets[documentId];
+
+  /// Reading counted in the unit each document actually has.
+  ReadingTally get readingTally => tallyReading(_allDocuments, _snapshot.progress);
 
   ReadingProgress? progressFor(String documentId) => _snapshot.progress[documentId];
 

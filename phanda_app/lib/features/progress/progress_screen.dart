@@ -24,11 +24,7 @@ class ProgressScreen extends StatelessWidget {
     final entries = state.entries;
     final started = entries.where((entry) => entry.progressPercent > 0).toList();
     final finished = entries.where((entry) => entry.progressPercent >= 99.5).toList();
-    final pagesRead = entries.fold<int>(
-      0,
-      (sum, entry) =>
-          sum + (state.progressFor(entry.document.id)?.currentPage ?? 0),
-    );
+    final tally = state.readingTally;
 
     final recent = started
         .where((entry) => state.progressFor(entry.document.id)?.lastReadAt != null)
@@ -49,7 +45,7 @@ class ProgressScreen extends StatelessWidget {
               ScreenHeader(
                 eyebrow: 'Evidence, not tick boxes',
                 title: 'Progress',
-                subtitle: 'Pages read and minutes studied across this account.',
+                subtitle: 'What you have read, and how long you spent on it.',
                 actions: [
                   IconButton(
                     onPressed: onOpenProfile,
@@ -113,9 +109,13 @@ class ProgressScreen extends StatelessWidget {
                         width: width,
                         child: StatTile(
                           height: tileHeight,
-                          label: 'Pages read',
-                          value: '$pagesRead',
-                          caption: 'across all documents',
+                          label: tally.measuredInQuestions
+                              ? 'Questions read'
+                              : 'Pages read',
+                          value: '${tally.measuredInQuestions ? tally.questions : tally.pages}',
+                          caption: tally.measuredInQuestions
+                              ? 'across ${plural(tally.papers, 'paper')}'
+                              : 'across all documents',
                           icon: Icons.auto_stories_outlined,
                           tint: const Color(0xFF2F6B9A),
                         ),
