@@ -4,11 +4,10 @@ import '../../app.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
-import '../../data/api/api_models.dart';
-import '../../data/auth/google_sign_in_service.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
+import 'sign_in_sheet.dart';
 import '../billing/subscription_screen.dart';
 import '../staff/staff_library_screen.dart';
 
@@ -129,7 +128,7 @@ class ProfileScreen extends StatelessWidget {
                             : 'Tap to sign in and sync your progress',
                         onTap: state.isSignedIn
                             ? () => _confirmSignOut(context, state)
-                            : () => _signIn(context, state),
+                            : () => showSignInSheet(context, state),
                       ),
                     ],
                   ),
@@ -316,18 +315,6 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-Future<void> _signIn(BuildContext context, AppState state) async {
-  try {
-    final token = await GoogleSignInService().idToken();
-    await state.signInWithGoogle(token);
-    if (context.mounted) showSnack(context, 'Signed in with Google.');
-  } on ApiException catch (error) {
-    if (context.mounted) showSnack(context, error.message, error: true);
-  } catch (error) {
-    if (context.mounted) showSnack(context, 'Could not sign in: $error', error: true);
   }
 }
 

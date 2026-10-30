@@ -137,7 +137,9 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   bool get isSignedIn => _token != null && _token!.isNotEmpty;
-  bool get isStaff => _account?.isStaff ?? false;
+  // The snapshot carries the flag that was persisted with the session, so staff
+  // tools survive a restart and a later account refresh that does not repeat it.
+  bool get isStaff => _snapshot.accountStaff || (_account?.isStaff ?? false);
   AuthSession? get account => _account;
   String? get accountName => _snapshot.accountName;
   String? get accountEmail => _snapshot.accountEmail;
@@ -1248,6 +1250,14 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _adoptSession(AuthSession session) async {
+    // A different person on the same phone: the profile follows the account, or
+    // the teacher's classes would be listed under the learner's name. Signing out
+    // clears the stored identity, so this covers both "switched directly" and
+    // "signed out, then someone else signed in".
+    final switched = _snapshot.accountEmail == null ||
+        _snapshot.accountEmail != session.email ||
+        _snapshot.accountId != session.userId;
+
     _token = session.token;
     _account = session;
     final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: session.token);
@@ -1270,7 +1280,7 @@ class AppState extends ChangeNotifier {
 
     // Merge Google's profile data only into an empty local profile. Anything
     // the learner has already confirmed is kept, including edited names.
-    if (profile.name.trim().isEmpty) {
+    if (profile.name.trim().isEmpty || switched) {
       final given = session.firstName.trim();
       final family = session.lastName.trim();
       merged = merged.copyWith(
