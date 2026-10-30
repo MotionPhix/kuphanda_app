@@ -66,5 +66,12 @@ void main() {
     expect(sheet.height, lessThan(screen * 0.6),
         reason: 'the sheet was ${sheet.height} dp tall on an $screen dp screen');
     expect(sheet.height, greaterThan(200), reason: 'the form still has to fit');
+
+    // A short sheet is only right if the form is actually in it: the first
+    // attempt at this sized the sheet by collapsing the field to nothing.
+    final field = tester.getRect(find.byType(TextField));
+    expect(field.height, greaterThan(40), reason: 'the code field must be visible');
+    expect(find.text('Class code'), findsOneWidget);
+    expect(field.bottom, lessThan(sheet.bottom));
   });
 }

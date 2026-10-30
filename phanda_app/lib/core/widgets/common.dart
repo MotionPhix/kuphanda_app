@@ -635,22 +635,23 @@ class SheetBody extends StatelessWidget {
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
     final bottomInset = keyboard > safeBottom ? keyboard : safeBottom;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: height),
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          bottom: bottomInset + 20,
-        ),
-        child: Align(
-          alignment: Alignment.topCenter,
-          heightFactor: 1,
-          // Without an explicit factor an Align takes the biggest height it is
-          // offered, and a scroll-controlled sheet offers the whole screen — so
-          // a short form sat in a screen-tall sheet with dead space beneath it.
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
+    // The sheet's height is this widget's height, so nothing here may expand to
+    // fill: an Align or a flex viewport both take the whole screen a
+    // scroll-controlled sheet offers, which left a short form sitting above a
+    // field of empty space. The content is sized by what is in it, and the scroll
+    // view only starts scrolling once that exceeds the cap.
+    return Align(
+      alignment: Alignment.topCenter,
+      heightFactor: 1,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 620, maxHeight: height),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            bottom: bottomInset + 20,
+          ),
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -666,7 +667,7 @@ class SheetBody extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                Flexible(child: SingleChildScrollView(child: child)),
+                child,
                 if (actions.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Row(children: actions),
