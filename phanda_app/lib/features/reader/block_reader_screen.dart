@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../core/widgets/common.dart';
 import '../../data/api/api_models.dart';
-import '../../data/models/block_document.dart';
+import '../../data/store/block_cache.dart';
 import '../../state/app_state.dart';
 import 'block_document_view.dart';
 
@@ -30,7 +30,7 @@ class BlockReaderScreen extends StatefulWidget {
 }
 
 class _BlockReaderScreenState extends State<BlockReaderScreen> {
-  Future<BlockDocument>? _document;
+  Future<LoadedBlockDocument>? _document;
   bool _showAnswers = false;
   final ScrollController _scroll = ScrollController();
   int _lastReported = -1;
@@ -51,7 +51,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
     _document ??= _load();
   }
 
-  Future<BlockDocument> _load() {
+  Future<LoadedBlockDocument> _load() {
     _slowTimer?.cancel();
     _slow = false;
     _slowTimer = Timer(const Duration(seconds: 6), () {
@@ -126,7 +126,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<BlockDocument>(
+      body: FutureBuilder<LoadedBlockDocument>(
         future: _document,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -179,7 +179,8 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
             );
           }
 
-          final document = snapshot.data;
+          final loaded = snapshot.data;
+          final document = loaded?.document;
           if (document == null || document.blocks.isEmpty) {
             return const Center(
               child: EmptyState(
@@ -190,10 +191,29 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
             );
           }
 
-          return BlockDocumentView(
-            document: document,
-            showAnswers: _showAnswers,
-              controller: _scroll,
+          return Column(
+            children: [
+              // A copy from disk looks live otherwise, and a learner reading
+              // yesterday's marks has no way to know.
+              if (loaded!.fromCache)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: InfoBanner(
+                    tone: BannerTone.info,
+                    icon: Icons.cloud_off_rounded,
+                    title: 'Saved copy',
+                    message: 'You are offline, so this is the paper as it was last '
+                        'downloaded. Anything changed since then appears once you reconnect.',
+                  ),
+                ),
+              Expanded(
+                child: BlockDocumentView(
+                  document: document,
+                  showAnswers: _showAnswers,
+                  controller: _scroll,
+                ),
+              ),
+            ],
           );
         },
       ),

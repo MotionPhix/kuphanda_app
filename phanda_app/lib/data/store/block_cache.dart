@@ -18,6 +18,21 @@ abstract class BlockDocumentCache {
   Future<BlockDocument?> read(String documentId);
   Future<void> write(String documentId, BlockDocument document);
   Future<void> delete(String documentId);
+
+  /// Which papers have a copy, so the library can say what opens without data.
+  Future<Set<String>> saved();
+}
+
+/// A document together with where it came from.
+///
+/// The reader has to be able to say that it is showing yesterday's copy: a
+/// paper served silently from disk looks live, and a learner who cannot tell
+/// the difference will trust stale marks.
+class LoadedBlockDocument {
+  const LoadedBlockDocument(this.document, {this.fromCache = false});
+
+  final BlockDocument document;
+  final bool fromCache;
 }
 
 class LocalBlockDocumentCache implements BlockDocumentCache {
@@ -67,6 +82,28 @@ class LocalBlockDocumentCache implements BlockDocumentCache {
       if (await file.exists()) await file.delete();
     } catch (_) {
       // Nothing to recover from.
+    }
+  }
+
+  @override
+  Future<Set<String>> saved() async {
+    const suffix = '.blocks.json';
+    try {
+      final directory = await _store.blocksDirectory();
+      final ids = <String>{};
+
+      await for (final entity in directory.list()) {
+        final name = entity.uri.pathSegments.isEmpty ? '' : entity.uri.pathSegments.last;
+        if (entity is File && name.endsWith(suffix)) {
+          // The file name is the document id, sanitised. Ids the catalogue uses
+          // (ref-msce-maths-2002-p1) survive unchanged.
+          ids.add(name.substring(0, name.length - suffix.length));
+        }
+      }
+
+      return ids;
+    } catch (_) {
+      return <String>{};
     }
   }
 }

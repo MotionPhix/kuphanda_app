@@ -10,7 +10,6 @@ import '../data/api/api_config.dart';
 import '../data/api/api_models.dart';
 import '../data/api/token_store.dart';
 import '../data/models/classroom.dart';
-import '../data/models/block_document.dart';
 import '../data/models/document.dart';
 import '../data/models/profile.dart';
 import '../data/models/reading.dart';
@@ -111,6 +110,9 @@ class AppState extends ChangeNotifier {
   final Set<String> _downloading = <String>{};
   final Map<String, String> _downloadErrors = <String, String>{};
   final Map<String, bool> _entitled = <String, bool>{};
+
+  /// Documents with a copy on this phone, in either format.
+  Set<String> _savedOffline = <String>{};
   List<RemotePlan> _plans = const <RemotePlan>[];
   List<PaymentRecord> _payments = const <PaymentRecord>[];
   List<AppNotification> _notifications = const <AppNotification>[];
@@ -301,6 +303,8 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    _savedOffline = await _blockCache?.saved() ?? <String>{};
+
     _token = await _tokenStore.read();
     if (_token != null && _token!.isNotEmpty) {
       _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
@@ -424,6 +428,7 @@ class AppState extends ChangeNotifier {
       rating: _snapshot.ratings[document.id],
       priceMwk: priceFor(document.id),
       hasRemoteFile: hasRemoteFile(document.id),
+      offlineCopy: _savedOffline.contains(document.id),
     );
   }
 
@@ -1288,7 +1293,7 @@ class AppState extends ChangeNotifier {
   /// stays readable in a blackout. A refusal does not: 401, 403 and the
   /// entitlement failures must still reach the learner, or a lapsed subscription
   /// would keep serving papers from the cache.
-  Future<BlockDocument> loadBlockDocument(String documentId) async {
+  Future<LoadedBlockDocument> loadBlockDocument(String documentId) async {
     if (!isSignedIn) {
       throw const ApiException('Sign in to read this paper.');
     }
@@ -1296,16 +1301,22 @@ class AppState extends ChangeNotifier {
     try {
       final document = await _api!.fetchBlockDocument(documentId);
       await _blockCache?.write(documentId, document);
-      return document;
+      if (_savedOffline.add(documentId)) notifyListeners();
+      return LoadedBlockDocument(document);
     } on ApiException catch (error) {
       final offline = error.isNetworkError || (error.statusCode ?? 0) >= 500;
       if (offline) {
         final cached = await _blockCache?.read(documentId);
-        if (cached != null) return cached;
+        if (cached != null) return LoadedBlockDocument(cached, fromCache: true);
       }
       rethrow;
     }
   }
+
+  /// True when this document can be opened without a connection — a saved
+  /// structured paper or a downloaded file.
+  bool savedOffline(String documentId) =>
+      _savedOffline.contains(documentId) || assetFor(documentId)?.path != null;
 
   /// Pulls the recent messages addressed to this learner's audiences. A failure
   /// keeps whatever was already loaded: an inbox must not break the app when a

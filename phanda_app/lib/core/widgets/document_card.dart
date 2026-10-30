@@ -257,6 +257,16 @@ class DocumentTile extends StatelessWidget {
                           )
                         // Everything Kuphanda publishes is read in the app or
                         // downloaded; there is nothing for a learner to attach.
+                        // A paper already read is kept on the phone, so it opens
+                        // with no data. Saying so is the point of caching it, and
+                        // it implies the "Readable" badge.
+                        else if (entry.offlineCopy)
+                          const Pill(
+                            label: 'Saved',
+                            icon: Icons.offline_pin_outlined,
+                            color: AppColors.green,
+                            compact: true,
+                          )
                         else if (document.hasBlocks)
                           const Pill(
                             label: 'Readable',

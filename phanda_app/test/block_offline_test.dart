@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kuphanda/app.dart';
+import 'package:kuphanda/features/reader/block_reader_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:kuphanda/data/api/api_client.dart';
@@ -51,6 +54,10 @@ class _MemoryCache implements BlockDocumentCache {
 
   @override
   Future<void> delete(String documentId) async => stored = null;
+
+  @override
+  Future<Set<String>> saved() async =>
+      stored == null ? <String>{} : {'ref-msce-maths-2002-p1'};
 }
 
 const _payload = <String, Object?>{
@@ -101,6 +108,9 @@ Future<AppState> _signedIn({
   );
 
   await state.signInWithGoogle('google-id-token', sync: false);
+  // Signing in starts a 15-minute refresh timer; a widget test fails when one is
+  // still pending as the tree is torn down.
+  state.stopAutoSync();
   return state;
 }
 
@@ -112,9 +122,11 @@ void main() {
       onBlocks: () async => _json({'data': _payload}),
     );
 
-    final document = await state.loadBlockDocument('ref-msce-maths-2002-p1');
+    final loaded = await state.loadBlockDocument('ref-msce-maths-2002-p1');
 
-    expect(document.blocks, hasLength(2));
+    expect(loaded.document.blocks, hasLength(2));
+    expect(loaded.fromCache, isFalse);
+    expect(state.savedOffline('ref-msce-maths-2002-p1'), isTrue);
     expect(cache.writes, 1);
     expect(cache.stored!.blocks, hasLength(2));
   });
@@ -126,10 +138,11 @@ void main() {
       onBlocks: () async => throw http.ClientException('offline'),
     );
 
-    final document = await state.loadBlockDocument('ref-msce-maths-2002-p1');
+    final loaded = await state.loadBlockDocument('ref-msce-maths-2002-p1');
 
-    expect(document.title, 'Mathematics Paper I');
-    expect(document.blocks, hasLength(2));
+    expect(loaded.fromCache, isTrue);
+    expect(loaded.document.title, 'Mathematics Paper I');
+    expect(loaded.document.blocks, hasLength(2));
   });
 
   test('a lapsed entitlement is not served from the cache', () async {
@@ -157,5 +170,41 @@ void main() {
     expect(round.subtitle, 'Paper I, 100 marks.');
     expect(round.blocks, hasLength(2));
     expect(round.blocks.last.raw['parts'], isA<List<Object?>>());
+  });
+
+  testWidgets('the reader says when it is showing a saved copy', (tester) async {
+    final cache = _MemoryCache(BlockDocument.fromMap(_payload));
+    final state = await _signedIn(
+      cache: cache,
+      onBlocks: () async => throw http.ClientException('offline'),
+    );
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: const MaterialApp(
+        home: BlockReaderScreen(documentId: 'ref-msce-maths-2002-p1'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Saved copy'), findsOneWidget);
+    expect(find.text('Mathematics Paper I'), findsOneWidget);
+  });
+
+  testWidgets('a live paper carries no saved-copy banner', (tester) async {
+    final state = await _signedIn(
+      cache: _MemoryCache(),
+      onBlocks: () async => _json({'data': _payload}),
+    );
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: const MaterialApp(
+        home: BlockReaderScreen(documentId: 'ref-msce-maths-2002-p1'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Saved copy'), findsNothing);
   });
 }

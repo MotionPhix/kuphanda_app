@@ -368,6 +368,7 @@ class LibraryEntry {
     this.rating,
     this.priceMwk = 0,
     this.hasRemoteFile = false,
+    this.offlineCopy = false,
   });
 
   final Document document;
@@ -391,6 +392,13 @@ class LibraryEntry {
   final bool hasRemoteFile;
 
   bool get onDevice => asset != null;
+
+  /// A copy exists on this phone that is not a downloaded file: a structured
+  /// paper kept after it was read. It opens without data, which is what a
+  /// learner on a bundle needs to know before tapping.
+  final bool offlineCopy;
+
+  bool get opensWithoutData => onDevice || offlineCopy;
   bool get hasFile => asset != null || document.guideId != null;
   bool get started => progressPercent > 0;
 }

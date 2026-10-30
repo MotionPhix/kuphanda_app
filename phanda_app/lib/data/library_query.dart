@@ -122,7 +122,9 @@ class LibraryQuery {
 
       switch (availability) {
         case AvailabilityFilter.offline:
-          if (!entry.onDevice) return false;
+          // "On this device" has to mean what it says: a structured paper kept
+          // after reading opens without data just as a downloaded file does.
+          if (!entry.opensWithoutData) return false;
         case AvailabilityFilter.saved:
           if (!entry.saved) return false;
         case AvailabilityFilter.guides:
