@@ -34,6 +34,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
   bool _showAnswers = false;
   final ScrollController _scroll = ScrollController();
   int _lastReported = -1;
+  bool _restored = false;
   AppState? _state;
 
   /// A blank spinner for the length of an HTTP timeout reads as a broken app,
@@ -58,9 +59,60 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
       if (mounted) setState(() => _slow = true);
     });
 
-    return AppScope.of(context).loadBlockDocument(widget.documentId).whenComplete(() {
+    return AppScope.of(context).loadBlockDocument(widget.documentId).then((loaded) {
+      _scheduleResume();
+      return loaded;
+    }).whenComplete(() {
       _slowTimer?.cancel();
     });
+  }
+
+  /// Puts the reader back where the learner stopped.
+  ///
+  /// The percentage was recorded but never read back, so "Continue reading ·
+  /// 19%" opened at question 1: a warm screen looked fine because the scroll
+  /// position was still in memory, and a cold open always started over.
+  void _scheduleResume() {
+    if (_restored) return;
+
+    final progress = _state?.progressFor(widget.documentId);
+    final fraction = progress?.fraction;
+    if (fraction == null || fraction <= 0.01) return;
+
+    // A finished paper is worth reopening at the start rather than at its last
+    // line; there is nothing left below to continue into.
+    if (progress!.completed) return;
+
+    _restored = true;
+    // The list has no extent until it has been laid out once.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToFraction(fraction));
+  }
+
+  void _jumpToFraction(double fraction, {int attemptsLeft = 3}) {
+    if (!mounted || !_scroll.hasClients) return;
+
+    final max = _scroll.position.maxScrollExtent;
+    if (max <= 0) {
+      if (attemptsLeft > 0) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _jumpToFraction(fraction, attemptsLeft: attemptsLeft - 1));
+      }
+      return;
+    }
+
+    _scroll.jumpTo((max * fraction).clamp(0.0, max));
+
+    // Blocks are measured as they build, so the extent after the first jump is a
+    // better estimate of the paper's height than the one before it was.
+    if (attemptsLeft > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scroll.hasClients) return;
+        final refined = _scroll.position.maxScrollExtent;
+        if ((refined - max).abs() > 1) {
+          _scroll.jumpTo((refined * fraction).clamp(0.0, refined));
+        }
+      });
+    }
   }
 
   /// Progress for a reflowable document follows the scroll, not fixed pages.
