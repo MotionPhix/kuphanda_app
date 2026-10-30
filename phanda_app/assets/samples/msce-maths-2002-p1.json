@@ -172,9 +172,7 @@
       "label": "5.",
       "marks": 3,
       "difficulty": 3,
-      "needs_review": true,
-      "text": "Given that angle $\\theta$ is acute and that $\\log \\cos \\theta = 1.73$, evaluate $(\\cos \\theta)^{2}$.",
-      "review_note": "The printed value was partly covered by handwriting in the scan; confirm 1.73 against a clean copy."
+      "text": "Given that angle $\\theta$ is acute and that $\\log \\cos \\theta = 1.75$, evaluate $(\\cos \\theta)^{2}$."
     },
     {
       "type": "question",

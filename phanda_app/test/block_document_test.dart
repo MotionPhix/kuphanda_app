@@ -142,10 +142,16 @@ void main() {
       final flagged =
           document.blocks.where((b) => b.raw['needs_review'] == true).toList();
 
-      // Q5 had a printed value covered by handwriting; Q13 and Q17 have no
-      // allocation printed at all, so their weights are an explicit decision
-      // and stay flagged as such.
-      expect(flagged.map((b) => b.label), containsAll(['5.', '13.', '17.']));
+      // Q13 and Q17 have no allocation printed at all, so their weights are an
+      // explicit decision and stay flagged as such. Q5 used to be flagged too,
+      // for a digit covered by handwriting; the clean copy reads 1.75, so it is
+      // settled and must carry no note.
+      expect(flagged.map((b) => b.label), containsAll(['13.', '17.']));
+      expect(flagged.map((b) => b.label), isNot(contains('5.')));
+
+      final q5 = document.blocks.firstWhere((b) => b.label == '5.');
+      expect(q5.raw['text'], contains(r'\log \cos \theta = 1.75$'));
+      expect(q5.raw['review_note'], isNull);
       expect(flagged.every((b) => (b.raw['review_note'] as String).isNotEmpty),
           isTrue);
 
