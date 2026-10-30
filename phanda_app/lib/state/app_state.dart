@@ -322,6 +322,7 @@ class AppState extends ChangeNotifier {
       _token = null;
     }
 
+
     // Runs after the token is known: only a signed-in learner can be restored.
     if (_restoreEjectedSession(snapshot)) migrated = true;
 
