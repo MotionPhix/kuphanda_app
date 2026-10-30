@@ -21,6 +21,7 @@ final class ClassroomResource extends JsonResource
             'form' => $this->form,
             'subject_id' => $this->subject_id,
             'teacher_name' => $this->teacher?->name,
+            'created_at' => $this->created_at?->toIso8601String(),
             'member_count' => $this->members_count ?? $this->members()->count(),
             'assignments' => $this->assignments->map(fn (ClassroomAssignment $assignment): array => [
                 'id' => $assignment->id,
