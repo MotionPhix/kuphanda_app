@@ -236,7 +236,6 @@ void main() {
       );
 
       expect(find.text('i.'), findsOneWidget);
-      expect(find.text('ii.'), findsOneWidget);
       // Both sub-lists share the same labels, so each appears twice.
       // "ii." carries no text of its own, so the paper prints it on the same
       // line as its first item and the reader does the same.
@@ -348,6 +347,48 @@ void main() {
       expect(find.text('marks unconfirmed'), findsOneWidget);
       expect(find.text('The scanned paper has no allocation printed here.'),
           findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a heading label appears once, on its first sub-item',
+        (tester) async {
+      // The paper prints "b. (i) Give any one reason ..." on one line. The
+      // reader used to render "b." on a row of its own *and* prefix the child,
+      // which read as a duplicate.
+      const document = BlockDocument(
+        title: 'Q1',
+        blocks: [
+          DocumentBlock(
+            type: 'question',
+            raw: {
+              'label': '1.',
+              'marks': 3,
+              'text': 'Answer the following.',
+              'parts': [
+                {'label': 'a.', 'text': 'State two ways.', 'marks': 2},
+                {
+                  'label': 'b.',
+                  'text': '',
+                  'parts': [
+                    {
+                      'label': '(i)',
+                      'text': 'Give any one reason.',
+                      'marks': 1,
+                    },
+                  ],
+                },
+              ],
+            },
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+      );
+
+      expect(find.text('b.'), findsNothing);
+      expect(find.text('b. (i)'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

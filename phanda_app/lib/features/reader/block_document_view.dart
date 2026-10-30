@@ -373,8 +373,11 @@ class _PartsList extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // A heading has no row of its own: its label travels into
+                  // the first sub-item, which is where the paper prints it.
+                  if (!isHeading)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
                         width: depth == 0 ? 30 : 34,
