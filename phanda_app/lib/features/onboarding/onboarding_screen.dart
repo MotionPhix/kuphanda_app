@@ -398,7 +398,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(20, 4, 20, MediaQuery.paddingOf(context).bottom + 16),
+          // The SafeArea around the body has already reserved the system bar,
+          // and this context sits above it, so reading paddingOf() here measured
+          // the raw inset and reserved it a second time — a dead band of ~48 dp
+          // under the button.
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           child: Column(
             children: [
               FilledButton(
