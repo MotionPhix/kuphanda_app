@@ -88,10 +88,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  Future<void> _finish({bool preview = false}) async {
+  Future<void> _finish() async {
     if (_saving) return;
-    if (!preview &&
-        (_firstController.text.trim().isEmpty || _lastController.text.trim().isEmpty)) {
+    if (_firstController.text.trim().isEmpty ||
+        _lastController.text.trim().isEmpty) {
       setState(() {
         _step = 1;
         _nameError = 'Add both your first and last name.';
@@ -102,20 +102,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     setState(() => _saving = true);
     final state = AppScope.read(context);
     await state.completeOnboarding(
-      name: preview
-          ? 'Chisomo Banda'
-          : [_firstController.text.trim(), _lastController.text.trim()]
-              .where((part) => part.isNotEmpty)
-              .join(' '),
-      givenName: preview ? 'Chisomo' : _firstController.text,
-      familyName: preview ? 'Banda' : _lastController.text,
-      school: preview ? 'Bwaila Secondary School' : _schoolController.text,
-      form: preview ? 4 : _form,
-      examYear: preview ? DateTime.now().year + 1 : _examYear,
-      role: preview ? StudentRole.student : _role,
-      subjectIds: preview
-          ? subjectsForForm(4).take(5).map((subject) => subject.id).toList()
-          : _subjects.toList(),
+      name: [_firstController.text.trim(), _lastController.text.trim()]
+          .where((part) => part.isNotEmpty)
+          .join(' '),
+      givenName: _firstController.text,
+      familyName: _lastController.text,
+      school: _schoolController.text,
+      form: _form,
+      examYear: _examYear,
+      role: _role,
+      subjectIds: _subjects.toList(),
     );
     if (mounted) setState(() => _saving = false);
   }
@@ -329,13 +325,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
           FilledButton(onPressed: _next, child: const Text('Continue')),
-          const SizedBox(height: 10),
-          Center(
-            child: TextButton(
-              onPressed: () => _finish(preview: true),
-              child: const Text('Preview with sample data'),
-            ),
-          ),
         ],
       ),
     );

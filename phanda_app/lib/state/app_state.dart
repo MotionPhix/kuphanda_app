@@ -264,6 +264,8 @@ class AppState extends ChangeNotifier {
       );
     }
 
+    _releaseRetiredSampleProfile(snapshot);
+
     // Bundled files are always available, even if an older snapshot predates
     // them. Imported files survive because they are keyed by document id.
     for (final asset in kBundledAssets) {
@@ -521,6 +523,41 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  /// "Preview with sample data" wrote this identity straight into the profile
+  /// and dropped the learner into the library. It offered no way back: sign out
+  /// only clears the account, and onboarding was already marked complete, so
+  /// the button stranded anyone who touched it — and discarded the details they
+  /// had typed, since it overwrote the profile in place.
+  ///
+  /// The entry point is gone; this releases snapshots that still carry it. Only
+  /// the profile is reset — progress, notes, downloads and classes survive, so
+  /// signing in again restores the same library.
+  static const _retiredSampleProfile = (
+    name: 'Chisomo Banda',
+    givenName: 'Chisomo',
+    familyName: 'Banda',
+    school: 'Bwaila Secondary School',
+    form: 4,
+  );
+
+  void _releaseRetiredSampleProfile(AppSnapshot snapshot) {
+    final profile = snapshot.profile;
+
+    // Never touch a snapshot that belongs to a real account, and require the
+    // whole sample identity — a partial match is someone's real profile.
+    final isRetiredSample = snapshot.accountId == null &&
+        snapshot.accountEmail == null &&
+        profile.name == _retiredSampleProfile.name &&
+        profile.givenName == _retiredSampleProfile.givenName &&
+        profile.familyName == _retiredSampleProfile.familyName &&
+        profile.school == _retiredSampleProfile.school &&
+        profile.form == _retiredSampleProfile.form;
+
+    if (!isRetiredSample) return;
+
+    snapshot.profile = profile.copyWith(onboardingComplete: false);
   }
 
   Future<void> completeOnboarding({
