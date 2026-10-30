@@ -29,6 +29,8 @@ class BlockReaderScreen extends StatefulWidget {
   State<BlockReaderScreen> createState() => _BlockReaderScreenState();
 }
 
+
+
 class _BlockReaderScreenState extends State<BlockReaderScreen> {
   Future<LoadedBlockDocument>? _document;
   bool _showAnswers = false;
@@ -91,7 +93,7 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
 
     // Nothing to resume, or a finished paper: it should open at the start, since
     // there is nothing below its last line to continue into.
-    if (fraction == null || fraction <= 0.01 || (progress?.completed ?? false)) {
+    if (fraction == null || fraction <= 0.01 || (progress?.isComplete ?? false)) {
       _restored = true;
       return;
     }
@@ -154,8 +156,10 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
     _lastReported = percent;
     state.recordProgress(
       documentId: widget.documentId,
-      page: (fraction * 6).ceil().clamp(1, 6),
-      totalPages: 6,
+      // A reflowable paper has one scroll, not six pages. The invented page
+      // number used to decide completion — page 6 of 6 at 83% — so it goes.
+      page: 1,
+      totalPages: 1,
       fraction: fraction,
     );
   }

@@ -9,7 +9,9 @@ import 'package:kuphanda/app.dart';
 import 'package:kuphanda/data/api/api_client.dart';
 import 'package:kuphanda/data/api/token_store.dart';
 import 'package:kuphanda/data/models/document.dart';
+import 'package:kuphanda/data/models/reading.dart';
 import 'package:kuphanda/data/store/document_files.dart';
+import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
 import 'package:kuphanda/features/reader/block_reader_screen.dart';
 import 'package:kuphanda/state/app_state.dart';
@@ -57,7 +59,7 @@ http.Response _json(Object body) => http.Response(
       headers: {'content-type': 'application/json'},
     );
 
-Future<AppState> _stateWithProgress(double fraction) async {
+Future<AppState> _stateWithProgress(double fraction, {bool staleCompleted = false}) async {
   final client = MockClient((request) async {
     if (request.url.path.endsWith('/auth/google')) {
       return _json({
@@ -71,8 +73,21 @@ Future<AppState> _stateWithProgress(double fraction) async {
     return _json({'data': _longPaper()});
   });
 
+  final store = MemoryStateStore();
+  if (staleCompleted) {
+    await store.write(AppSnapshot(progress: {
+      'ref-msce-maths-2002-p1': ReadingProgress(
+        documentId: 'ref-msce-maths-2002-p1',
+        currentPage: 6,
+        totalPages: 6,
+        fraction: fraction,
+        completed: true,
+      ),
+    }));
+  }
+
   final state = AppState(
-    store: MemoryStateStore(),
+    store: store,
     files: _NoFiles(),
     api: ApiClient(baseUrl: 'https://example.test/api/v1', token: null, httpClient: client),
     tokenStore: MemoryTokenStore(),
@@ -80,6 +95,8 @@ Future<AppState> _stateWithProgress(double fraction) async {
   await state.initialize();
   await state.signInWithGoogle('google-id-token', sync: false);
   state.stopAutoSync();
+
+  if (staleCompleted) return state;
 
   state.recordProgress(
     documentId: 'ref-msce-maths-2002-p1',
@@ -140,5 +157,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('1.'), findsOneWidget);
+  });
+
+  testWidgets('a stale "finished" flag still resumes at the saved position',
+      (tester) async {
+    // The device hit exactly this: 82% recorded, completed true from the old
+    // page arithmetic, so the reader treated it as finished and opened at the
+    // top. The fraction says otherwise.
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    final state = await _stateWithProgress(0.82, staleCompleted: true);
+    await tester.pumpWidget(_reader(state));
+    await tester.pumpAndSettle();
+
+    final position = tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+    expect(position.pixels, greaterThan(0));
+    expect(find.text('1.'), findsNothing);
   });
 }

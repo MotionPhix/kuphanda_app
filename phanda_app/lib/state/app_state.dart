@@ -692,15 +692,23 @@ class AppState extends ChangeNotifier {
         ReadingProgress(documentId: documentId, totalPages: totalPages);
     final safeTotal = totalPages <= 0 ? existing.totalPages : totalPages;
     final safePage = page.clamp(1, safeTotal <= 0 ? 1 : safeTotal);
-    final completed = (safeTotal > 0 && safePage >= safeTotal) ||
-        (fraction != null && fraction >= 0.995);
+    // Completion follows the measure in use. Mixing the two marked a
+    // twenty-four-question paper finished at 83%, because the reader's page
+    // number is derived from the scroll fraction out of an invented six.
+    final measured = fraction;
+    final completed = measured != null
+        ? measured >= 0.995
+        : (safeTotal > 0 && safePage >= safeTotal);
 
     _snapshot.progress[documentId] = existing.copyWith(
       currentPage: safePage,
       totalPages: safeTotal,
       secondsSpent: existing.secondsSpent + seconds,
       lastReadAt: _clock(),
-      completed: existing.completed || completed,
+      // Sticky only for page-based documents: a PDF that was finished stays
+      // finished. A measured fraction is re-derived on every report, which is
+      // what corrects the stale "finished" written by the old arithmetic.
+      completed: measured != null ? completed : (existing.completed || completed),
       fraction: fraction,
     );
 

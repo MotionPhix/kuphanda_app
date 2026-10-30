@@ -27,6 +27,15 @@ class ReadingProgress {
   /// poor proxy: a reflowable book has one scroll, not fixed pages.
   final double? fraction;
 
+  /// Whether the document has actually been finished.
+  ///
+  /// When the reader measured a fraction, that is the only measure that counts.
+  /// A reflowable paper has no pages, so a record written by the old page
+  /// arithmetic — page 6 of 6 at 83% scrolled — claims "finished" while a fifth
+  /// of the paper is still below. Trusting `completed` there sends the learner
+  /// back to question one every time.
+  bool get isComplete => fraction != null ? fraction! >= 0.995 : completed;
+
   /// 0–100, clamped.
   double get percent {
     final measured = fraction;
