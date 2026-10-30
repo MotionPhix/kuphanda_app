@@ -270,7 +270,7 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    _releaseRetiredSampleProfile(snapshot);
+    var migrated = _releaseRetiredSampleProfile(snapshot);
 
     // Bundled files are always available, even if an older snapshot predates
     // them. Imported files survive because they are keyed by document id.
@@ -322,9 +322,12 @@ class AppState extends ChangeNotifier {
       _token = null;
     }
 
+    // Runs after the token is known: only a signed-in learner can be restored.
+    if (_restoreEjectedSession(snapshot)) migrated = true;
+
     _allDocuments = _mergeDocuments();
     _ready = true;
-    if (isFirstRun) {
+    if (isFirstRun || migrated) {
       await _persistNow();
     }
     notifyListeners();
@@ -551,17 +554,21 @@ class AppState extends ChangeNotifier {
     form: 4,
   );
 
-  void _releaseRetiredSampleProfile(AppSnapshot snapshot) {
+  /// Returns true when it changed the snapshot, so the new marker is persisted
+  /// immediately rather than waiting for some later write.
+  bool _releaseRetiredSampleProfile(AppSnapshot snapshot) {
+    // Once only. The reset leaves the identity untouched, so without this the
+    // next launch matches again and ejects the learner from their own account
+    // on every start.
+    if (snapshot.sampleProfileReleased) return false;
+
     final profile = snapshot.profile;
 
-    // The whole identity must match. A partial match is somebody's real
-    // profile; the full match is a fabricated one, so the worst case here is a
-    // genuine Chisomo Banda at Bwaila in Form 4 typing their name once more.
-    //
-    // Deliberately not conditioned on being signed out: the shortcut also ran
-    // while a session was live, which is exactly how it stranded a signed-in
-    // learner — their account was fine, their profile was now the sample, and
-    // onboarding was marked complete.
+    // An account settles it: this is a real learner whose name happens to match
+    // the sample. The real Chisomo Banda at Bwaila in Form 4 is exactly who the
+    // first version of this released by mistake.
+    if (snapshot.accountId != null || snapshot.accountEmail != null) return false;
+
     final isRetiredSample =
         profile.name == _retiredSampleProfile.name &&
             profile.givenName == _retiredSampleProfile.givenName &&
@@ -569,9 +576,25 @@ class AppState extends ChangeNotifier {
             profile.school == _retiredSampleProfile.school &&
             profile.form == _retiredSampleProfile.form;
 
-    if (!isRetiredSample) return;
+    if (!isRetiredSample) return false;
 
     snapshot.profile = profile.copyWith(onboardingComplete: false);
+    snapshot.sampleProfileReleased = true;
+    return true;
+  }
+
+  /// Undoes the damage of releasing a signed-in learner: their profile was
+  /// complete before it was reset, so the details are still on the record and
+  /// asking for them again would be busywork caused by our bug.
+  bool _restoreEjectedSession(AppSnapshot snapshot) {
+    final profile = snapshot.profile;
+    if (profile.onboardingComplete) return false;
+    if (!isSignedIn) return false;
+    if (profile.name.trim().isEmpty || profile.school.trim().isEmpty) return false;
+
+    snapshot.profile = profile.copyWith(onboardingComplete: true);
+    snapshot.sampleProfileReleased = true;
+    return true;
   }
 
   Future<void> completeOnboarding({

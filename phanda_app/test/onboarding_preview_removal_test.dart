@@ -2,6 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:kuphanda/data/api/api_client.dart';
 import 'package:kuphanda/app.dart';
 import 'package:kuphanda/core/theme.dart';
 import 'package:kuphanda/data/api/token_store.dart';
@@ -60,17 +63,32 @@ AppSnapshot _retiredSampleSnapshot() => AppSnapshot(
       },
     );
 
-Future<AppState> _initialized(AppSnapshot snapshot) async {
+Future<AppState> _initialized(AppSnapshot snapshot, {String? token}) async {
   final store = MemoryStateStore();
   await store.write(snapshot);
   final state = AppState(
     store: store,
     files: _NoFiles(),
-    tokenStore: MemoryTokenStore(),
+    tokenStore: MemoryTokenStore(token),
+    // A signed-in start fires sync, billing and notifications in the background;
+    // a stub answers them so the test stays about the profile flag.
+    api: token == null ? null : _quietApi(),
   );
   await state.initialize();
   return state;
 }
+
+/// Answers the background calls a signed-in start makes, so the test is about
+/// the profile flag rather than about reaching a server.
+ApiClient _quietApi() => ApiClient(
+      baseUrl: 'https://example.test/api/v1',
+      token: 'live-token',
+      httpClient: MockClient((request) async => http.Response(
+            '{"data":[]}',
+            200,
+            headers: {'content-type': 'application/json'},
+          )),
+    );
 
 void main() {
   testWidgets('onboarding offers no way into the app without an account',
@@ -113,18 +131,63 @@ void main() {
     expect(progress!.fraction, 0.5);
   });
 
-  test('a signed-in learner holding the sample profile is released too',
+  test('a real account is never treated as the sample, even on an exact match',
       () async {
-    // The shortcut could be pressed while a session was live, and that is the
-    // state it stranded: account intact, profile replaced by the sample.
+    // This is the actual developer account: Chisomo Banda, Bwaila Secondary
+    // School, Form 4. Releasing it signed the learner out of their own app.
     final snapshot = _retiredSampleSnapshot();
-    snapshot.accountId = 4;
-    snapshot.accountEmail = 'kingscrib1@gmail.com';
+    snapshot.accountId = 5;
+    snapshot.accountEmail = 'aishootsmo@gmail.com';
 
-    final state = await _initialized(snapshot);
+    final state = await _initialized(snapshot, token: 'live-token');
 
-    expect(state.profile.onboardingComplete, isFalse);
-    expect(state.progressFor('ref-msce-agriculture-2017-p1'), isNotNull);
+    expect(state.profile.onboardingComplete, isTrue);
+  });
+
+  test('the release happens once, so a second launch does not eject again',
+      () async {
+    // The reset leaves the identity untouched, so a release without a marker
+    // re-fires forever: every start resets onboarding.
+    final snapshot = _retiredSampleSnapshot();
+    final store = MemoryStateStore();
+    await store.write(snapshot);
+
+    final first = AppState(store: store, files: _NoFiles(), tokenStore: MemoryTokenStore());
+    await first.initialize();
+    expect(first.profile.onboardingComplete, isFalse);
+
+    // The learner finishes onboarding, keeping the same name and school.
+    await first.completeOnboarding(
+      name: 'Chisomo Banda',
+      givenName: 'Chisomo',
+      familyName: 'Banda',
+      school: 'Bwaila Secondary School',
+      form: 4,
+      examYear: 2027,
+      role: StudentRole.student,
+      subjectIds: const <String>['mathematics', 'biology'],
+    );
+
+    // Second launch of the same install.
+    final second = AppState(store: store, files: _NoFiles(), tokenStore: MemoryTokenStore());
+    await second.initialize();
+
+    // With no marker the release would reset this again on every single start.
+    expect(second.profile.onboardingComplete, isTrue);
+  });
+
+  test('a signed-in learner with their details is put back in the library',
+      () async {
+    // Repair for the state the bad release left behind: profile complete,
+    // onboarding reset. Asking for the same details again is our bug, not theirs.
+    final snapshot = _retiredSampleSnapshot();
+    snapshot.accountId = 5;
+    snapshot.accountEmail = 'aishootsmo@gmail.com';
+    snapshot.profile = snapshot.profile.copyWith(onboardingComplete: false);
+
+    final state = await _initialized(snapshot, token: 'live-token');
+
+    expect(state.profile.onboardingComplete, isTrue);
   });
 
   test('a partial match is treated as someone real and left alone', () async {

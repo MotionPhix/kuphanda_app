@@ -91,6 +91,13 @@ class AppSnapshot {
   DateTime? pendingPaymentAt;
   final int version;
 
+  /// Set once the retired "preview with sample data" profile has been released.
+  ///
+  /// Without it the release re-fires on every launch: it resets
+  /// `onboardingComplete`, the identity stays the same, so the next start
+  /// resets it again and the learner is ejected from their own account forever.
+  bool sampleProfileReleased = false;
+
   String encode() => jsonEncode(toJson());
 
   static AppSnapshot decode(String raw) {
@@ -124,6 +131,7 @@ class AppSnapshot {
         'pendingPaymentTxRef': pendingPaymentTxRef,
         'pendingPaymentKind': pendingPaymentKind,
         'pendingPaymentAt': pendingPaymentAt?.toIso8601String(),
+        'sampleProfileReleased': sampleProfileReleased,
       };
 
   static AppSnapshot fromJson(Map<String, Object?> json) {
@@ -185,7 +193,7 @@ class AppSnapshot {
       pendingPaymentKind: json['pendingPaymentKind'] as String?,
       pendingPaymentAt: DateTime.tryParse(json['pendingPaymentAt'] as String? ?? ''),
       version: (json['version'] as num?)?.toInt() ?? 1,
-    );
+    )..sampleProfileReleased = json['sampleProfileReleased'] as bool? ?? false;
   }
 
   static List<Object?> _list(Object? value) => value is List ? value : const <Object?>[];
