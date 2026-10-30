@@ -391,5 +391,44 @@ void main() {
       expect(find.text('b. (i)'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+    testWidgets('shows the unconfirmed-marks note on the real maths paper',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+
+      final document = BlockDocument.fromJsonString(
+        File('assets/samples/msce-maths-2002-p1.json').readAsStringSync(),
+      );
+
+      // Q13 and Q17 are weighed by decision: the scan prints no allocation, so
+      // the note must say the weight was chosen rather than read off the page.
+      final notes = document.blocks
+          .map((block) => block.raw['review_note'])
+          .whereType<String>()
+          .where((note) => note.contains('no allocation for this question'))
+          .toList();
+      expect(notes, hasLength(2));
+      expect(notes.every((note) => note.contains('decided by the Kuphanda team')),
+          isTrue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+      );
+
+      expect(tester.takeException(), isNull);
+
+      // The list is lazy, so the note only exists once it is scrolled into
+      // view — dragging to the end would scroll past it.
+      await tester.scrollUntilVisible(
+        find.text(notes.first),
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(find.text(notes.first), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
   });
 }
