@@ -75,6 +75,10 @@ class ReadingProgress {
       secondsSpent: (json['secondsSpent'] as num?)?.toInt() ?? 0,
       lastReadAt: DateTime.tryParse(json['lastReadAt'] as String? ?? ''),
       completed: json['completed'] as bool? ?? false,
+      // Written since the reader started measuring scroll, but never read back:
+      // every restart silently fell back to page arithmetic, so a reflowable
+      // paper reopened at whatever its page number implied.
+      fraction: (json['fraction'] as num?)?.toDouble(),
     );
   }
 }
