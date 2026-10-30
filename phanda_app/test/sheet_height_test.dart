@@ -78,7 +78,8 @@ void main() {
   testWidgets('a sheet does not reserve the keyboard twice', (tester) async {
     tester.view.physicalSize = const Size(720, 1640);
     tester.view.devicePixelRatio = 2.0;
-    // 300 dp of keyboard, and the route already lifts the sheet above it.
+    // 300 dp of keyboard. Android does not move a scroll-controlled sheet out
+    // of the keyboard's way, so the sheet has to reserve the inset itself.
     tester.view.viewInsets = const FakeViewPadding(bottom: 600);
     addTearDown(tester.view.reset);
 
@@ -101,6 +102,8 @@ void main() {
     await tester.tap(find.text('Join a class').first);
     await tester.pumpAndSettle();
 
+    final screen = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    const keyboard = 300.0;
     final sheet = tester.getRect(find.byType(SheetBody));
     final field = tester.getRect(find.byType(TextField));
 
@@ -108,5 +111,11 @@ void main() {
     expect(sheet.height, lessThan(500),
         reason: 'sheet was ${sheet.height} dp with the keyboard up');
     expect(field.height, greaterThan(40));
+    // The keyboard sits over the bottom of the screen, so the field has to end
+    // above it — a sheet that only reports the inset leaves the field behind
+    // the keyboard, which is what the sign-in sheet did on the phone.
+    expect(field.bottom, lessThanOrEqualTo(screen - keyboard),
+        reason: 'the field ended at ${field.bottom} dp with the keyboard '
+            'starting at ${screen - keyboard} dp');
   });
 }

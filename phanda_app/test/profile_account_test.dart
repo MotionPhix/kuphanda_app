@@ -98,9 +98,11 @@ void main() {
     await tester.tap(find.text('Signed in'));
     await tester.pumpAndSettle();
 
-    // The point of the copy: an offline library is not lost by signing out.
+    // The point of the copy: the downloaded papers survive, the reading does
+    // not — saying the progress stays would be a promise the sign-out breaks.
     expect(find.text('Sign out?'), findsOneWidget);
-    expect(find.textContaining('reading progress stay on this phone'), findsOneWidget);
+    expect(find.textContaining('Downloaded papers stay on this phone'), findsOneWidget);
+    expect(find.textContaining('reading progress, classes and notes'), findsOneWidget);
 
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();

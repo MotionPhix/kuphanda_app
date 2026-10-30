@@ -65,4 +65,43 @@ void main() {
       expect(height, lessThanOrEqualTo(110), reason: 'tile $index was $height dp');
     }
   });
+
+  testWidgets('the About section clears the navigation bar', (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    // 48 dp of navigation bar, and a status bar above.
+    tester.view.viewPadding = const FakeViewPadding(top: 48, bottom: 96);
+    addTearDown(tester.view.reset);
+
+    final state = AppState(
+      store: MemoryStateStore(),
+      files: _NoFiles(),
+      tokenStore: MemoryTokenStore(),
+    );
+    await state.initialize();
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const ProfileScreen(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // Scroll to the end of the page, where the About card is.
+    await tester.drag(find.byType(ListView), const Offset(0, -4000));
+    await tester.pumpAndSettle();
+
+    final screen = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    const navigationBar = 48.0;
+    final last = find.textContaining('remain the property of MANEB');
+    expect(last, findsOneWidget);
+
+    final rect = tester.getRect(last);
+    expect(rect.bottom, lessThanOrEqualTo(screen - navigationBar),
+        reason: 'the last About paragraph ended at ${rect.bottom} dp with the '
+            'navigation bar starting at ${screen - navigationBar} dp');
+    expect(rect.top, greaterThan(0));
+  });
 }

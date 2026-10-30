@@ -24,7 +24,14 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: ListView(
-        padding: EdgeInsets.zero,
+        // The list runs to the edge of the phone, so its last card has to clear
+        // the navigation bar itself: without this the About paragraphs sat under
+        // the system bar and could not be read. viewPadding rather than padding,
+        // because the inset belongs to the device and must not come and go with
+        // the keyboard.
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewPaddingOf(context).bottom,
+        ),
         children: [
           ResponsivePage(
             maxWidth: 760,
@@ -322,8 +329,12 @@ Future<void> _confirmSignOut(BuildContext context, AppState state) async {
   final sure = await confirmAction(
     context,
     title: 'Sign out?',
-    message: 'Your library, downloads and reading progress stay on this phone. '
-        'You can sign in again from here whenever you want.',
+    // What signing out actually does: the downloads stay, the reading itself —
+    // progress, classes, notes — belongs to the account and is cleared, so the
+    // next person to pick up the phone starts from nothing.
+    message: 'Downloaded papers stay on this phone, but the reading progress, '
+        'classes and notes on it are cleared. You can sign in again from here '
+        'whenever you want.',
     confirmLabel: 'Sign out',
     destructive: true,
   );
