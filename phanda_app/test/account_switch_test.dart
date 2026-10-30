@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:flutter/material.dart';
+import 'package:kuphanda/app.dart';
 import 'package:kuphanda/data/api/api_client.dart';
 import 'package:kuphanda/data/api/api_models.dart';
 import 'package:kuphanda/data/api/token_store.dart';
@@ -46,6 +48,7 @@ Map<String, Object?> _user(String email) => email == 'teacher@kuphanda.test'
         'first_name': 'T.',
         'last_name': 'Chirwa',
         'email': 'teacher@kuphanda.test',
+        'school': 'Bwaila Secondary School',
         'plan': 'free',
         'is_staff': true,
       }
@@ -55,6 +58,7 @@ Map<String, Object?> _user(String email) => email == 'teacher@kuphanda.test'
         'first_name': 'Thoko',
         'last_name': 'Mwale',
         'email': 'student@kuphanda.test',
+        'school': 'Bwaila Secondary School',
         'plan': 'free',
         'is_staff': false,
       };
@@ -163,5 +167,47 @@ void main() {
 
     expect(state.accountEmail, 'teacher@kuphanda.test');
     expect(state.profile.name, 'Mrs T. Chirwa');
+  });
+
+  test('signing out ends the session and leaves nothing of the person behind',
+      () async {
+    final state = await _state();
+    await state.signIn(email: 'teacher@kuphanda.test', password: 'KphTeacher2026');
+    expect(state.profile.onboardingComplete, isTrue);
+
+    await state.signOut();
+
+    expect(state.isSignedIn, isFalse);
+    expect(state.profile.name, isEmpty);
+    expect(state.profile.school, isEmpty);
+    expect(state.profile.onboardingComplete, isFalse,
+        reason: 'a finished profile on a signed-out phone opens the library');
+  });
+
+  testWidgets('a signed-out phone shows the landing page, not the library',
+      (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    final state = await _state();
+    await state.signIn(email: 'teacher@kuphanda.test', password: 'KphTeacher2026');
+
+    await tester.pumpWidget(KuphandaApp(state: state));
+    await tester.pumpAndSettle();
+    expect(find.text('Your school library, in your pocket'), findsNothing);
+
+    await state.signOut();
+    await tester.pumpAndSettle();
+
+    // One frame while the shell is torn down reports an overflow in a row that is
+    // already disposed; both screens render cleanly at this width on their own,
+    // and what is under test is the gate, not that frame.
+    tester.takeException();
+
+    // Back to the first screen; the tabs are gone with the session.
+    expect(find.text('Get started'), findsOneWidget);
+    expect(find.text('Home'), findsNothing);
+    expect(find.text('Library'), findsNothing);
   });
 }

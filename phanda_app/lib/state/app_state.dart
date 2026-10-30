@@ -1302,7 +1302,13 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    _snapshot.profile = merged;
+    // An account with a school on it does not need to be interviewed again;
+    // one without goes through onboarding for its form and subjects.
+    final signedIn = (session.school ?? '').trim().isNotEmpty
+        ? merged.copyWith(onboardingComplete: true)
+        : merged;
+
+    _snapshot.profile = signedIn;
 
     await _persistNow();
     startAutoSync();
@@ -1397,6 +1403,16 @@ class AppState extends ChangeNotifier {
     }
 
     _token = null;
+
+    // The next person to hold this phone must not inherit a name, a school or
+    // an open profile: logging out is the end of the session, not a pause.
+    // Library files stay on disk — they are only reachable after signing in.
+    _snapshot.profile = Profile(
+      examYear: _clock().year + 1,
+      subjectIds: subjectsForForm(4).map((subject) => subject.id).toList(),
+      theme: _snapshot.profile.theme,
+      weeklyGoalMinutes: _snapshot.profile.weeklyGoalMinutes,
+    );
     _account = null;
     _api?.token = null;
     await _tokenStore.clear();

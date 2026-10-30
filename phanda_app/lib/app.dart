@@ -76,7 +76,10 @@ class _KuphandaAppState extends State<KuphandaApp> with WidgetsBindingObserver {
             darkTheme: buildAppTheme(Brightness.dark),
             themeMode: profile.theme.themeMode,
             scrollBehavior: const _AppScrollBehavior(),
-            home: profile.onboardingComplete
+            // Two conditions, not one: a finished profile on a signed-out
+            // phone would otherwise leave the library open to whoever picks
+            // it up. Logging out ends the session and returns here.
+            home: state.isSignedIn && profile.onboardingComplete
                 ? const AppShell()
                 : const OnboardingScreen(),
           );
