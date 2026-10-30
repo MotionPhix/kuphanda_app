@@ -633,7 +633,11 @@ class SheetBody extends StatelessWidget {
     final height = MediaQuery.sizeOf(context).height * maxHeightFactor;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
-    final bottomInset = keyboard > safeBottom ? keyboard : safeBottom;
+    // A scroll-controlled sheet is already lifted clear of the keyboard by the
+    // route, so padding for it here reserved the keyboard's height a second time
+    // — a screen of white below the buttons. The safe area still matters when no
+    // keyboard is up.
+    final bottomInset = keyboard > 0 ? 0.0 : safeBottom;
 
     // The sheet's height is this widget's height, so nothing here may expand to
     // fill: an Align or a flex viewport both take the whole screen a

@@ -74,4 +74,39 @@ void main() {
     expect(find.text('Class code'), findsOneWidget);
     expect(field.bottom, lessThan(sheet.bottom));
   });
+
+  testWidgets('a sheet does not reserve the keyboard twice', (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    // 300 dp of keyboard, and the route already lifts the sheet above it.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 600);
+    addTearDown(tester.view.reset);
+
+    final state = AppState(
+      store: MemoryStateStore(),
+      files: _NoFiles(),
+      tokenStore: MemoryTokenStore(),
+    );
+    await state.initialize();
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const Scaffold(body: ClassesScreen()),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Join a class').first);
+    await tester.pumpAndSettle();
+
+    final sheet = tester.getRect(find.byType(SheetBody));
+    final field = tester.getRect(find.byType(TextField));
+
+    // The form, not the form plus a keyboard's worth of padding.
+    expect(sheet.height, lessThan(500),
+        reason: 'sheet was ${sheet.height} dp with the keyboard up');
+    expect(field.height, greaterThan(40));
+  });
 }
