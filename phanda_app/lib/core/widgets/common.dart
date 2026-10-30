@@ -396,7 +396,7 @@ class StatTile extends StatelessWidget {
     this.caption,
     this.icon,
     this.tint,
-    this.height = 128,
+    this.height = 104,
   });
 
   final String label;
@@ -417,7 +417,7 @@ class StatTile extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        padding: const EdgeInsets.fromLTRB(16, 5, 16, 5),
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.medium),
@@ -445,7 +445,7 @@ class StatTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             Align(
               alignment: Alignment.centerLeft,
               child: FittedBox(
@@ -630,7 +630,11 @@ class SheetBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final height = MediaQuery.sizeOf(context).height * maxHeightFactor;
+    final media = MediaQuery.of(context);
+    // What is actually left once the keyboard is up: the route lifts the sheet,
+    // so this is the room available to it, not the whole screen.
+    final height =
+        (media.size.height - media.viewInsets.bottom) * maxHeightFactor;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
     // A scroll-controlled sheet is already lifted clear of the keyboard by the

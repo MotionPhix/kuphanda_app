@@ -1225,7 +1225,17 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> signIn({required String email, required String password}) async {
+  Future<void> signIn({
+    required String email,
+    required String password,
+  }) async {
+    // Two accounts, one at a time. Swapping means signing out of the account in
+    // use and then signing in with the other — never replacing a live session
+    // from underneath the person holding the phone.
+    if (isSignedIn && (_snapshot.accountEmail ?? '') != email.trim()) {
+      throw const ApiException('Sign out before signing in with another account.');
+    }
+
     final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
     final session = await api.login(email: email.trim(), password: password);
     await _adoptSession(session);

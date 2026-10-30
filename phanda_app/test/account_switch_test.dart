@@ -148,4 +148,20 @@ void main() {
 
     expect(session.isStaff, isTrue);
   });
+
+  test('signing in as somebody else is refused while an account is live',
+      () async {
+    // Swapping accounts means signing out first. Replacing a live session from
+    // underneath the person holding the phone is not a switch, it is a surprise.
+    final state = await _state();
+    await state.signIn(email: 'teacher@kuphanda.test', password: 'KphTeacher2026');
+
+    await expectLater(
+      state.signIn(email: 'student@kuphanda.test', password: 'KphStudent2026'),
+      throwsA(isA<ApiException>()),
+    );
+
+    expect(state.accountEmail, 'teacher@kuphanda.test');
+    expect(state.profile.name, 'Mrs T. Chirwa');
+  });
 }
