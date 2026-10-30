@@ -17,7 +17,6 @@ import '../data/models/reading_tally.dart';
 import '../data/models/study_guide.dart';
 import '../data/models/subject.dart';
 import '../data/notifications/push_service.dart';
-import '../data/seed/classroom_seed.dart';
 import '../data/seed/curriculum_seed.dart';
 import '../data/seed/library_seed.dart';
 import '../data/store/block_cache.dart';
@@ -258,20 +257,16 @@ class AppState extends ChangeNotifier {
     var snapshot = await _store.read();
     final isFirstRun = snapshot == null;
 
-    if (snapshot == null) {
-      final classrooms = buildSeedClassrooms(now: now);
-      snapshot = AppSnapshot(
-        profile: Profile(
-          examYear: now.year + 1,
-          subjectIds: subjectsForForm(4).map((subject) => subject.id).toList(),
-        ),
-        classes: classrooms.classes,
-        assignments: classrooms.assignments,
-      );
-    }
+    snapshot ??= AppSnapshot(
+      profile: Profile(
+        examYear: now.year + 1,
+        subjectIds: subjectsForForm(4).map((subject) => subject.id).toList(),
+      ),
+    );
 
     var migrated = _releaseRetiredSampleProfile(snapshot);
     migrated = _clearDemoStudyHistory(snapshot) || migrated;
+    migrated = _clearDemoClasses(snapshot) || migrated;
 
     // Bundled files are always available, even if an older snapshot predates
     // them. Imported files survive because they are keyed by document id.
@@ -565,6 +560,29 @@ class AppState extends ChangeNotifier {
 
     snapshot.profile = profile.copyWith(onboardingComplete: false);
     snapshot.sampleProfileReleased = true;
+    return true;
+  }
+
+  /// The classes an earlier build invented, complete with teacher names and
+  /// learner counts, under a heading that reads "Reading set by your teachers."
+  /// A learner shown a class they never joined has no way to tell it apart from
+  /// a real one, so they are removed. Classes joined with a code are kept.
+  static const _seededClassIds = <String>{
+    'class-f4a-sciences',
+    'class-f4a-maths',
+    'class-f2b-maths',
+  };
+
+  bool _clearDemoClasses(AppSnapshot snapshot) {
+    final seeded = snapshot.classes
+        .where((group) => _seededClassIds.contains(group.id))
+        .map((group) => group.id)
+        .toSet();
+
+    if (seeded.isEmpty) return false;
+
+    snapshot.classes.removeWhere((group) => seeded.contains(group.id));
+    snapshot.assignments.removeWhere((assignment) => seeded.contains(assignment.classId));
     return true;
   }
 
@@ -984,25 +1002,13 @@ class AppState extends ChangeNotifier {
       return const ClassActionResult.error('You have already joined this class.');
     }
 
-    final seeds = buildSeedClassrooms(now: _clock());
-    ClassGroup? match;
-    for (final group in seeds.classes) {
-      if (group.code == code) match = group;
-    }
-
-    if (match == null) {
-      return const ClassActionResult.error('No class uses that code. Check it with your teacher.');
-    }
-
-    _snapshot.classes.add(match);
-    for (final assignment in seeds.assignments) {
-      if (assignment.classId == match.id) {
-        _snapshot.assignments.add(assignment);
-      }
-    }
-    notifyListeners();
-    await _persistNow();
-    return ClassActionResult.ok('Joined ${match.name}.');
+    // There is no classroom service: joining only ever matched the three codes
+    // this build shipped with, so a real code from a real teacher failed, and
+    // the classes on offer were invented. Accepting a code that cannot be
+    // checked against anything is worse than saying so.
+    return const ClassActionResult.error(
+      'Class codes are not live yet. They arrive with your school’s Kuphanda account.',
+    );
   }
 
   Future<ClassGroup> createClass({
