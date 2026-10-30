@@ -48,13 +48,20 @@ class _SignInSheet extends StatefulWidget {
 }
 
 class _SignInSheetState extends State<_SignInSheet> {
+  final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   String? _error;
   bool _busy = false;
 
+  /// A learner without a school email has no account to sign in to, so the same
+  /// sheet creates one: the gate is the first screen they meet, and a sign-in
+  /// box with no way to join is a dead end.
+  bool _creating = false;
+
   @override
   void dispose() {
+    _name.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -68,7 +75,9 @@ class _SignInSheetState extends State<_SignInSheet> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _signIn() async {
+  Future<void> _submit() async {
+    if (_creating) return _createAccount();
+
     if (_email.text.trim().isEmpty || _password.text.isEmpty) {
       setState(() => _error = 'Enter the email and password.');
       return;
@@ -101,6 +110,48 @@ class _SignInSheetState extends State<_SignInSheet> {
     }
   }
 
+  Future<void> _createAccount() async {
+    if (_name.text.trim().isEmpty) {
+      setState(() => _error = 'Add your name.');
+      return;
+    }
+    if (_email.text.trim().isEmpty) {
+      setState(() => _error = 'Add your email.');
+      return;
+    }
+    if (_password.text.length < 8) {
+      setState(() => _error = 'Use at least eight characters for the password.');
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await widget.state.registerAccount(
+        name: _name.text.trim(),
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+      if (mounted) Navigator.pop(context);
+      _say('Account created for ${widget.state.accountEmail ?? _email.text.trim()}.');
+    } on ApiException catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = failure.message;
+      });
+    } catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Could not create the account: $failure';
+      });
+    }
+  }
+
   Future<void> _signInWithGoogle() async {
     try {
       final token = await GoogleSignInService().idToken();
@@ -118,8 +169,10 @@ class _SignInSheetState extends State<_SignInSheet> {
     final theme = Theme.of(context);
 
     return SheetBody(
-      title: 'Sign in',
-      subtitle: 'Use the email and password for the account you want.',
+      title: _creating ? 'Create an account' : 'Sign in',
+      subtitle: _creating
+          ? 'Your papers and progress follow this account to any phone.'
+          : 'Use the email and password for the account you want.',
       actions: [
         Expanded(
           child: OutlinedButton(
@@ -130,7 +183,7 @@ class _SignInSheetState extends State<_SignInSheet> {
         const SizedBox(width: 10),
         Expanded(
           child: FilledButton(
-            onPressed: _busy ? null : _signIn,
+            onPressed: _busy ? null : _submit,
             child: _busy
                 ? const SizedBox(
                     width: 16,
@@ -140,13 +193,25 @@ class _SignInSheetState extends State<_SignInSheet> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Sign in'),
+                : Text(_creating ? 'Create account' : 'Sign in'),
           ),
         ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_creating) ...[
+            TextField(
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                prefixIcon: Icon(Icons.person_outline_rounded),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _email,
             // No autofocus: it throws the keyboard up over a four-field form
@@ -183,6 +248,19 @@ class _SignInSheetState extends State<_SignInSheet> {
             onPressed: _busy ? null : _signInWithGoogle,
             icon: const Icon(Icons.account_circle_outlined, size: 18),
             label: const Text('Use Google instead'),
+          ),
+          TextButton(
+            onPressed: _busy
+                ? null
+                : () => setState(() {
+                      _creating = !_creating;
+                      _error = null;
+                    }),
+            child: Text(
+              _creating
+                  ? 'I already have an account'
+                  : 'New here? Create an account',
+            ),
           ),
         ],
       ),

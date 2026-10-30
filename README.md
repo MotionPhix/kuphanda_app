@@ -95,7 +95,8 @@ Confirmed names and school are saved to the account with PATCH /api/v1/me.
 Offline edits stay on the device and are retried on the next save.
 
 Onboarding signs the learner in before it asks anything: **Get started** leads
-to a sign-in gate with **Sign in with email** and **Continue with Google**, and
+to a sign-in gate with **Sign in with email**, **Continue with Google** and a
+**New here? Create an account** switch in the same sheet, and
 only then to the details step, where first and last name are asked for
 separately and prefilled from the account; both stay editable. An account that
 already carries a school skips the details and the subject picker entirely.
@@ -282,3 +283,4 @@ expiry removal, bundled-file protection) and API client parsing/error mapping.
 Catalogue records are sample metadata. Only two Kuphanda-authored PDFs ship as
 files (`phanda_api/database/seeders/files/`). No MANEB papers or textbooks are
 bundled; the library team must publish files it has the right to distribute.
+
