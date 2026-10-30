@@ -98,6 +98,12 @@ class AppSnapshot {
   /// resets it again and the learner is ejected from their own account forever.
   bool sampleProfileReleased = false;
 
+  /// Set by builds that seeded study days so the weekly chart would not look
+  /// empty. Cleared, with the invented days, on the first launch that knows
+  /// better — a progress screen must not credit the learner with time they
+  /// never spent.
+  bool demoStudyHistory = false;
+
   String encode() => jsonEncode(toJson());
 
   static AppSnapshot decode(String raw) {
@@ -132,6 +138,7 @@ class AppSnapshot {
         'pendingPaymentKind': pendingPaymentKind,
         'pendingPaymentAt': pendingPaymentAt?.toIso8601String(),
         'sampleProfileReleased': sampleProfileReleased,
+        'demoStudyHistory': demoStudyHistory,
       };
 
   static AppSnapshot fromJson(Map<String, Object?> json) {
@@ -193,7 +200,9 @@ class AppSnapshot {
       pendingPaymentKind: json['pendingPaymentKind'] as String?,
       pendingPaymentAt: DateTime.tryParse(json['pendingPaymentAt'] as String? ?? ''),
       version: (json['version'] as num?)?.toInt() ?? 1,
-    )..sampleProfileReleased = json['sampleProfileReleased'] as bool? ?? false;
+    )
+      ..sampleProfileReleased = json['sampleProfileReleased'] as bool? ?? false
+      ..demoStudyHistory = json['demoStudyHistory'] as bool? ?? false;
   }
 
   static List<Object?> _list(Object? value) => value is List ? value : const <Object?>[];

@@ -38,6 +38,8 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
   int _lastReported = -1;
   bool _restored = false;
   bool _resumeScheduled = false;
+  DateTime? _readingSince;
+  Timer? _studyTimer;
   AppState? _state;
 
   /// A blank spinner for the length of an HTTP timeout reads as a broken app,
@@ -168,11 +170,32 @@ class _BlockReaderScreenState extends State<BlockReaderScreen> {
   void initState() {
     super.initState();
     _scroll.addListener(_reportProgress);
+
+    _readingSince = DateTime.now();
+    // Committed as it is spent, not on exit: scroll events are not a proxy for
+    // minutes, and a session lost to a kill would be time the learner did.
+    _studyTimer = Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => _commitStudyTime(),
+    );
+  }
+
+  /// Banks the time since the last commit. The cap keeps a timer that fires
+  /// after the app was frozen from inventing an hour of study.
+  void _commitStudyTime() {
+    final since = _readingSince;
+    _readingSince = DateTime.now();
+    if (since == null || !mounted) return;
+
+    final seconds = _readingSince!.difference(since).inSeconds.clamp(0, 120);
+    if (seconds > 0) _state?.addStudyTime(widget.documentId, seconds);
   }
 
   @override
   void dispose() {
     _slowTimer?.cancel();
+    _studyTimer?.cancel();
+    _commitStudyTime();
     _reportProgress();
     _state?.flush();
     _scroll

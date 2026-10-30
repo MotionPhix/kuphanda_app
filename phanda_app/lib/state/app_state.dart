@@ -267,11 +267,11 @@ class AppState extends ChangeNotifier {
         ),
         classes: classrooms.classes,
         assignments: classrooms.assignments,
-        studyDays: _starterActivity(now),
       );
     }
 
     var migrated = _releaseRetiredSampleProfile(snapshot);
+    migrated = _clearDemoStudyHistory(snapshot) || migrated;
 
     // Bundled files are always available, even if an older snapshot predates
     // them. Imported files survive because they are keyed by document id.
@@ -347,26 +347,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// A little history so the weekly chart and streak are not empty on a brand
-  /// new install. It is obviously demo data, and resetting the app regenerates
-  /// it rather than pretending it is real activity.
-  List<StudyDay> _starterActivity(DateTime now) {
-    StudyDay day(int daysAgo, int minutes, int sessions) {
-      final date = now.subtract(Duration(days: daysAgo));
-      return StudyDay(
-        date: dayKey(date),
-        seconds: minutes * 60,
-        sessions: sessions,
-      );
-    }
-
-    return <StudyDay>[
-      day(1, 35, 2),
-      day(2, 20, 1),
-      day(4, 48, 3),
-      day(5, 15, 1),
-    ];
-  }
 
   List<Document> _mergeDocuments() {
     final merged = <String, Document>{};
@@ -588,6 +568,18 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  /// Deletes the study history an earlier build seeded so the chart would not
+  /// look empty. It claimed minutes nobody studied — on the device it read
+  /// "1h 43m this week" for an account that had opened the app twice — which is
+  /// the one claim this screen exists to make honestly.
+  bool _clearDemoStudyHistory(AppSnapshot snapshot) {
+    if (!snapshot.demoStudyHistory) return false;
+
+    snapshot.studyDays.clear();
+    snapshot.demoStudyHistory = false;
+    return true;
+  }
+
   /// Undoes the damage of releasing a signed-in learner: their profile was
   /// complete before it was reset, so the details are still on the record and
   /// asking for them again would be busywork caused by our bug.
@@ -721,6 +713,29 @@ class AppState extends ChangeNotifier {
     }
 
     _autoCompleteAssignments(documentId);
+    notifyListeners();
+    _schedulePersist();
+  }
+
+  /// Banks time spent reading without touching where the reader is.
+  ///
+  /// A paper is read in one sitting, so minutes have to be captured as they are
+  /// spent: the PDF reader commits on a timer, the guide on exit, and the block
+  /// reader used to do neither — every structured paper contributed nothing to
+  /// "minutes studied" or to the streak, which is the app's whole promise.
+  void addStudyTime(String documentId, int seconds) {
+    if (seconds <= 0) return;
+
+    // A record created for time alone must not claim page 1 of 1: that reads as
+    // 100% and would auto-complete an assignment the learner has not opened.
+    final existing = _snapshot.progress[documentId] ??
+        ReadingProgress(documentId: documentId, currentPage: 0, totalPages: 0);
+
+    _snapshot.progress[documentId] = existing.copyWith(
+      secondsSpent: existing.secondsSpent + seconds,
+      lastReadAt: _clock(),
+    );
+    _addStudySeconds(seconds);
     notifyListeners();
     _schedulePersist();
   }
