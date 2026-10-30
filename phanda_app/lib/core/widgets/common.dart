@@ -214,12 +214,20 @@ class Pill extends StatelessWidget {
             Icon(icon, size: compact ? 12 : 14, color: filled ? Colors.white : tint),
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: filled ? Colors.white : tint,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
+          // A pill is often the widest thing in a narrow column: the profile
+          // header gives it 160 dp on a 360 dp phone. Without a flexible label
+          // the row overflows instead of shortening, which clips silently in a
+          // release build.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: filled ? Colors.white : tint,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
+              ),
             ),
           ),
         ],

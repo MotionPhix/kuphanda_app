@@ -4,6 +4,8 @@ import '../../app.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../data/api/api_models.dart';
+import '../../data/auth/google_sign_in_service.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
@@ -63,9 +65,11 @@ class ProfileScreen extends StatelessWidget {
                             spacing: 6,
                             runSpacing: 6,
                             children: [
+                              // The exam target is implied by the form number:
+                              // spelling both out pushed the pill past the
+                              // column and off the screen.
                               Pill(
-                                label: 'Form ${profile.form} · ${profile.examTarget} '
-                                    '${profile.examYear}',
+                                label: 'Form ${profile.form} · ${profile.examYear}',
                                 compact: true,
                               ),
                               Pill(
@@ -104,6 +108,31 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 22),
+                Text('Account', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _ProfileItem(
+                        icon: state.isSignedIn
+                            ? Icons.verified_user_outlined
+                            : Icons.person_outline_rounded,
+                        title: state.isSignedIn ? 'Signed in' : 'Not signed in',
+                        // Signing out used to be a one-way door: the library
+                        // stays usable offline, but nothing offered a way back
+                        // to Google. The row is that way back.
+                        subtitle: state.isSignedIn
+                            ? '${state.accountName ?? profile.name} · ${state.accountEmail ?? ''}'
+                            : 'Tap to sign in and sync your progress',
+                        onTap: state.isSignedIn
+                            ? () => _confirmSignOut(context, state)
+                            : () => _signIn(context, state),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 22),
                 Text('Your library', style: theme.textTheme.titleSmall),
@@ -288,6 +317,33 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _signIn(BuildContext context, AppState state) async {
+  try {
+    final token = await GoogleSignInService().idToken();
+    await state.signInWithGoogle(token);
+    if (context.mounted) showSnack(context, 'Signed in with Google.');
+  } on ApiException catch (error) {
+    if (context.mounted) showSnack(context, error.message, error: true);
+  } catch (error) {
+    if (context.mounted) showSnack(context, 'Could not sign in: $error', error: true);
+  }
+}
+
+Future<void> _confirmSignOut(BuildContext context, AppState state) async {
+  final sure = await confirmAction(
+    context,
+    title: 'Sign out?',
+    message: 'Your library, downloads and reading progress stay on this phone. '
+        'You can sign in again from here whenever you want.',
+    confirmLabel: 'Sign out',
+    destructive: true,
+  );
+  if (sure != true || !context.mounted) return;
+
+  await state.signOut();
+  if (context.mounted) showSnack(context, 'Signed out. Your papers are still here.');
 }
 
 class _ProfileItem extends StatelessWidget {
