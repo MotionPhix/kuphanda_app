@@ -1,3 +1,4 @@
+import '../models/classroom.dart';
 import '../models/document.dart';
 
 /// Everything the API returns about one published file. Immutable, because a
@@ -511,6 +512,47 @@ class AppNotification {
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       sentAt: DateTime.tryParse(json['sent_at'] as String? ?? ''),
+    );
+  }
+}
+
+/// A class as the service returns it: the class itself plus what was set for it.
+class RemoteClassroom {
+  const RemoteClassroom({required this.group, required this.assignments});
+
+  final ClassGroup group;
+  final List<Assignment> assignments;
+
+  factory RemoteClassroom.fromJson(Map<String, Object?> json) {
+    final id = json['id'] as String? ?? '';
+    final createdAt = DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now();
+
+    final assignments = (json['assignments'] as List<Object?>? ?? const <Object?>[])
+        .whereType<Map<String, Object?>>()
+        .map(
+          (row) => Assignment(
+            id: row['id'] as String? ?? '',
+            classId: id,
+            documentId: row['document_id'] as String? ?? '',
+            dueDate: DateTime.tryParse(row['due_date'] as String? ?? ''),
+            createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? createdAt,
+            note: row['title'] as String? ?? '',
+          ),
+        )
+        .toList();
+
+    return RemoteClassroom(
+      group: ClassGroup(
+        id: id,
+        name: json['name'] as String? ?? 'Class',
+        code: json['code'] as String? ?? '',
+        form: (json['form'] as num?)?.toInt() ?? 4,
+        subjectId: json['subject_id'] as String? ?? 'mathematics',
+        teacherName: json['teacher_name'] as String? ?? 'Teacher',
+        memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
+        createdAt: createdAt,
+      ),
+      assignments: assignments,
     );
   }
 }

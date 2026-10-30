@@ -72,7 +72,7 @@ class Assignment {
     required this.id,
     required this.classId,
     required this.documentId,
-    required this.dueDate,
+    this.dueDate,
     required this.createdAt,
     this.note = '',
     this.completed = false,
@@ -81,7 +81,8 @@ class Assignment {
   final String id;
   final String classId;
   final String documentId;
-  final DateTime dueDate;
+  /// Null when the teacher set the paper without a deadline.
+  final DateTime? dueDate;
   final DateTime createdAt;
   final String note;
   final bool completed;
@@ -102,7 +103,7 @@ class Assignment {
         'id': id,
         'classId': classId,
         'documentId': documentId,
-        'dueDate': dueDate.toIso8601String(),
+        'dueDate': dueDate?.toIso8601String(),
         'createdAt': createdAt.toIso8601String(),
         'note': note,
         'completed': completed,
@@ -113,7 +114,7 @@ class Assignment {
       id: json['id']! as String,
       classId: json['classId']! as String,
       documentId: json['documentId']! as String,
-      dueDate: DateTime.tryParse(json['dueDate'] as String? ?? '') ?? DateTime.now(),
+      dueDate: DateTime.tryParse(json['dueDate'] as String? ?? ''),
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       note: (json['note'] as String?) ?? '',
       completed: json['completed'] as bool? ?? false,
@@ -132,11 +133,16 @@ class AssignmentStatus {
 
 AssignmentStatus assignmentStatus(Assignment assignment, {DateTime? now}) {
   final today = _dateOnly(now ?? DateTime.now());
-  final due = _dateOnly(assignment.dueDate);
+  final due = _dateOnly(assignment.dueDate ?? today);
   final days = due.difference(today).inDays;
 
   if (assignment.completed) {
     return const AssignmentStatus(label: 'Done', daysLeft: 0, urgent: false);
+  }
+  if (assignment.dueDate == null) {
+    // A teacher may set reading without a deadline; saying "due" would be
+    // inventing one.
+    return const AssignmentStatus(label: 'No due date', daysLeft: 999, urgent: false);
   }
   if (days < 0) {
     return AssignmentStatus(

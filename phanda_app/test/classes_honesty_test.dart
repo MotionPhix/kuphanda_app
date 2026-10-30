@@ -100,16 +100,17 @@ void main() {
     expect(state.classes.map((group) => group.id), ['class-mine-2026']);
   });
 
-  test('joining with a code says the service is not live, not that the code is wrong',
+  test('joining needs a session, because the code is checked by the service',
       () async {
-    // A real teacher's code would have failed too: joining only ever matched the
-    // codes this build shipped with.
+    // Joining used to be decided by a list inside the binary. It now asks the
+    // classroom service, so a signed-out learner is told what is actually
+    // missing instead of a code being called wrong.
     final state = await _state();
 
     final result = await state.joinClass('KPH4A2');
 
     expect(result.success, isFalse);
-    expect(result.message, contains('not live yet'));
+    expect(result.message, contains('Sign in'));
     expect(state.classes, isEmpty);
   });
 }

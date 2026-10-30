@@ -149,6 +149,36 @@ class ApiClient {
     );
   }
 
+  /// Classes this account teaches or belongs to.
+  Future<List<RemoteClassroom>> fetchClassrooms() async {
+    final body = await _send(() => _http.get(_uri('/classrooms'), headers: _headers));
+    final rows = body['data'];
+    final list = rows is List ? rows : (rows is Map<String, Object?> ? rows['data'] : null);
+
+    return (list as List<Object?>? ?? const <Object?>[])
+        .whereType<Map<String, Object?>>()
+        .map(RemoteClassroom.fromJson)
+        .toList();
+  }
+
+  Future<RemoteClassroom> joinClass(String code) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/classrooms/join'),
+        headers: _headers,
+        body: jsonEncode({'code': code}),
+      ),
+    );
+
+    return RemoteClassroom.fromJson(_dataMap(body));
+  }
+
+  Future<void> leaveClass(String classroomId) async {
+    await _send(
+      () => _http.delete(_uri('/classrooms/$classroomId/leave'), headers: _headers),
+    );
+  }
+
   Future<RemoteOfflineItem> acknowledge(String documentId, int version) async {
     final body = await _send(
       () => _http.post(

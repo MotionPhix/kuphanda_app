@@ -969,7 +969,14 @@ class AppState extends ChangeNotifier {
 
   List<Assignment> assignmentsForClass(String classId) {
     final list = _snapshot.assignments.where((a) => a.classId == classId).toList();
-    list.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    // Undated reading sorts last: it is never urgent.
+    list.sort((a, b) {
+      final left = a.dueDate;
+      final right = b.dueDate;
+      if (left == null) return right == null ? 0 : 1;
+      if (right == null) return -1;
+      return left.compareTo(right);
+    });
     return list;
   }
 
@@ -982,7 +989,14 @@ class AppState extends ChangeNotifier {
 
   List<Assignment> get upcomingAssignments {
     final list = _snapshot.assignments.where((assignment) => !assignment.completed).toList();
-    list.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    // Undated reading sorts last: it is never urgent.
+    list.sort((a, b) {
+      final left = a.dueDate;
+      final right = b.dueDate;
+      if (left == null) return right == null ? 0 : 1;
+      if (right == null) return -1;
+      return left.compareTo(right);
+    });
     return list;
   }
 
@@ -1002,13 +1016,29 @@ class AppState extends ChangeNotifier {
       return const ClassActionResult.error('You have already joined this class.');
     }
 
-    // There is no classroom service: joining only ever matched the three codes
-    // this build shipped with, so a real code from a real teacher failed, and
-    // the classes on offer were invented. Accepting a code that cannot be
-    // checked against anything is worse than saying so.
-    return const ClassActionResult.error(
-      'Class codes are not live yet. They arrive with your school’s Kuphanda account.',
-    );
+    if (!isSignedIn) {
+      return const ClassActionResult.error('Sign in to join a class.');
+    }
+
+    if (_snapshot.classes.any((group) => group.code == code)) {
+      return const ClassActionResult.error('You have already joined this class.');
+    }
+
+    try {
+      final classroom = await _api!.joinClass(code);
+      _snapshot.classes.add(classroom.group);
+      _snapshot.assignments
+        ..removeWhere((assignment) => assignment.classId == classroom.group.id)
+        ..addAll(classroom.assignments);
+      notifyListeners();
+      await _persistNow();
+
+      return ClassActionResult.ok('Joined ${classroom.group.name}.');
+    } on ApiException catch (error) {
+      // The service says whether the code is unknown; passing that through keeps
+      // the message in one place instead of inventing a second wording here.
+      return ClassActionResult.error(error.message);
+    }
   }
 
   Future<ClassGroup> createClass({
@@ -1524,6 +1554,36 @@ class AppState extends ChangeNotifier {
   // Offline library sync
   // ---------------------------------------------------------------------------
 
+  /// Replaces the stored classes with the service's copy, keeping the flags only
+  /// this phone knows — whether a learner has finished an assignment.
+  Future<void> _refreshClassrooms(ApiClient api) async {
+    try {
+      final classrooms = await api.fetchClassrooms();
+      final done = {
+        for (final assignment in _snapshot.assignments)
+          if (assignment.completed) assignment.id,
+      };
+
+      _snapshot.classes
+        ..clear()
+        ..addAll(classrooms.map((classroom) => classroom.group));
+
+      _snapshot.assignments
+        ..clear()
+        ..addAll(
+          classrooms.expand(
+            (classroom) => classroom.assignments.map(
+              (assignment) => done.contains(assignment.id)
+                  ? assignment.copyWith(completed: true)
+                  : assignment,
+            ),
+          ),
+        );
+    } on ApiException {
+      // A class list is not worth failing a sync over: the stored copy stands.
+    }
+  }
+
   /// Refreshes the catalogue, then makes every marked document match the
   /// server: new marks download, newer versions replace older ones, and marks
   /// removed elsewhere delete their local file. A failed item never removes a
@@ -1548,6 +1608,10 @@ class AppState extends ChangeNotifier {
 
     try {
       await _flushPendingRemovals(api);
+
+      // Classes change in a staffroom, not on this phone: a sync is the only
+      // way a learner sees a paper set for them since they last opened the app.
+      await _refreshClassrooms(api);
 
       final catalogue = await api.fetchDocuments();
       _remoteCatalogue = catalogue;
