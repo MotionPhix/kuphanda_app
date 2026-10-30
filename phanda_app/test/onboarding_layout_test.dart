@@ -6,6 +6,11 @@ import 'package:kuphanda/app.dart';
 import 'package:kuphanda/core/theme.dart';
 import 'package:kuphanda/data/api/token_store.dart';
 import 'package:kuphanda/data/models/document.dart';
+import 'package:kuphanda/data/store/snapshot.dart';
+import 'package:kuphanda/data/models/profile.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:kuphanda/data/api/api_client.dart';
 import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/state_store.dart';
 import 'package:kuphanda/features/onboarding/onboarding_screen.dart';
@@ -66,12 +71,33 @@ void main() {
       (tester) async {
     _phoneWithSystemBar(tester);
 
+    // Signed in: the details step is behind the sign-in gate now.
+    final store = MemoryStateStore();
+    await store.write(AppSnapshot(
+      accountId: 1,
+      accountEmail: 'learner@kuphanda.test',
+      profile: const Profile(examYear: 2027),
+    ));
+    // A signed-in start reaches for billing and the catalogue; a stub keeps the
+    // test about layout rather than the network.
     final state = AppState(
-      store: MemoryStateStore(),
+      store: store,
       files: _NoFiles(),
-      tokenStore: MemoryTokenStore(),
+      tokenStore: MemoryTokenStore('token'),
+      api: ApiClient(
+        baseUrl: 'https://example.test/api/v1',
+        token: 'token',
+        httpClient: MockClient((request) async => http.Response(
+              '{"data":[]}',
+              200,
+              headers: {'content-type': 'application/json'},
+            )),
+      ),
     );
     await state.initialize();
+    // A signed-in start arms the fifteen-minute auto-sync timer; this test is
+    // about layout, so stop it rather than fail on a pending timer at teardown.
+    state.stopAutoSync();
 
     await tester.pumpWidget(
       AppScope(

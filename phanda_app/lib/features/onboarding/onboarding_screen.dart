@@ -325,7 +325,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onSelectionChanged: (selection) => setState(() => _role = selection.first),
           ),
           const SizedBox(height: 28),
-          FilledButton(onPressed: _next, child: const Text('Continue')),
+          // One of the two sign-in routes first: a learner types their details
+          // once the account behind them exists, so nothing here is invented and
+          // a second phone can find the same person.
+          if (AppScope.of(context).isSignedIn)
+            FilledButton(onPressed: _next, child: const Text('Continue'))
+          else
+            FilledButton(
+              onPressed: () => showSignInSheet(context, AppScope.of(context)),
+              child: const Text('Sign in to continue'),
+            ),
         ],
       ),
     );
@@ -482,16 +491,7 @@ class _WelcomeStep extends StatelessWidget {
           ),
           const SizedBox(height: 36),
           FilledButton(onPressed: onStart, child: const Text('Get started')),
-          const SizedBox(height: 6),
-          // Signing out returns here, so this is the way back in: an existing
-          // learner should not have to fill the form again to reach the sheet.
-          Center(
-            child: TextButton(
-              onPressed: () => showSignInSheet(context, AppScope.of(context)),
-              child: const Text('I already have an account'),
-            ),
-          ),
-          const SizedBox(height: 4),
+
           Center(
             child: Text(
               'Mobile money payments · Powered by PayChangu',

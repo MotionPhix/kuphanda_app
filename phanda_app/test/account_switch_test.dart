@@ -182,6 +182,13 @@ void main() {
     expect(state.profile.school, isEmpty);
     expect(state.profile.onboardingComplete, isFalse,
         reason: 'a finished profile on a signed-out phone opens the library');
+
+    // Nothing belonging to the person who left is left reachable: not the
+    // reading, not the classes they were in, not the papers they had saved.
+    expect(state.progressFor('ref-msce-maths-2002-p1'), isNull);
+    expect(state.classes, isEmpty);
+    expect(state.upcomingAssignments, isEmpty);
+    expect(state.stats.weekMinutes, 0);
   });
 
   testWidgets('a signed-out phone shows the landing page, not the library',
@@ -211,7 +218,8 @@ void main() {
     expect(find.text('Library'), findsNothing);
   });
 
-  testWidgets('the landing page can sign an existing account in', (tester) async {
+  testWidgets('the landing page carries no sign-in shortcut of its own',
+      (tester) async {
     tester.view.physicalSize = const Size(720, 1640);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.reset);
@@ -220,15 +228,36 @@ void main() {
     await tester.pumpWidget(KuphandaApp(state: state));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('I already have an account'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('I already have an account'));
+    expect(find.text('Get started'), findsOneWidget);
+    expect(find.text('I already have an account'), findsNothing);
+  });
+
+  testWidgets('the step after Get started cannot continue without an account',
+      (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    final state = await _state();
+    await tester.pumpWidget(KuphandaApp(state: state));
     await tester.pumpAndSettle();
 
-    // The sheet, not the onboarding form: signing out returns here, and a
-    // learner should not have to retype their details to get back in.
-    expect(find.text('Sign in'), findsWidgets);
+    await tester.ensureVisible(find.text('Get started'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+
+    // Name, school and form are collected once the account exists; until then
+    // the only way forward is email and password, or Google.
+    expect(find.text('Sign in to continue'), findsOneWidget);
+    expect(find.text('Continue'), findsNothing);
+
+    await tester.ensureVisible(find.text('Sign in to continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign in to continue'));
+    await tester.pumpAndSettle();
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
+    expect(find.text('Use Google instead'), findsOneWidget);
   });
 }

@@ -114,7 +114,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // The name step is where the shortcut used to sit, under Continue.
-    expect(find.text('Continue'), findsOneWidget);
+    // Without an account the only way forward is signing in; there is no
+    // shortcut and no preview entry beside it.
+    expect(find.text('Sign in to continue'), findsOneWidget);
     expect(find.textContaining('Preview'), findsNothing);
     expect(state.profile.onboardingComplete, isFalse);
   });

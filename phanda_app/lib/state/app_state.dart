@@ -1407,11 +1407,18 @@ class AppState extends ChangeNotifier {
     // The next person to hold this phone must not inherit a name, a school or
     // an open profile: logging out is the end of the session, not a pause.
     // Library files stay on disk — they are only reachable after signing in.
-    _snapshot.profile = Profile(
-      examYear: _clock().year + 1,
-      subjectIds: subjectsForForm(4).map((subject) => subject.id).toList(),
-      theme: _snapshot.profile.theme,
-      weeklyGoalMinutes: _snapshot.profile.weeklyGoalMinutes,
+    // A fresh snapshot, not just a fresh profile: progress, notes, saved
+    // classes and the record of downloaded papers all belonged to the person who
+    // just left. Theme and the weekly goal are device settings and stay.
+    final theme = _snapshot.profile.theme;
+    final weeklyGoal = _snapshot.profile.weeklyGoalMinutes;
+    _snapshot = AppSnapshot(
+      profile: Profile(
+        examYear: _clock().year + 1,
+        subjectIds: subjectsForForm(4).map((subject) => subject.id).toList(),
+        theme: theme,
+        weeklyGoalMinutes: weeklyGoal,
+      ),
     );
     _account = null;
     _api?.token = null;
