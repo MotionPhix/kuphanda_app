@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\ClassroomController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\DownloadController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -73,6 +74,21 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
             ->name('api.v1.staff.versions.store');
         Route::patch('documents/{document}/publication', [StaffDocumentController::class, 'updatePublication'])
             ->name('api.v1.staff.publication');
+    });
+
+    // Classes: a code a teacher reads out, and the papers set for the room.
+    Route::get('classrooms', [ClassroomController::class, 'index'])->name('api.v1.classrooms.index');
+    Route::post('classrooms/join', [ClassroomController::class, 'join'])->name('api.v1.classrooms.join');
+    Route::get('classrooms/{classroom}', [ClassroomController::class, 'show'])->name('api.v1.classrooms.show');
+    Route::delete('classrooms/{classroom}/leave', [ClassroomController::class, 'leave'])
+        ->name('api.v1.classrooms.leave');
+
+    Route::middleware('staff')->group(function (): void {
+        Route::post('classrooms', [ClassroomController::class, 'store'])->name('api.v1.classrooms.store');
+        Route::post('classrooms/{classroom}/assignments', [ClassroomController::class, 'assign'])
+            ->name('api.v1.classrooms.assign');
+        Route::delete('classrooms/{classroom}/assignments/{assignment}', [ClassroomController::class, 'unassign'])
+            ->name('api.v1.classrooms.unassign');
     });
 
     // Subscriptions, single-document purchases and PayChangu checkout
