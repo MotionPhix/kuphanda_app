@@ -59,6 +59,10 @@ class _SignInSheetState extends State<_SignInSheet> {
   /// box with no way to join is a dead end.
   bool _creating = false;
 
+  /// True once a reset link has gone out, which replaces the form with the
+  /// "check your email" confirmation.
+  bool _resetSent = false;
+
   @override
   void dispose() {
     _name.dispose();
@@ -164,9 +168,75 @@ class _SignInSheetState extends State<_SignInSheet> {
     }
   }
 
+  /// A link by mail is the only way back in for a learner who has forgotten the
+  /// password: the sheet hands off to the web app rather than pretending to
+  /// reset anything itself.
+  Future<void> _forgotPassword() async {
+    final email = _email.text.trim();
+    if (email.isEmpty) {
+      setState(() => _error = 'Type your email first, then tap Forgot password.');
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await widget.state.requestPasswordReset(email);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _resetSent = true;
+      });
+    } on ApiException catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = failure.message;
+      });
+    } catch (failure) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Could not send the link: $failure';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (_resetSent) {
+      return SheetBody(
+        title: 'Check your email',
+        subtitle: 'We sent a reset link to ${_email.text.trim()}.',
+        actions: [
+          Expanded(
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Back to sign in'),
+            ),
+          ),
+        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              'Open the link on any phone or computer to choose a new password, '
+              'then come back here and sign in.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return SheetBody(
       title: _creating ? 'Create an account' : 'Sign in',
@@ -241,7 +311,17 @@ class _SignInSheetState extends State<_SignInSheet> {
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ],
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          // Only while signing in: a new account has no password to recover.
+          if (!_creating)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _busy ? null : _forgotPassword,
+                child: const Text('Forgot password?'),
+              ),
+            ),
+          const SizedBox(height: 4),
           // Google stays available: it is how a learner signs in without an
           // email account at all.
           TextButton.icon(

@@ -1259,6 +1259,13 @@ class AppState extends ChangeNotifier {
     await syncNow();
   }
 
+  /// Sends a password reset link. The learner follows it on the web app, so
+  /// nothing changes on the phone until they sign in again.
+  Future<void> requestPasswordReset(String email) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
+    await api.forgotPassword(email: email.trim());
+  }
+
   Future<void> _adoptSession(AuthSession session) async {
     // A different person on the same phone: the profile follows the account, or
     // the teacher's classes would be listed under the learner's name. Signing out

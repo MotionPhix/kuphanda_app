@@ -87,6 +87,76 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('forgotten password sends a link and says where to look',
+      (tester) async {
+    tester.view.physicalSize = const Size(720, 1640);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    var askedFor = '';
+
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/forgot-password')) {
+        askedFor =
+            (jsonDecode(request.body) as Map<String, Object?>)['email']
+                as String;
+        return http.Response(
+          jsonEncode({'success': true, 'message': 'Password reset link sent'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }
+      return http.Response(
+        jsonEncode({'data': []}),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    final state = AppState(
+      store: MemoryStateStore(),
+      files: _NoFiles(),
+      tokenStore: MemoryTokenStore(),
+      api: ApiClient(
+        baseUrl: 'https://example.test/api/v1',
+        token: null,
+        httpClient: client,
+      ),
+    );
+    await state.initialize();
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: const OnboardingScreen(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Get started'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign in with email'));
+    await tester.pumpAndSettle();
+
+    // Without an address there is nothing to send to, and the sheet says so
+    // rather than failing silently.
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Type your email first'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'tadala@kuphanda.test');
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+
+    expect(askedFor, 'tadala@kuphanda.test');
+    expect(find.text('Check your email'), findsOneWidget);
+    expect(find.textContaining('tadala@kuphanda.test'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a learner without an account can create one from the sheet',
       (tester) async {
     tester.view.physicalSize = const Size(720, 1640);

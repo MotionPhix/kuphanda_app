@@ -6,11 +6,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app.dart';
 import '../../core/format.dart';
-import '../../data/auth/google_sign_in_service.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/api/api_models.dart';
 import '../../data/models/document.dart';
+import '../../features/profile/sign_in_sheet.dart';
 import '../../state/app_state.dart';
 
 /// Sign-in and the paid-access surface.
@@ -29,12 +29,7 @@ class SubscriptionScreen extends StatefulWidget {
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
-  bool _registering = false;
   bool _busy = false;
-  String? _error;
 
   @override
   void initState() {
@@ -45,14 +40,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       state.loadBilling();
       state.resumePendingPayment();
     });
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _nameController.dispose();
-    super.dispose();
   }
 
   @override
@@ -157,79 +144,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ),
         ),
         const SizedBox(height: 18),
-        if (_registering) ...[
-          TextField(
-            controller: _nameController,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Name'),
-          ),
-          const SizedBox(height: 10),
-        ],
-        TextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [AutofillHints.email],
-          decoration: const InputDecoration(labelText: 'Email'),
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _passwordController,
-          obscureText: true,
-          autofillHints: const [AutofillHints.password],
-          decoration: const InputDecoration(labelText: 'Password'),
-        ),
-        if (_error != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            _error!,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
-          ),
-        ],
-        const SizedBox(height: 16),
+        // One door, the same one the onboarding gate uses: email, Google, or a
+        // new account. A second copy of the form here would drift from it.
         FilledButton(
-          onPressed: _busy ? null : () => _submit(state),
-          child: _busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Text(_registering ? 'Create account' : 'Sign in'),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text(
-                'or',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            const Expanded(child: Divider()),
-          ],
+          onPressed: _busy ? null : () => _openSignIn(state),
+          child: const Text('Sign in or create an account'),
         ),
         const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: _busy ? null : () => _google(state),
-          icon: const Text('G', style: TextStyle(fontWeight: FontWeight.w700)),
-          label: const Text('Continue with Google'),
-        ),
-        const SizedBox(height: 6),
-        Center(
-          child: TextButton(
-            onPressed: () => setState(() {
-              _registering = !_registering;
-              _error = null;
-            }),
-            child: Text(_registering ? 'I already have an account' : 'Create an account'),
+        Text(
+          'Your receipt and downloads follow the account to any phone.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
+  }
+
+  /// Signing in from here lands on this screen, not the library: the plans and
+  /// any pending payment are what the learner came for.
+  Future<void> _openSignIn(AppState state) async {
+    await showSignInSheet(context, state);
+    if (!mounted || !AppScope.read(context).isSignedIn) return;
+    await state.loadBilling();
+    await state.resumePendingPayment();
   }
 
   Widget _pendingBanner(ThemeData theme, AppState state) {
@@ -423,50 +361,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     );
   }
 
-  Future<void> _google(AppState state) async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final token = await GoogleSignInService().idToken();
-      await state.signInWithGoogle(token);
-      if (mounted) showSnack(context, 'Signed in with Google.');
-    } on ApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _submit(AppState state) async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      if (_registering) {
-        await state.registerAccount(
-          name: _nameController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      } else {
-        await state.signIn(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      }
-      await state.loadBilling();
-      if (mounted) setState(() {});
-    } on ApiException catch (error) {
-      setState(() => _error = error.message);
-    } catch (error) {
-      setState(() => _error = 'Could not sign in: $error');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
 
   Future<void> _buyPlan(AppState state, RemotePlan plan) async {
     await _checkout(
@@ -497,7 +391,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
-        setState(() => _error = 'Could not open the PayChangu checkout page.');
+        showSnack(context, 'Could not open the PayChangu checkout page.',
+            error: true);
         return;
       }
 
@@ -513,9 +408,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       );
       if (mounted) await state.loadBilling();
     } on ApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) showSnack(context, error.message, error: true);
     } catch (error) {
-      if (mounted) setState(() => _error = 'Checkout failed: $error');
+      if (mounted) showSnack(context, 'Checkout failed: $error', error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -916,3 +811,6 @@ String _planTierLabel(AccessTier tier) => switch (tier) {
       AccessTier.school => 'School licence',
       AccessTier.free => 'Free access',
     };
+
+
+

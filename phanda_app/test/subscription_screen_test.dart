@@ -29,7 +29,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Sign in to the library'), findsOneWidget);
-    expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Create an account'), findsOneWidget);
+    expect(find.text('Sign in or create an account'), findsOneWidget);
+    // No second copy of the form: the screen opens the same sheet the
+    // onboarding gate uses.
+    expect(find.byType(TextField), findsNothing);
+
+    await tester.tap(find.text('Sign in or create an account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in'), findsWidgets);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('New here? Create an account'), findsOneWidget);
   });
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\LibraryPlan;
+use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -84,4 +85,15 @@ final class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(OfflineDocument::class);
     }
+
+    /**
+     * The stock notification points at a route this API does not serve with a
+     * GET, so the link in the email went nowhere. Ours opens the page that
+     * collects the new password.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
 }
+

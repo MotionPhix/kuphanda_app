@@ -56,6 +56,13 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Where the "reset your password" email sends people. Defaults to the page
+    // this API serves; point it at the web app once one exists.
+    'password_reset_url' => env(
+        'PASSWORD_RESET_URL',
+        rtrim((string) env('APP_URL', 'http://localhost'), '/').'/reset-password'
+    ),
+
     // Comma separated list of proxies whose X-Forwarded-* headers are trusted.
     // Use '*' only for a development tunnel.
     'trusted_proxies' => env('TRUSTED_PROXIES'),

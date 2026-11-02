@@ -80,6 +80,18 @@ class ApiClient {
     await _send(() => _http.post(_uri('/logout'), headers: _headers));
   }
 
+  /// Asks the server to mail a reset link. The link itself is opened on the web
+  /// app; the phone only needs to know the request went through.
+  Future<void> forgotPassword({required String email}) async {
+    await _send(
+      () => _http.post(
+        _uri('/forgot-password'),
+        headers: _headers,
+        body: jsonEncode({'email': email}),
+      ),
+    );
+  }
+
   Future<List<RemoteDocument>> fetchDocuments({int perPage = 100}) async {
     final documents = <RemoteDocument>[];
     var page = 1;
