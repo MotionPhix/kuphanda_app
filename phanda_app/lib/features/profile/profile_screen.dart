@@ -403,11 +403,6 @@ class _ProfileItem extends StatelessWidget {
 
 Future<void> showEditProfile(BuildContext context, AppState state) async {
   final profile = state.profile;
-  final firstController = TextEditingController(
-    text: profile.firstName == 'learner' ? '' : profile.firstName,
-  );
-  final lastController = TextEditingController(text: profile.lastName);
-  final schoolController = TextEditingController(text: profile.school);
   var form = profile.form;
   var examYear = profile.examYear;
   var weeklyGoal = profile.weeklyGoalMinutes;
@@ -418,8 +413,19 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
     isScrollControlled: true,
     builder: (sheetContext) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-      child: StatefulBuilder(
+      // The three controllers live with the sheet, not with this method: the
+      // sheet is still animating out when the await below returns.
+      child: TextControllers(
+        initialTexts: [
+          profile.firstName == 'learner' ? '' : profile.firstName,
+          profile.lastName,
+          profile.school,
+        ],
+        builder: (sheetContext, controllers) => StatefulBuilder(
         builder: (sheetContext, setSheetState) {
+          final firstController = controllers[0];
+          final lastController = controllers[1];
+          final schoolController = controllers[2];
           final available = subjectsForForm(form);
           return SheetBody(
             title: 'Edit profile',
@@ -568,10 +574,9 @@ Future<void> showEditProfile(BuildContext context, AppState state) async {
             ),
           );
         },
+        ),
       ),
     ),
   );
-  firstController.dispose();
-  lastController.dispose();
-  schoolController.dispose();
 }
+

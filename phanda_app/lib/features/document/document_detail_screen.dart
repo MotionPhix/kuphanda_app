@@ -282,7 +282,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Future<void> _editDetails(BuildContext context, AppState state, Document document) async {
-    final titleController = TextEditingController(text: document.title);
     var subjectId = document.subjectId;
     var form = document.form;
     var kind = document.kind;
@@ -290,7 +289,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
+      // The controller belongs to the sheet: disposing it when the await below
+      // returns happens while the sheet is still animating out.
+      builder: (sheetContext) => TextControllers(
+        initialTexts: [document.title],
+        builder: (sheetContext, controllers) => StatefulBuilder(
         builder: (sheetContext, setSheetState) => SheetBody(
           title: 'Edit document',
           actions: [
@@ -306,7 +309,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 onPressed: () async {
                   await state.updatePersonalDocument(
                     document.id,
-                    title: titleController.text,
+                    title: controllers.first.text,
                     subjectId: subjectId,
                     form: form,
                     kind: kind,
@@ -321,7 +324,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
-                controller: titleController,
+                controller: controllers.first,
                 decoration: const InputDecoration(labelText: 'Title'),
               ),
               const SizedBox(height: 16),
@@ -371,9 +374,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
-    titleController.dispose();
   }
 
   Future<void> _download(BuildContext context, AppState state, Document document) async {
@@ -467,9 +470,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   Future<void> _addNote(BuildContext context, AppState state, Document document) async {
-    final controller = TextEditingController();
     final progress = state.progressOrDefault(document);
-    final pageController = TextEditingController(text: '${progress.currentPage}');
 
     // A purpose-built composer instead of the generic sheet: the sheet grows to
     // exactly its content, so the field and both buttons stay above the
@@ -479,7 +480,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (sheetContext) {
+      builder: (sheetContext) => TextControllers(
+        initialTexts: ['${progress.currentPage}', ''],
+        builder: (sheetContext, controllers) {
+        final controller = controllers[1];
+        final pageController = controllers[0];
         final theme = Theme.of(sheetContext);
 
         return Padding(
@@ -552,10 +557,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             ),
           ),
         );
-      },
+        },
+      ),
     );
-    controller.dispose();
-    pageController.dispose();
   }
 }
 
@@ -1254,3 +1258,6 @@ class _RelatedTab extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -55,13 +55,13 @@ class _StaffLibraryScreenState extends State<StaffLibraryScreen> {
     if (picked == null) return;
     if (!mounted) return;
 
-    final pagesController = TextEditingController(
-      text: '${document.currentVersion?.pageCount ?? document.pages}',
-    );
-
     final pages = await showDialog<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      // The controller belongs to the dialog: it is still animating away when
+      // showDialog returns, and the field is still using it then.
+      builder: (dialogContext) => TextControllers(
+        initialTexts: ['${document.currentVersion?.pageCount ?? document.pages}'],
+        builder: (dialogContext, controllers) => AlertDialog(
         title: const Text('Publish a new version'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -70,7 +70,7 @@ class _StaffLibraryScreenState extends State<StaffLibraryScreen> {
             Text(picked.fileName, style: Theme.of(dialogContext).textTheme.bodySmall),
             const SizedBox(height: 14),
             TextField(
-              controller: pagesController,
+              controller: controllers.first,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Page count'),
             ),
@@ -83,16 +83,16 @@ class _StaffLibraryScreenState extends State<StaffLibraryScreen> {
           ),
           FilledButton(
             onPressed: () {
-              final value = int.tryParse(pagesController.text.trim());
+              final value = int.tryParse(controllers.first.text.trim());
               if (value != null && value > 0) Navigator.pop(dialogContext, value);
             },
             child: const Text('Publish'),
           ),
         ],
       ),
+      ),
     );
 
-    pagesController.dispose();
     if (pages == null) return;
 
     setState(() => _loading = true);
@@ -250,3 +250,4 @@ class _StaffLibraryScreenState extends State<StaffLibraryScreen> {
     );
   }
 }
+

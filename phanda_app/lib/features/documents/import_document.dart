@@ -21,7 +21,10 @@ Future<Document?> importDocumentFlow(
     final picked = await state.pickPdf();
     if (picked == null || !context.mounted) return null;
 
-    final controller = TextEditingController(text: titleFromFile(picked.fileName));
+    // The field is read before the sheet closes, so the controller can live
+    // inside the sheet and die with it rather than being disposed here while
+    // the sheet is still animating away.
+    var title = titleFromFile(picked.fileName);
     var subjectId = state.profile.subjectIds.isEmpty
         ? kSubjects.first.id
         : state.profile.subjectIds.first;
@@ -32,7 +35,9 @@ Future<Document?> importDocumentFlow(
     final shouldImport = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
+      builder: (sheetContext) => TextControllers(
+        initialTexts: [title],
+        builder: (sheetContext, controllers) => StatefulBuilder(
         builder: (sheetContext, setSheetState) => SheetBody(
           title: 'Name your paper',
           subtitle: '${picked.fileName} · ${formatBytes(picked.sizeBytes)}',
@@ -47,10 +52,12 @@ Future<Document?> importDocumentFlow(
             Expanded(
               child: FilledButton(
                 onPressed: () {
-                  if (controller.text.trim().isEmpty) {
+                  if (controllers.first.text.trim().isEmpty) {
                     setSheetState(() => titleMissing = true);
                     return;
                   }
+                  // Taken now, while the field still exists.
+                  title = controllers.first.text.trim();
                   Navigator.pop(sheetContext, true);
                 },
                 child: const Text('Add to library'),
@@ -61,7 +68,7 @@ Future<Document?> importDocumentFlow(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
-                controller: controller,
+                controller: controllers.first,
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
                 onChanged: (_) {
@@ -134,22 +141,21 @@ Future<Document?> importDocumentFlow(
             ],
           ),
         ),
+        ),
       ),
     );
 
     if (shouldImport != true) {
-      controller.dispose();
       return null;
     }
 
     final document = await state.importPdf(
       picked: picked,
-      title: controller.text,
+      title: title,
       subjectId: subjectId,
       form: form,
       kind: kind,
     );
-    controller.dispose();
 
     if (context.mounted) {
       showSnack(context, '“${document.title}” is on this phone.');
@@ -174,3 +180,5 @@ String titleFromFile(String fileName) {
       .map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}')
       .join(' ');
 }
+
+

@@ -122,7 +122,6 @@ class ClassesScreen extends StatelessWidget {
   }
 
   Future<void> _joinClass(BuildContext context, AppState state) async {
-    final controller = TextEditingController();
     String? error;
 
     await showModalBottomSheet<void>(
@@ -130,7 +129,10 @@ class ClassesScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-        child: StatefulBuilder(
+        // The controller belongs to the sheet: this method resumes while the
+        // sheet is still animating out, and the field is still using it then.
+        child: TextControllers(
+          builder: (sheetContext, controllers) => StatefulBuilder(
           builder: (sheetContext, setSheetState) => SheetBody(
             title: 'Join a class',
             subtitle: 'Enter the code your teacher shared.',
@@ -145,7 +147,7 @@ class ClassesScreen extends StatelessWidget {
               Expanded(
                 child: FilledButton(
                   onPressed: () async {
-                    final result = await state.joinClass(controller.text);
+                    final result = await state.joinClass(controllers.first.text);
                     if (!result.success) {
                       setSheetState(() => error = result.message);
                       return;
@@ -163,7 +165,7 @@ class ClassesScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
-                  controller: controller,
+                  controller: controllers.first,
                   autofocus: true,
                   textCapitalization: TextCapitalization.characters,
                   maxLength: 6,
@@ -190,10 +192,10 @@ class ClassesScreen extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ),
       ),
     );
-    controller.dispose();
   }
 
   Future<void> _createClass(BuildContext context, AppState state) async {
@@ -201,7 +203,6 @@ class ClassesScreen extends StatelessWidget {
       showSnack(context, 'Only teachers can create classes.', error: true);
       return;
     }
-    final nameController = TextEditingController();
     var form = state.profile.form;
     var subjectId = state.profile.subjectIds.isEmpty
         ? kSubjects.first.id
@@ -213,7 +214,9 @@ class ClassesScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
-        child: StatefulBuilder(
+        // Same as the join sheet: the controller outlives this method's await.
+        child: TextControllers(
+          builder: (sheetContext, controllers) => StatefulBuilder(
           builder: (sheetContext, setSheetState) => SheetBody(
             title: 'Create a class',
             subtitle: 'You will be able to set reading for everyone who joins.',
@@ -228,7 +231,7 @@ class ClassesScreen extends StatelessWidget {
               Expanded(
                 child: FilledButton(
                   onPressed: () async {
-                    final name = nameController.text.trim();
+                    final name = controllers.first.text.trim();
                     if (name.length < 3) {
                       setSheetState(() => error = 'Give the class a name of at least 3 characters.');
                       return;
@@ -259,7 +262,7 @@ class ClassesScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
-                  controller: nameController,
+                  controller: controllers.first,
                   autofocus: true,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
@@ -307,10 +310,10 @@ class ClassesScreen extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ),
       ),
     );
-    nameController.dispose();
   }
 }
 
@@ -425,3 +428,6 @@ class _ClassCard extends StatelessWidget {
     );
   }
 }
+
+
+

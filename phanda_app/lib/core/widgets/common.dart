@@ -610,6 +610,46 @@ void showSnack(BuildContext context, String message, {bool error = false}) {
     );
 }
 
+/// Owns the text controllers a sheet's or dialog's fields need, until it is gone.
+///
+/// `await showModalBottomSheet(...)` returns while the sheet is still playing
+/// its close animation, so disposing a controller on the next line leaves the
+/// fields using a dead controller — which surfaces as "A TextEditingController
+/// was used after being disposed" and then a failed framework assertion. A
+/// StatefulWidget inside the sheet unmounts after the animation, which is the
+/// moment the controllers can go. Dialogs close the same way.
+class TextControllers extends StatefulWidget {
+  const TextControllers({
+    super.key,
+    this.initialTexts = const [''],
+    required this.builder,
+  });
+
+  /// One entry per controller, holding its starting text.
+  final List<String> initialTexts;
+  final Widget Function(BuildContext context, List<TextEditingController> controllers) builder;
+
+  @override
+  State<TextControllers> createState() => _TextControllersState();
+}
+
+class _TextControllersState extends State<TextControllers> {
+  late final List<TextEditingController> _controllers = [
+    for (final text in widget.initialTexts) TextEditingController(text: text),
+  ];
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _controllers);
+}
+
 /// Bottom sheet body with a title row, scrollable content and safe insets.
 class SheetBody extends StatelessWidget {
   const SheetBody({
