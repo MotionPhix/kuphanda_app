@@ -142,13 +142,20 @@ php artisan config:cache 2>&1 | tail -2
 php artisan route:clear >/dev/null 2>&1
 
 say "smoke test"
-php -r '
-$url = "https://app.kuphanda.com/api/v1/health";
-$ctx = stream_context_create(["http" => ["timeout" => 15, "ignore_errors" => true]]);
-$body = @file_get_contents($url, false, $ctx);
-$code = isset($http_response_header[0]) ? $http_response_header[0] : "no response";
-echo "$code\n";
-echo substr((string) $body, 0, 300), "\n";
-'
+# /up is Laravel's own health route. /api/v1/login is the only unauthenticated
+# API endpoint, so an empty POST must come back 422 (validated, never a 500).
+probe() {
+  local method="$1" url="$2" code body
+  body=$(mktemp)
+  code=$(curl -s -o "$body" -w '%{http_code}' -X "$method" \
+    -H 'Accept: application/json' --max-time 20 "$url" 2>/dev/null)
+  printf '%s %s -> %s\n' "$method" "$url" "${code:-no-response}"
+  head -c 200 "$body" | tr -d '\n'
+  printf '\n'
+  rm -f "$body"
+}
+probe GET  "$APP_URL_/up"
+probe POST "$APP_URL_/api/v1/login"
+probe GET  "$APP_URL_/reset-password"
 
 say "done — $(date -u '+%Y-%m-%d %H:%M:%SZ')"
