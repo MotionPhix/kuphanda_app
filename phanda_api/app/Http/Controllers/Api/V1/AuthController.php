@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Requests\Api\V1\ChangePasswordRequest;
 use App\Http\Requests\Api\V1\ForgotPasswordRequest;
 use App\Http\Requests\Api\V1\GoogleSignInRequest;
 use App\Http\Requests\Api\V1\UpdateProfileRequest;
@@ -238,6 +239,26 @@ final class AuthController extends ApiController
         return $this->error('Unable to send reset link', 500);
     }
 
+    /**
+     * Changing the password from a signed-in phone, without the email round
+     * trip. Every other device is signed out; this one keeps working, because
+     * the person changing it is holding it.
+     */
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $user->forceFill(['password' => Hash::make($request->string('password')->toString())])->save();
+
+        $current = $user->currentAccessToken();
+        $user->tokens()
+            ->when($current !== null, fn ($query) => $query->where('id', '!=', $current->getKey()))
+            ->delete();
+
+        return $this->success(message: 'Password changed. Other devices were signed out.');
+    }
+
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
         $status = Password::reset(
@@ -267,3 +288,4 @@ final class AuthController extends ApiController
         );
     }
 }
+

@@ -7,6 +7,7 @@ import '../../core/widgets/common.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
+import 'change_password_sheet.dart';
 import 'sign_in_sheet.dart';
 import '../billing/subscription_screen.dart';
 import '../staff/staff_library_screen.dart';
@@ -137,6 +138,18 @@ class ProfileScreen extends StatelessWidget {
                             ? () => _confirmSignOut(context, state)
                             : () => showSignInSheet(context, state),
                       ),
+                      // Only for a signed-in account: without a session there
+                      // is no current password to prove, and the reset link on
+                      // the sign-in sheet covers everyone else.
+                      if (state.isSignedIn) ...[
+                        const Divider(height: 1),
+                        _ProfileItem(
+                          icon: Icons.password_rounded,
+                          title: 'Change password',
+                          subtitle: 'Signs out your other devices',
+                          onTap: () => showChangePasswordSheet(context, state),
+                        ),
+                      ],
                     ],
                   ),
                 ),

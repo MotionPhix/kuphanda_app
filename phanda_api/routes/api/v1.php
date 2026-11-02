@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
     Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
     Route::get('me', [AuthController::class, 'me'])->name('api.v1.me');
     Route::patch('me', [AuthController::class, 'updateProfile'])->name('api.v1.me.update');
+    Route::put('password', [AuthController::class, 'changePassword'])->name('api.v1.password.update');
 
     // Push notification devices and inbox
     Route::get('me/devices', [DeviceController::class, 'index'])->name('api.v1.devices.index');

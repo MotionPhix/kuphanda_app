@@ -1274,6 +1274,16 @@ class AppState extends ChangeNotifier {
     await syncNow();
   }
 
+  /// Changes the password from this phone. Other devices are signed out by the
+  /// server; this session carries on.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String password,
+  }) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
+    await api.changePassword(currentPassword: currentPassword, password: password);
+  }
+
   /// Sends a password reset link. The learner follows it on the web app, so
   /// nothing changes on the phone until they sign in again.
   Future<void> requestPasswordReset(String email) async {

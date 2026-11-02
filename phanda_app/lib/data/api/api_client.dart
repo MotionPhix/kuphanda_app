@@ -80,6 +80,25 @@ class ApiClient {
     await _send(() => _http.post(_uri('/logout'), headers: _headers));
   }
 
+  /// Changes the password for the signed-in account. The server signs every
+  /// other device out and keeps this one.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String password,
+  }) async {
+    await _send(
+      () => _http.put(
+        _uri('/password'),
+        headers: _headers,
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'password': password,
+          'password_confirmation': password,
+        }),
+      ),
+    );
+  }
+
   /// Asks the server to mail a reset link. The link itself is opened on the web
   /// app; the phone only needs to know the request went through.
   Future<void> forgotPassword({required String email}) async {
@@ -551,7 +570,21 @@ class ApiClient {
       } catch (_) {}
     }
 
-    final message = (parsed['message'] as String?) ?? switch (status) {
+    // Laravel puts the useful sentence in `errors`, and leaves `message` as
+    // "The given data was invalid." — which tells a learner nothing about the
+    // field they got wrong.
+    final errors = parsed['errors'];
+    String? fieldError;
+    if (errors is Map) {
+      for (final value in errors.values) {
+        if (value is List && value.isNotEmpty && value.first is String) {
+          fieldError = value.first as String;
+          break;
+        }
+      }
+    }
+
+    final message = fieldError ?? (parsed['message'] as String?) ?? switch (status) {
       401 => 'Your session has expired. Sign in again.',
       403 => 'Your library pass does not cover this document.',
       404 => 'The document is no longer available.',
