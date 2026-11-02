@@ -39,6 +39,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   /// overwritten by a profile that arrives a moment later.
   bool _detailsEdited = false;
 
+  /// The gate is reached once per ended session, not on every rebuild.
+  bool _jumpedToGate = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -46,7 +49,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     // details step opens on their own name rather than an empty form. The
     // account's name can arrive a moment after the session does, so this keeps
     // offering until the form has been touched.
-    if (AppScope.of(context).isSignedIn && !_detailsEdited) _adoptAccount();
+    final app = AppScope.of(context);
+    if (app.isSignedIn && !_detailsEdited) _adoptAccount();
+
+    // A session that ended mid-use needs the way back in, not the tour: open on
+    // the gate, where the reason is written.
+    if (!_jumpedToGate && !app.isSignedIn && app.sessionEndedReason != null) {
+      _jumpedToGate = true;
+      _step = 1;
+    }
   }
 
   @override
@@ -233,6 +244,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          // A session that ended without the learner asking is worth a line of
+          // explanation: otherwise the app appears to have thrown them out.
+          if (AppScope.of(context).sessionEndedReason != null) ...[
+            const SizedBox(height: 16),
+            AppCard(
+              color: AppColors.sun.withValues(alpha: 0.12),
+              borderColor: AppColors.sun.withValues(alpha: 0.4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 18, color: theme.colorScheme.onSurface),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      AppScope.of(context).sessionEndedReason!,
+                      style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 26),
           FilledButton(
             onPressed: _googleBusy ? null : _signInWithEmail,
@@ -699,5 +733,6 @@ class _ChoiceCard extends StatelessWidget {
     );
   }
 }
+
 
 

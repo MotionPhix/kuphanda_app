@@ -147,6 +147,21 @@ class AppState extends ChangeNotifier {
   bool get isSyncing => _syncing;
   String? get syncError => _syncError;
 
+  /// Why the phone stopped being signed in, when it was not the learner's own
+  /// doing — a password changed elsewhere, or an account closed by the school.
+  /// The gate says it once, so being dropped to the landing page is explained
+  /// instead of looking like a crash.
+  String? get sessionEndedReason => _sessionEndedReason;
+  String? _sessionEndedReason;
+
+  void _endSession(String reason) {
+    _sessionEndedReason = reason;
+    _token = null;
+    _account = null;
+    _api?.token = null;
+    stopAutoSync();
+  }
+
   /// Messages the library or a teacher has sent to this learner, newest first.
   List<AppNotification> get notifications => _notifications;
 
@@ -1267,6 +1282,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _adoptSession(AuthSession session) async {
+    // A fresh session answers whatever ended the last one.
+    _sessionEndedReason = null;
+
     // A different person on the same phone: the profile follows the account, or
     // the teacher's classes would be listed under the learner's name. Signing out
     // clears the stored identity, so this covers both "switched directly" and
@@ -1387,6 +1405,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    // Leaving on purpose: nothing to explain on the gate afterwards.
+    _sessionEndedReason = null;
+
     if (isSignedIn) {
       try {
         await _api?.logout();
@@ -1721,11 +1742,12 @@ class AppState extends ChangeNotifier {
       _syncError = error.message;
       if (error.isUnauthorized) {
         // Keep downloaded files: losing a session must not lose reading access.
-        _token = null;
-        _account = null;
-        _api?.token = null;
+        // The token is dead because the password was changed on another phone,
+        // so say that rather than silently emptying the shell.
+        _endSession(
+          'This phone was signed out. If you changed your password, sign in with the new one.',
+        );
         await _tokenStore.clear();
-        stopAutoSync();
       }
     } catch (error) {
       _syncError = 'Sync failed: $error';
