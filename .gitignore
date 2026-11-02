@@ -72,6 +72,9 @@ phanda_api/storage/framework/sessions/*
 phanda_api/storage/framework/views/*
 phanda_api/storage/pail/
 phanda_api/database/*.sqlite
+
+# Server-side secrets for cPanel deploys — never committed, never in the web root.
+phanda_api/deploy/mail.credentials
 phanda_api/database/*.sqlite-journal
 phanda_api/public/build/
 phanda_api/public/hot
