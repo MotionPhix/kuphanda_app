@@ -243,4 +243,23 @@ void main() {
     expect(classroom.assignments.first.completed, isTrue);
     expect(classroom.assignments.last.completed, isFalse);
   });
+  testWidgets('tapping a learner shows which papers they still owe',
+      (tester) async {
+    final state = await _teacherState();
+    await _pump(tester, state);
+
+    await tester.ensureVisible(find.text('Chisomo Banda'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Chisomo Banda'));
+    await tester.pumpAndSettle();
+
+    // Chisomo has read none of it: his row opens to say so, paper by paper.
+    expect(find.text('Mechanics — MSCE study guide · read'), findsNothing);
+
+    await tester.tap(find.text('Tadala Phiri'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mechanics — MSCE study guide · read'), findsOneWidget);
+  });
 }
+
+

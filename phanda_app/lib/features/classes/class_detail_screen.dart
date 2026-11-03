@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app.dart';
+import '../../data/api/api_models.dart';
 import '../../core/format.dart';
 import '../../core/navigation.dart';
 import '../../core/theme.dart';
@@ -415,12 +416,64 @@ class _ClassReportSection extends StatefulWidget {
 class _ClassReportSectionState extends State<_ClassReportSection> {
   bool _loading = true;
 
+  /// Learners whose papers are expanded beneath their row.
+  final Set<int> _open = <int>{};
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
+  /// The detail behind a learner's count: every paper the class was set, and
+  /// whether this learner has read it. Inline, so it works the same on a phone
+  /// and on a desktop window and needs no second surface.
+  Widget _learnerPapers(ThemeData theme, ClassReport report, ReportedLearner learner) {
+    if (report.assignments.isEmpty) {
+      return Text(
+        'Nothing has been set for this class yet.',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final assignment in report.assignments)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  learner.hasFinished(assignment.id)
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  size: 15,
+                  color: learner.hasFinished(assignment.id)
+                      ? AppColors.green
+                      : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${assignment.title ?? 'A paper in the library'}'
+                    '${learner.hasFinished(assignment.id) ? ' · read' : ''}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: learner.hasFinished(assignment.id)
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
   Future<void> _load() async {
     if (!mounted) return;
     final state = AppScope.read(context);
@@ -533,33 +586,59 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
             const SizedBox(height: 6),
             Text('Learners', style: theme.textTheme.titleSmall),
             const SizedBox(height: 6),
-            for (final learner in report.learners)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        learner.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
-                      ),
+            for (final learner in report.learners) ...[
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => setState(() {
+                    if (!_open.remove(learner.id)) _open.add(learner.id);
+                  }),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            learner.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                        Text(
+                          report.assignmentCount == 0
+                              ? '—'
+                              : '${learner.completedAssignmentIds.length} of ${report.assignmentCount} read',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          _open.contains(learner.id)
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
                     ),
-                    Text(
-                      report.assignmentCount == 0
-                          ? '—'
-                          : '${learner.completedAssignmentIds.length} of ${report.assignmentCount} read',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+              if (_open.contains(learner.id))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 2, 4, 8),
+                  child: _learnerPapers(theme, report, learner),
+                ),
+            ],
           ],
         ],
       ],
     );
   }
 }
+
+
+
