@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /** A paper a teacher set for a class, optionally with a due date. */
@@ -43,4 +44,11 @@ final class ClassroomAssignment extends Model
     {
         return $this->belongsTo(Document::class);
     }
+
+    /** Which learners have finished this paper. */
+    public function completions(): HasMany
+    {
+        return $this->hasMany(AssignmentCompletion::class, 'assignment_id');
+    }
 }
+

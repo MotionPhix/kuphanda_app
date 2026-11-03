@@ -149,6 +149,83 @@ final class ClassroomController extends ApiController
         );
     }
 
+    /**
+     * A learner says they have finished a paper the class was set.
+     *
+     * Idempotent: reading it twice is not two completions. Only a member of the
+     * class may write this, so a code alone cannot mark someone else's work.
+     */
+    public function complete(Request $request, ClassroomAssignment $assignment): JsonResponse
+    {
+        $classroom = $assignment->classroom;
+        abort_if($classroom === null, 404);
+
+        abort_unless(
+            $classroom->hasMember($request->user()),
+            403,
+            'Join the class before marking its reading done.',
+        );
+
+        $completion = $assignment->completions()->firstOrCreate(
+            ['user_id' => $request->user()->getKey()],
+            ['completed_at' => now()],
+        );
+
+        return $this->success([
+            'assignment_id' => $assignment->id,
+            'classroom_id' => $classroom->id,
+            'completed_at' => $completion->completed_at?->toIso8601String(),
+        ], 'Marked as read.');
+    }
+
+    /**
+     * The teacher's report: who is in the class, what was set, and who has read
+     * it. A learner gets 403 — this is the one class view that is not shared.
+     */
+    public function report(Request $request, Classroom $classroom): JsonResponse
+    {
+        $this->ensureRuns($request->user(), $classroom);
+
+        $assignments = $classroom->assignments()
+            ->with(['document', 'completions'])
+            ->orderBy('created_at')
+            ->get();
+
+        $members = $classroom->members()
+            ->orderBy('name')
+            ->get(['users.id', 'users.name']);
+
+        return $this->success([
+            'classroom' => new ClassroomResource(
+                $classroom->load('teacher')->loadCount('members')
+            ),
+            'assignments' => $assignments->map(fn (ClassroomAssignment $assignment): array => [
+                'id' => $assignment->id,
+                'document_id' => $assignment->document_id,
+                'title' => $assignment->document?->title,
+                'due_date' => $assignment->due_date?->toDateString(),
+                'completed_count' => $assignment->completions->count(),
+            ])->all(),
+            'learners' => $members->map(function (User $member) use ($assignments): array {
+                $done = $assignments
+                    ->filter(fn (ClassroomAssignment $assignment): bool => $assignment->completions
+                        ->contains('user_id', $member->getKey()))
+                    ->pluck('id')
+                    ->values()
+                    ->all();
+
+                return [
+                    'id' => $member->getKey(),
+                    'name' => $member->name,
+                    'completed_assignment_ids' => $done,
+                    'completed_count' => count($done),
+                ];
+            })->all(),
+            'assignment_count' => $assignments->count(),
+            'learner_count' => $members->count(),
+        ]);
+    }
+
     private function ensureBelongs(User $user, Classroom $classroom): void
     {
         abort_unless($classroom->isRunBy($user) || $classroom->hasMember($user), 403);

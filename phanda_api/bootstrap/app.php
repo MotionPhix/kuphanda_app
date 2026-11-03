@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureStaff;
+use App\Http\Middleware\EnsureTeacher;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\LogApiRequests;
 use Illuminate\Auth\AuthenticationException;
@@ -39,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'log.api' => LogApiRequests::class,
             'verified' => EnsureEmailVerified::class,
             'staff' => EnsureStaff::class,
+            'teacher' => EnsureTeacher::class,
         ]);
 
         // There is no login route to redirect a guest to — this app is API
@@ -66,3 +68,4 @@ return Application::configure(basePath: dirname(__DIR__))
             ], Response::HTTP_UNAUTHORIZED);
         });
     })->create();
+

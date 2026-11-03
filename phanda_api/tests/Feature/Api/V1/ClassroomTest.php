@@ -188,3 +188,22 @@ it('lets a learner leave a class', function (): void {
 
     $this->actingAs($student)->getJson('/api/v1/classrooms')->assertJsonCount(0, 'data');
 });
+
+it('lets a teacher who is not library staff run a class', function (): void {
+    // Onboarding asks "Student or Teacher"; that answer is a role, not a staff
+    // badge. The class tools used to sit behind the staff gate and refused them.
+    $teacher = User::factory()->create(['role' => 'teacher', 'is_staff' => false]);
+
+    $this->actingAs($teacher)
+        ->postJson('/api/v1/classrooms', ['name' => 'Form 3 Science', 'form' => 3])
+        ->assertStatus(201)
+        ->assertJsonPath('data.is_owner', true);
+});
+
+it('still refuses a learner the class tools', function (): void {
+    $learner = User::factory()->create(['role' => 'student', 'is_staff' => false]);
+
+    $this->actingAs($learner)
+        ->postJson('/api/v1/classrooms', ['name' => 'Not mine', 'form' => 2])
+        ->assertForbidden();
+});
