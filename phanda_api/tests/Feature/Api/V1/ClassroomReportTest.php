@@ -151,3 +151,39 @@ it('tells each learner which papers they have already read, on any device', func
         ->assertOk()
         ->assertJsonPath('data.assignments.0.completed', false);
 });
+
+it('tells the learners when a paper is set, and not the teacher', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true, 'name' => 'Grace Mwale']);
+    $tadala = User::factory()->create(['name' => 'Tadala Phiri']);
+    $chisomo = User::factory()->create(['name' => 'Chisomo Banda']);
+
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach([$tadala->getKey(), $chisomo->getKey()], ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2007-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+    ])->assertStatus(201);
+
+    $assignmentId = (string) $classroom->assignments()->firstOrFail()->id;
+
+    $this->actingAs($tadala)
+        ->getJson('/api/v1/me/notifications')
+        ->assertOk()
+        ->assertJsonPath('data.0.category', 'assignment')
+        ->assertJsonPath('data.0.title', 'New reading: Physics Paper I')
+        ->assertJsonPath('data.0.data.classroom_id', (string) $classroom->id)
+        ->assertJsonPath('data.0.data.assignment_id', $assignmentId)
+        ->assertJsonPath('data.0.data.document_id', $document->id);
+
+    $this->actingAs($chisomo)
+        ->getJson('/api/v1/me/notifications')
+        ->assertOk()
+        ->assertJsonPath('data.0.category', 'assignment');
+
+    // The person who set it does not get told about their own action.
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/me/notifications')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+});

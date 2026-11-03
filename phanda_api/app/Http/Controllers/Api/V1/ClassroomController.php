@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Resources\ClassroomResource;
+use App\Services\Push\PushDispatcher;
+use Throwable;
 use App\Models\Classroom;
 use App\Models\ClassroomAssignment;
 use App\Models\Document;
@@ -20,6 +22,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class ClassroomController extends ApiController
 {
+    public function __construct(private readonly PushDispatcher $push) {}
+
     /** Classes this account runs as a teacher, or belongs to as a learner. */
     public function index(Request $request): JsonResponse
     {
@@ -145,10 +149,48 @@ final class ClassroomController extends ApiController
             ],
         );
 
+        $this->tellTheClass($classroom, $assignment, $document, $request->user());
+
         return $this->created(
             new ClassroomResource($this->loadFor($classroom, $request->user())),
             'Set '.$document->title.' for '.$classroom->name.'.',
         );
+    }
+
+    /**
+     * The class hears about reading the moment it is set.
+     *
+     * One message per learner, so it lands in their in-app inbox whether or not
+     * the push token is alive — a phone that was off still shows it next time.
+     * Best effort: a push provider problem must not undo the assignment.
+     */
+    private function tellTheClass(
+        Classroom $classroom,
+        ClassroomAssignment $assignment,
+        Document $document,
+        User $teacher,
+    ): void {
+        $members = $classroom->members()
+            ->where('users.id', '!=', $teacher->getKey())
+            ->get();
+
+        foreach ($members as $member) {
+            try {
+                $this->push->toUser(
+                    $member,
+                    'assignment',
+                    'New reading: '.$document->title,
+                    $teacher->name.' set this for '.$classroom->name,
+                    [
+                        'classroom_id' => (string) $classroom->id,
+                        'assignment_id' => (string) $assignment->id,
+                        'document_id' => (string) $document->id,
+                    ],
+                );
+            } catch (Throwable $error) {
+                report($error);
+            }
+        }
     }
 
     public function unassign(Request $request, Classroom $classroom, ClassroomAssignment $assignment): JsonResponse
@@ -251,4 +293,6 @@ final class ClassroomController extends ApiController
         abort_unless($classroom->isRunBy($user), 403, 'Only the teacher who runs this class can change it.');
     }
 }
+
+
 

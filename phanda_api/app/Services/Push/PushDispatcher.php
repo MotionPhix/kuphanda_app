@@ -78,13 +78,13 @@ final class PushDispatcher
         string $body,
         array $data = [],
     ): int {
+        // The inbox row is written whatever happens to the push. A learner with no
+        // registered device — or one whose phone was off — still finds the message
+        // in the app next time, which is the point of the in-app inbox. Returning
+        // early here meant the message never existed anywhere.
         $tokens = DeviceToken::query()
             ->where('user_id', $user->id)
             ->pluck('token');
-
-        if ($tokens->isEmpty()) {
-            return 0;
-        }
 
         $delivered = 0;
         $failed = 0;
@@ -196,3 +196,4 @@ final class PushDispatcher
         };
     }
 }
+
