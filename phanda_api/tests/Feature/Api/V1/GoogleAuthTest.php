@@ -94,3 +94,27 @@ it('rejects an unverified token', function (): void {
     $this->postJson('/api/v1/auth/google', ['id_token' => str_repeat('e', 40)])
         ->assertStatus(401);
 });
+
+it('sends a brand-new Google account through onboarding', function (): void {
+    $this->postJson('/api/v1/auth/google', ['id_token' => str_repeat('c', 40)])
+        ->assertOk()
+        ->assertJsonPath('data.user.profile_completed', false);
+});
+
+it('does not re-interview a Google account that already onboarded', function (): void {
+    User::factory()->create([
+        'name' => 'Returning Learner',
+        'first_name' => 'Returning',
+        'last_name' => 'Learner',
+        'email' => 'learner@example.com',
+        'role' => 'student',
+        'form' => 4,
+        'profile_completed_at' => now(),
+    ]);
+
+    $this->postJson('/api/v1/auth/google', ['id_token' => str_repeat('d', 40)])
+        ->assertOk()
+        ->assertJsonPath('data.user.profile_completed', true)
+        ->assertJsonPath('data.user.role', 'student')
+        ->assertJsonPath('data.user.form', 4);
+});

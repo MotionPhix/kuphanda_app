@@ -31,6 +31,7 @@ final class UserResource extends JsonResource
             'plan' => $this->plan->value,
             'role' => $this->role,
             'form' => $this->form,
+            'profile_completed' => $this->profile_completed_at !== null,
             'email_verified_at' => $this->email_verified_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

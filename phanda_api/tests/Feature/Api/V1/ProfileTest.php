@@ -51,3 +51,48 @@ it('requires authentication', function (): void {
     $this->patchJson('/api/v1/me', ['first_name' => 'No', 'last_name' => 'Auth'])
         ->assertStatus(401);
 });
+
+it('records onboarding as complete once the answers are there', function (): void {
+    $this->patchJson('/api/v1/me', [
+        'first_name' => 'Tadala',
+        'last_name' => 'Phiri',
+        'role' => 'student',
+        'form' => 3,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.role', 'student')
+        ->assertJsonPath('data.form', 3)
+        ->assertJsonPath('data.profile_completed', true);
+
+    expect($this->user->refresh()->profile_completed_at)->not->toBeNull();
+});
+
+it('leaves a learner incomplete until a form is chosen', function (): void {
+    $this->patchJson('/api/v1/me', [
+        'first_name' => 'Tadala',
+        'last_name' => 'Phiri',
+        'role' => 'student',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.profile_completed', false);
+});
+
+it('completes a teacher without a form', function (): void {
+    $this->patchJson('/api/v1/me', [
+        'first_name' => 'Grace',
+        'last_name' => 'Mwale',
+        'role' => 'teacher',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.role', 'teacher')
+        ->assertJsonPath('data.profile_completed', true);
+});
+
+it('keeps completion once recorded, even when a later edit clears a field', function (): void {
+    $this->user->forceFill(['profile_completed_at' => now()->subDay()])->save();
+
+    $this->patchJson('/api/v1/me', ['school' => null])
+        ->assertOk()
+        ->assertJsonPath('data.profile_completed', true);
+});
+

@@ -176,3 +176,38 @@ describe('Me', function (): void {
             ]);
     });
 });
+
+describe('Onboarding state', function (): void {
+    it('reports a newly registered account as not onboarded', function (): void {
+        $this->postJson('/api/v1/register', [
+            'name' => 'New Learner',
+            'email' => 'new@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])
+            ->assertStatus(201)
+            ->assertJsonPath('data.user.profile_completed', false);
+    });
+
+    it('returns a returning teacher their role and completion on login', function (): void {
+        User::factory()->create([
+            'name' => 'Grace Mwale',
+            'first_name' => 'Grace',
+            'last_name' => 'Mwale',
+            'email' => 'grace@example.com',
+            'password' => 'password123',
+            'role' => 'teacher',
+            'form' => null,
+            'profile_completed_at' => now(),
+        ]);
+
+        $this->postJson('/api/v1/login', [
+            'email' => 'grace@example.com',
+            'password' => 'password123',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.user.role', 'teacher')
+            ->assertJsonPath('data.user.form', null)
+            ->assertJsonPath('data.user.profile_completed', true);
+    });
+});

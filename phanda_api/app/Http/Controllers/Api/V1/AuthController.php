@@ -185,7 +185,24 @@ final class AuthController extends ApiController
 
         $user->save();
 
+        // Onboarding is done once the account can answer the three things the app
+        // asks a new person: who you are, whether you teach or study, and — for a
+        // learner — which form you sit in. Recorded here so a returning account is
+        // never interviewed again on a second phone. A teacher has no form.
+        if ($user->profile_completed_at === null && $this->profileIsComplete($user)) {
+            $user->forceFill(['profile_completed_at' => now()])->save();
+        }
+
         return $this->success(new UserResource($user->fresh()), 'Profile updated.');
+    }
+
+    private function profileIsComplete(User $user): bool
+    {
+        $named = filled($user->first_name) && filled($user->last_name);
+        $role = in_array($user->role, ['student', 'teacher'], true);
+        $form = $user->role === 'teacher' || $user->form !== null;
+
+        return $named && $role && $form;
     }
 
     public function me(Request $request): JsonResponse

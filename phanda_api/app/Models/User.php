@@ -23,6 +23,9 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $school
  * @property LibraryPlan $plan
  * @property string $email
+ * @property string $role
+ * @property int|null $form
+ * @property Carbon|null $profile_completed_at
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property Carbon|null $created_at
@@ -41,6 +44,7 @@ use Laravel\Sanctum\HasApiTokens;
     'google_id',
     'avatar_url',
     'is_staff',
+    'profile_completed_at',
 ])]
 #[Hidden([
     'password',
@@ -75,6 +79,7 @@ final class User extends Authenticatable implements MustVerifyEmail
             'plan' => LibraryPlan::class,
             'is_staff' => 'boolean',
             'form' => 'integer',
+            'profile_completed_at' => 'datetime',
         ];
     }
 
@@ -96,4 +101,5 @@ final class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new ResetPasswordNotification($token));
     }
 }
+
 
