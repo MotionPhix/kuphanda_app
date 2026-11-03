@@ -121,3 +121,33 @@ it('will not let someone outside the class mark its reading done', function (): 
         ->postJson("/api/v1/assignments/{$assignmentId}/complete")
         ->assertForbidden();
 });
+
+it('tells each learner which papers they have already read, on any device', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true]);
+    $tadala = User::factory()->create(['name' => 'Tadala Phiri']);
+    $chisomo = User::factory()->create(['name' => 'Chisomo Banda']);
+
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach([$tadala->getKey(), $chisomo->getKey()], ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2006-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+    ]);
+    $assignmentId = $classroom->assignments()->firstOrFail()->id;
+
+    $this->actingAs($tadala)
+        ->postJson("/api/v1/assignments/{$assignmentId}/complete")
+        ->assertOk();
+
+    // Tadala reads it; the class shows it done for her and not for Chisomo.
+    $this->actingAs($tadala)
+        ->getJson("/api/v1/classrooms/{$classroom->id}")
+        ->assertOk()
+        ->assertJsonPath('data.assignments.0.completed', true);
+
+    $this->actingAs($chisomo)
+        ->getJson("/api/v1/classrooms/{$classroom->id}")
+        ->assertOk()
+        ->assertJsonPath('data.assignments.0.completed', false);
+});

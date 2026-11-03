@@ -8,6 +8,7 @@ import 'package:http/testing.dart';
 import 'package:kuphanda/app.dart';
 import 'package:kuphanda/core/theme.dart';
 import 'package:kuphanda/data/api/api_client.dart';
+import 'package:kuphanda/data/api/api_models.dart';
 import 'package:kuphanda/data/api/token_store.dart';
 import 'package:kuphanda/data/models/classroom.dart';
 import 'package:kuphanda/data/models/document.dart';
@@ -209,5 +210,37 @@ void main() {
     expect(find.text('Read'), findsOneWidget);
     expect(find.text('50%'), findsOneWidget);
     expect(find.textContaining('1 read'), findsWidgets);
+  });
+  test('a classroom payload carries what this learner has already read', () {
+    final classroom = RemoteClassroom.fromJson({
+      'id': 'c1',
+      'name': 'Form 4 Physics',
+      'code': 'K4P9QZ',
+      'form': 4,
+      'subject_id': 'physics',
+      'teacher_name': 'Grace Mwale',
+      'is_owner': false,
+      'member_count': 38,
+      'created_at': DateTime.now().toIso8601String(),
+      'assignments': [
+        {
+          'id': 'a1',
+          'document_id': 'doc-1',
+          'due_date': null,
+          'created_at': DateTime.now().toIso8601String(),
+          'completed': true,
+        },
+        {
+          'id': 'a2',
+          'document_id': 'doc-2',
+          'due_date': null,
+          'created_at': DateTime.now().toIso8601String(),
+          'completed': false,
+        },
+      ],
+    });
+
+    expect(classroom.assignments.first.completed, isTrue);
+    expect(classroom.assignments.last.completed, isFalse);
   });
 }

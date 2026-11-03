@@ -31,6 +31,12 @@ final class ClassroomResource extends JsonResource
                 'document_id' => $assignment->document_id,
                 'title' => $assignment->document?->title,
                 'due_date' => $assignment->due_date?->toDateString(),
+                // Whether the person asking has finished it. The controller
+                // loads only their own completions, so this is never a leak of
+                // someone else's reading.
+                'completed' => $assignment->relationLoaded('completions')
+                    ? $assignment->completions->isNotEmpty()
+                    : false,
                 'created_at' => $assignment->created_at?->toIso8601String(),
             ])->all(),
         ];

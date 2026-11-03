@@ -561,6 +561,9 @@ class RemoteClassroom {
             classId: id,
             documentId: row['document_id'] as String? ?? '',
             dueDate: DateTime.tryParse(row['due_date'] as String? ?? ''),
+            // The server now knows what this learner has finished, so a paper
+            // read on one device is not "unread" on the next.
+            completed: row['completed'] as bool? ?? false,
             createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? createdAt,
             note: row['title'] as String? ?? '',
           ),

@@ -63,9 +63,24 @@ final class ClassroomController extends ApiController
     {
         $this->ensureBelongs($request->user(), $classroom);
 
-        return $this->success(new ClassroomResource(
-            $classroom->load(['teacher', 'assignments.document'])->loadCount('members')
-        ));
+        return $this->success(new ClassroomResource($this->loadFor($classroom, $request->user())));
+    }
+
+    /**
+     * Loads a class the way the person looking at it needs to see it: with the
+     * papers set, and — for a learner — which of them they have already finished.
+     * Without this, "done" was a private note on one phone, so a learner who read
+     * a paper on a tablet saw it unread on the school computer.
+     */
+    private function loadFor(Classroom $classroom, User $viewer): Classroom
+    {
+        return $classroom
+            ->load([
+                'teacher',
+                'assignments.document',
+                'assignments.completions' => fn ($query) => $query->where('user_id', $viewer->getKey()),
+            ])
+            ->loadCount('members');
     }
 
     /** A learner joins with the code their teacher gave them. */
@@ -91,7 +106,7 @@ final class ClassroomController extends ApiController
         }
 
         return $this->success(
-            new ClassroomResource($classroom->load(['teacher', 'assignments.document'])->loadCount('members')),
+            new ClassroomResource($this->loadFor($classroom, $request->user())),
             'Joined '.$classroom->name.'.',
         );
     }
@@ -131,7 +146,7 @@ final class ClassroomController extends ApiController
         );
 
         return $this->created(
-            new ClassroomResource($classroom->load(['teacher', 'assignments.document'])->loadCount('members')),
+            new ClassroomResource($this->loadFor($classroom, $request->user())),
             'Set '.$document->title.' for '.$classroom->name.'.',
         );
     }
@@ -144,7 +159,7 @@ final class ClassroomController extends ApiController
         $assignment->delete();
 
         return $this->success(
-            new ClassroomResource($classroom->load(['teacher', 'assignments.document'])->loadCount('members')),
+            new ClassroomResource($this->loadFor($classroom, $request->user())),
             'Assignment removed.',
         );
     }
@@ -236,3 +251,4 @@ final class ClassroomController extends ApiController
         abort_unless($classroom->isRunBy($user), 403, 'Only the teacher who runs this class can change it.');
     }
 }
+
