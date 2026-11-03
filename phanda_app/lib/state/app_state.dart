@@ -845,6 +845,22 @@ class AppState extends ChangeNotifier {
 
   ClassReport? classReportFor(String classroomId) => _reports[classroomId];
 
+  /// Reminds the learners who have not read a paper. Null when the server could
+  /// not be reached, so the page can say so instead of claiming it worked.
+  Future<int?> remindUnfinished(String classroomId, String assignmentId) async {
+    final api = _api;
+    if (api == null) return null;
+    try {
+      return await api.remindUnfinished(
+        classroomId: classroomId,
+        assignmentId: assignmentId,
+      );
+    } on ApiException catch (error) {
+      debugPrint('Could not remind $assignmentId: ${error.message}');
+      return null;
+    }
+  }
+
   /// Loads reports for several classes at once, for the teaching home.
   ///
   /// One failing class must not hide the rest, so failures are dropped and the

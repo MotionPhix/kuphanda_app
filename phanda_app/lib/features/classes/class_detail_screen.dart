@@ -494,6 +494,24 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
       ],
     );
   }
+  /// Reminds the learners still to read this paper, and says how many it reached
+  /// rather than leaving the teacher to guess.
+  Future<void> _remind(ReportedAssignment assignment) async {
+    final state = AppScope.read(context);
+    final sent = await state.remindUnfinished(widget.classroomId, assignment.id);
+    if (!mounted) return;
+
+    if (sent == null) {
+      showSnack(context, 'Could not send the reminder. Check the connection and try again.');
+      return;
+    }
+    if (sent == 0) {
+      showSnack(context, 'Everyone has already read this one.');
+      return;
+    }
+    showSnack(context, sent == 1 ? 'Reminded one learner.' : 'Reminded $sent learners.');
+  }
+
   Future<void> _load() async {
     if (!mounted) return;
     final state = AppScope.read(context);
@@ -602,6 +620,23 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                       ),
                     ),
+                    if (report.learnerCount - assignment.completedCount > 0)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          // Chases only the people still to read it.
+                          onPressed: () => _remind(assignment),
+                          icon: const Icon(Icons.notifications_active_outlined, size: 15),
+                          label: Text(
+                            'Remind ${report.learnerCount - assignment.completedCount}',
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(0, 32),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

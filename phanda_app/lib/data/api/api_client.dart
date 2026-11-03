@@ -250,6 +250,19 @@ class ApiClient {
     );
   }
 
+  /// Nudges the learners who have not read a paper yet; returns how many.
+  Future<int> remindUnfinished({
+    required String classroomId,
+    required String assignmentId,
+  }) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/classrooms/$classroomId/assignments/$assignmentId/remind'),
+        headers: _headers,
+      ),
+    );
+    return (_dataMap(body)['sent'] as num?)?.toInt() ?? 0;
+  }
   /// Takes a paper off the class, for everyone — not just this phone.
   Future<void> unassignPaper({
     required String classroomId,
@@ -638,5 +651,6 @@ class ApiClient {
     );
   }
 }
+
 
 

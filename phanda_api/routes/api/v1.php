@@ -93,6 +93,8 @@ Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function ()
         Route::post('classrooms', [ClassroomController::class, 'store'])->name('api.v1.classrooms.store');
         Route::post('classrooms/{classroom}/assignments', [ClassroomController::class, 'assign'])
             ->name('api.v1.classrooms.assign');
+        Route::post('classrooms/{classroom}/assignments/{assignment}/remind', [ClassroomController::class, 'remind'])
+            ->name('api.v1.classrooms.remind');
         Route::get('classrooms/{classroom}/report', [ClassroomController::class, 'report'])
             ->name('api.v1.classrooms.report');
         Route::delete('classrooms/{classroom}/assignments/{assignment}', [ClassroomController::class, 'unassign'])
@@ -129,4 +131,5 @@ Route::middleware('throttle:6,1')->group(function (): void {
     Route::post('reset-password', [AuthController::class, 'resetPassword'])
         ->name('password.reset');
 });
+
 

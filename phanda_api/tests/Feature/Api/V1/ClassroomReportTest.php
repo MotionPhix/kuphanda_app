@@ -217,3 +217,70 @@ it('tells the teacher when a learner finishes, once', function (): void {
         ->assertJsonPath('data.0.data.assignment_id', $assignmentId)
         ->assertJsonPath('data.0.data.classroom_id', (string) $classroom->id);
 });
+
+it('reminds only the learners who have not read it', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true, 'name' => 'Grace Mwale']);
+    $tadala = User::factory()->create(['name' => 'Tadala Phiri']);
+    $chisomo = User::factory()->create(['name' => 'Chisomo Banda']);
+
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach([$tadala->getKey(), $chisomo->getKey()], ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2009-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+    ]);
+    $assignmentId = (string) $classroom->assignments()->firstOrFail()->id;
+
+    // Tadala has read it; Chisomo has not.
+    $this->actingAs($tadala)->postJson("/api/v1/assignments/{$assignmentId}/complete")->assertOk();
+
+    $this->actingAs($teacher)
+        ->postJson("/api/v1/classrooms/{$classroom->id}/assignments/{$assignmentId}/remind")
+        ->assertOk()
+        ->assertJsonPath('data.sent', 1);
+
+    // Chisomo also has the "New reading" message from when it was set, so pick
+    // the reminder out rather than assuming an order.
+    $chisomoInbox = $this->actingAs($chisomo)
+        ->getJson('/api/v1/me/notifications')
+        ->assertOk()
+        ->json('data');
+
+    $reminders = array_values(array_filter(
+        $chisomoInbox,
+        static fn (array $message): bool => ($message['category'] ?? null) === 'reminder',
+    ));
+
+    expect($reminders)->toHaveCount(1)
+        ->and($reminders[0]['title'])->toBe('Still to read: Physics Paper I')
+        ->and($reminders[0]['data']['assignment_id'])->toBe($assignmentId);
+
+    // Someone who has already read it is not chased about it.
+    $tadalaInbox = $this->actingAs($tadala)
+        ->getJson('/api/v1/me/notifications')
+        ->assertOk()
+        ->json('data');
+
+    expect(array_filter(
+        $tadalaInbox,
+        static fn (array $message): bool => ($message['category'] ?? null) === 'reminder',
+    ))->toBeEmpty();
+});
+
+it('keeps reminders to the teacher who runs the class', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true]);
+    $learner = User::factory()->create();
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach($learner->getKey(), ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2010-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+    ]);
+    $assignmentId = (string) $classroom->assignments()->firstOrFail()->id;
+
+    $this->actingAs($learner)
+        ->postJson("/api/v1/classrooms/{$classroom->id}/assignments/{$assignmentId}/remind")
+        ->assertForbidden();
+});

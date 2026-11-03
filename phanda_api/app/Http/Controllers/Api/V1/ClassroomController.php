@@ -329,11 +329,56 @@ final class ClassroomController extends ApiController
         abort_unless($classroom->isRunBy($user) || $classroom->hasMember($user), 403);
     }
 
+    /**
+     * Nudges the learners who have not read a paper yet.
+     *
+     * One message each to the people still to do it, never the whole class, so a
+     * reminder does not become noise for those who already read it. Returns how
+     * many were sent so the app can say so.
+     */
+    public function remind(Request $request, Classroom $classroom, ClassroomAssignment $assignment): JsonResponse
+    {
+        $this->ensureRuns($request->user(), $classroom);
+        abort_unless($assignment->classroom_id === $classroom->id, 404);
+
+        $done = $assignment->completions()->pluck('user_id')->all();
+        $members = $classroom->members()
+            ->whereNotIn('users.id', $done)
+            ->get();
+
+        $title = $assignment->document?->title ?? 'a paper';
+        $sent = 0;
+
+        foreach ($members as $member) {
+            try {
+                $this->push->toUser(
+                    $member,
+                    'reminder',
+                    'Still to read: '.$title,
+                    $classroom->name.' · set by '.$request->user()->name,
+                    [
+                        'classroom_id' => (string) $classroom->id,
+                        'assignment_id' => (string) $assignment->id,
+                        'document_id' => (string) $assignment->document_id,
+                    ],
+                );
+                $sent++;
+            } catch (Throwable $error) {
+                report($error);
+            }
+        }
+
+        return $this->success(
+            ['sent' => $sent, 'assignment_id' => (string) $assignment->id],
+            $sent === 1 ? 'Reminded one learner.' : 'Reminded '.$sent.' learners.',
+        );
+    }
     private function ensureRuns(User $user, Classroom $classroom): void
     {
         abort_unless($classroom->isRunBy($user), 403, 'Only the teacher who runs this class can change it.');
     }
 }
+
 
 
 

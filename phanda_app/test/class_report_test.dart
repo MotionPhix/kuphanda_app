@@ -51,6 +51,12 @@ http.Response _json(Object body, [int status = 200]) => http.Response(
 MockClient _reporter({bool fails = false}) => MockClient((request) async {
       final path = request.url.path;
 
+      if (path.endsWith('/remind')) {
+        return _json({
+          'data': {'sent': 1, 'assignment_id': 'a1'},
+        });
+      }
+
       if (path.endsWith('/classrooms/c1/report')) {
         if (fails) return _json({'message': 'Server Error'}, 500);
         return _json({
@@ -316,5 +322,17 @@ void main() {
     );
 
     expect(lateCountFor(report, report.assignments.single), 0);
+  });
+  testWidgets('a teacher can chase the ones still to read it', (tester) async {
+    final state = await _teacherState();
+    await _pump(tester, state);
+
+    // One of the two learners has read it, so one is left to chase.
+    expect(find.text('Remind 1'), findsOneWidget);
+
+    await tester.tap(find.text('Remind 1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reminded one learner.'), findsOneWidget);
   });
 }
