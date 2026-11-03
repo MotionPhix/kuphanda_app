@@ -260,6 +260,61 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Mechanics — MSCE study guide · read'), findsOneWidget);
   });
+  test('a paper past its deadline counts who is still to read it', () {
+    final report = ClassReport(
+      assignments: [
+        ReportedAssignment(
+          id: 'a1',
+          documentId: 'doc-1',
+          title: 'Mechanics',
+          completedCount: 1,
+          dueDate: DateTime.now().subtract(const Duration(days: 2)),
+        ),
+      ],
+      learners: const [
+        ReportedLearner(id: 1, name: 'Tadala', completedAssignmentIds: ['a1']),
+        ReportedLearner(id: 2, name: 'Chisomo', completedAssignmentIds: []),
+      ],
+      assignmentCount: 1,
+      learnerCount: 2,
+    );
+
+    expect(lateCountFor(report, report.assignments.single), 1);
+  });
+
+  test('the whole of the due day still counts as on time', () {
+    final report = ClassReport(
+      assignments: [
+        ReportedAssignment(
+          id: 'a1',
+          documentId: 'doc-1',
+          title: 'Mechanics',
+          completedCount: 0,
+          dueDate: DateTime.now(),
+        ),
+      ],
+      learners: const [
+        ReportedLearner(id: 2, name: 'Chisomo', completedAssignmentIds: []),
+      ],
+      assignmentCount: 1,
+      learnerCount: 1,
+    );
+
+    expect(lateCountFor(report, report.assignments.single), 0);
+  });
+
+  test('a paper with no deadline is never late', () {
+    final report = ClassReport(
+      assignments: const [
+        ReportedAssignment(id: 'a1', documentId: 'doc-1', title: 'Mechanics', completedCount: 0),
+      ],
+      learners: const [
+        ReportedLearner(id: 2, name: 'Chisomo', completedAssignmentIds: []),
+      ],
+      assignmentCount: 1,
+      learnerCount: 1,
+    );
+
+    expect(lateCountFor(report, report.assignments.single), 0);
+  });
 }
-
-

@@ -405,6 +405,19 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
   }
 }
 
+/// How many learners are past a paper's deadline without having read it.
+///
+/// A deadline is a day, not a moment: the whole of the due date still counts as
+/// on time.
+int lateCountFor(ClassReport report, ReportedAssignment assignment) {
+  final due = assignment.dueDate;
+  if (due == null) return 0;
+
+  final endOfDueDay = DateTime(due.year, due.month, due.day, 23, 59, 59);
+  if (endOfDueDay.isAfter(DateTime.now())) return 0;
+
+  return report.learners.where((learner) => !learner.hasFinished(assignment.id)).length;
+}
 /// The teacher's side of a class: what was set, and who has finished it.
 ///
 /// The list above this is the class's reading, counted from this phone. This
@@ -564,6 +577,18 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
+                        if (lateCountFor(report, assignment) > 0) ...[
+                          const SizedBox(width: 8),
+                          // Past its deadline with people still to read it: the
+                          // number a teacher acts on first.
+                          Text(
+                            '${lateCountFor(report, assignment)} late',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -646,6 +671,7 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
     );
   }
 }
+
 
 
 
