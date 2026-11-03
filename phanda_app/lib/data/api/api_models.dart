@@ -183,7 +183,7 @@ class AuthSession {
     this.avatarUrl,
     this.googleLinked = false,
     this.isStaff = false,
-    this.role = 'student',
+    this.role,
     this.form,
     this.profileCompleted = false,
   });
@@ -202,7 +202,11 @@ class AuthSession {
 
   /// 'student' or 'teacher' — the server's copy of the answer onboarding asks
   /// once, so a returning account is not asked again on another phone.
-  final String role;
+  ///
+  /// Null when the payload did not say (an older server, or a reply that is not
+  /// an account). That must never be read as "student": it would demote a
+  /// teacher on the next refresh.
+  final String? role;
 
   /// The school form a learner sits in. Teachers have none.
   final int? form;
@@ -244,7 +248,7 @@ class AuthSession {
       avatarUrl: json['avatar_url'] as String?,
       googleLinked: json['google_linked'] as bool? ?? false,
       isStaff: json['is_staff'] as bool? ?? false,
-      role: (json['role'] as String?) ?? 'student',
+      role: json['role'] as String?,
       form: (json['form'] as num?)?.toInt(),
       profileCompleted: json['profile_completed'] as bool? ?? false,
     );
@@ -579,4 +583,3 @@ class RemoteClassroom {
     );
   }
 }
-

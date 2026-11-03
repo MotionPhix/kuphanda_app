@@ -1347,7 +1347,10 @@ class AppState extends ChangeNotifier {
     // learner keeps their form.
     final form = session.form ?? merged.form;
     merged = merged.copyWith(
-      role: session.isTeacher ? StudentRole.teacher : StudentRole.student,
+      // A payload that did not name a role leaves the local one alone.
+      role: session.role == null
+          ? merged.role
+          : (session.isTeacher ? StudentRole.teacher : StudentRole.student),
       form: form,
     );
 
@@ -1578,7 +1581,9 @@ class AppState extends ChangeNotifier {
       // start that restored an older snapshot: the role, the form, and whether
       // onboarding was ever finished. Without this a teacher who signed in
       // before this release kept the learner's screen until they next signed in.
-      final role = account.isTeacher ? StudentRole.teacher : StudentRole.student;
+      final role = account.role == null
+          ? profile.role
+          : (account.isTeacher ? StudentRole.teacher : StudentRole.student);
       final form = account.form ?? profile.form;
       final completed = profile.onboardingComplete || account.profileCompleted;
       if (profile.role != role || profile.form != form || profile.onboardingComplete != completed) {
@@ -2041,3 +2046,4 @@ String _shortDate(DateTime date) {
   ];
   return '${date.day} ${months[date.month - 1]} ${date.year}';
 }
+
