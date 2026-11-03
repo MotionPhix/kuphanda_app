@@ -18,6 +18,7 @@ import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
 import 'package:kuphanda/features/billing/subscription_screen.dart';
+import 'package:kuphanda/features/shell/app_sidebar.dart';
 import 'package:kuphanda/features/shell/app_shell.dart';
 import 'package:kuphanda/state/app_state.dart';
 
@@ -127,10 +128,7 @@ Future<void> _openTab(
 
   if (tab.isNotEmpty) {
     await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationRail),
-        matching: find.text(tab),
-      ),
+      find.descendant(of: find.byType(AppSidebar), matching: find.text(tab)),
     );
     await tester.pumpAndSettle();
   }
