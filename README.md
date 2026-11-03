@@ -172,6 +172,21 @@ flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
 
 Android emulator: `--dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1`.
 
+### Pointing at the deployed API
+
+The compiled default is the local development API (`127.0.0.1:8000`), so nothing
+reaches the live server unless the base URL is passed in at build time:
+
+```bash
+# Desktop against the live server
+flutter run -d windows --dart-define=API_BASE_URL=https://app.kuphanda.com/api/v1
+
+# Release APK against the live server
+flutter build apk --release --target-platform android-arm64 \
+  --dart-define=API_BASE_URL=https://app.kuphanda.com/api/v1 \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=239327365893-1725f6in8f6nnmc85836eqhrets9hfes.apps.googleusercontent.com
+```
+
 Physical Android device over USB (no LAN or firewall changes):
 
 ```bash

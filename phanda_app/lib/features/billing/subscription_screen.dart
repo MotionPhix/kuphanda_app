@@ -83,7 +83,48 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (state.plans.isEmpty)
+                  if (state.plans.isEmpty && state.billingError != null)
+                    AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.cloud_off_rounded,
+                                size: 18,
+                                color: theme.colorScheme.error,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Could not load the plans',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            // The server's own words when it gave any: "Server
+                            // Error" tells a learner nothing, a refused
+                            // connection at least tells them to check signal.
+                            state.billingError!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          FilledButton.tonalIcon(
+                            onPressed: () => state.loadBilling(),
+                            icon: const Icon(Icons.refresh_rounded, size: 16),
+                            label: const Text('Try again'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (state.plans.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(child: CircularProgressIndicator()),

@@ -114,6 +114,7 @@ class AppState extends ChangeNotifier {
   /// Documents with a copy on this phone, in either format.
   Set<String> _savedOffline = <String>{};
   List<RemotePlan> _plans = const <RemotePlan>[];
+  String? _billingError;
   List<PaymentRecord> _payments = const <PaymentRecord>[];
   List<AppNotification> _notifications = const <AppNotification>[];
   BillingStatus? _billing;
@@ -146,6 +147,10 @@ class AppState extends ChangeNotifier {
   String? get accountPlan => _snapshot.accountPlan;
   bool get isSyncing => _syncing;
   String? get syncError => _syncError;
+
+  /// Why the last billing fetch failed, if it did. The subscription page
+  /// uses it to stop showing a spinner that never resolves.
+  String? get billingError => _billingError;
 
   /// Why the phone stopped being signed in, when it was not the learner's own
   /// doing — a password changed elsewhere, or an account closed by the school.
@@ -1530,6 +1535,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> loadBilling() async {
     if (!isSignedIn) return;
+    _billingError = null;
     try {
       final (plans, status, payments, account) = await (
         _api!.fetchPlans(),
@@ -1547,10 +1553,17 @@ class AppState extends ChangeNotifier {
         ..accountPlan = account.plan
         ..accountSchool = account.school
         ..accountStaff = account.isStaff;
+      _billingError = null;
       _schedulePersist();
       notifyListeners();
     } on ApiException catch (error) {
-      _syncError = error.message;
+      // The subscription page needs to hear about this: it used to keep a
+      // spinner turning for ever when the plans never arrived.
+      _billingError = error.message;
+      notifyListeners();
+    } catch (error) {
+      _billingError = 'Could not reach the library. Check the connection and try again.';
+      debugPrint('Could not load billing: $error');
       notifyListeners();
     }
   }
