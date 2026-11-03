@@ -196,7 +196,14 @@ class ClassDetailScreen extends StatelessWidget {
                               message: 'The document stays in the library for everyone.',
                               confirmLabel: 'Remove',
                             );
-                            if (confirmed) await state.deleteAssignment(assignment.id);
+                            if (!confirmed) return;
+                            final removed = await state.deleteAssignment(assignment.id);
+                            if (!removed && context.mounted) {
+                              showSnack(
+                                context,
+                                'Could not remove it from the class. Check the connection and try again.',
+                              );
+                            }
                           },
                           icon: const Icon(Icons.delete_outline_rounded, size: 16),
                           label: const Text('Remove assignment'),

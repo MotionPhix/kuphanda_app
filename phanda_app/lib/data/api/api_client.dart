@@ -250,6 +250,18 @@ class ApiClient {
     );
   }
 
+  /// Takes a paper off the class, for everyone — not just this phone.
+  Future<void> unassignPaper({
+    required String classroomId,
+    required String assignmentId,
+  }) async {
+    await _send(
+      () => _http.delete(
+        _uri('/classrooms/$classroomId/assignments/$assignmentId'),
+        headers: _headers,
+      ),
+    );
+  }
   /// Tells the class that this learner has finished the paper it was set.
   ///
   /// Idempotent on the server, so a device that retries after a dropped
@@ -626,3 +638,5 @@ class ApiClient {
     );
   }
 }
+
+

@@ -1206,10 +1206,35 @@ class AppState extends ChangeNotifier {
     await _persistNow();
   }
 
-  Future<void> deleteAssignment(String assignmentId) async {
+  /// Takes a paper off the class.
+  ///
+  /// The server is asked first: this used to delete the row from this phone only,
+  /// so a teacher "removed" a paper that the rest of the class still had, and it
+  /// came back on the next sync. Returns false when the server refused, so the
+  /// caller can say so instead of pretending it worked.
+  Future<bool> deleteAssignment(String assignmentId) async {
+    String? classroomId;
+    for (final assignment in _snapshot.assignments) {
+      if (assignment.id == assignmentId) {
+        classroomId = assignment.classId;
+        break;
+      }
+    }
+
+    final api = _api;
+    if (api != null && classroomId != null) {
+      try {
+        await api.unassignPaper(classroomId: classroomId, assignmentId: assignmentId);
+      } on ApiException catch (error) {
+        debugPrint('Could not remove $assignmentId: ${error.message}');
+        return false;
+      }
+    }
+
     _snapshot.assignments.removeWhere((a) => a.id == assignmentId);
     notifyListeners();
     await _persistNow();
+    return true;
   }
 
   // ---------------------------------------------------------------------------
