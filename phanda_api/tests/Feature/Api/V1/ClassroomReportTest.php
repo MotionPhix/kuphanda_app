@@ -284,3 +284,60 @@ it('keeps reminders to the teacher who runs the class', function (): void {
         ->postJson("/api/v1/classrooms/{$classroom->id}/assignments/{$assignmentId}/remind")
         ->assertForbidden();
 });
+
+it('reminds the learners still to read a paper that is due tomorrow', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true, 'name' => 'Grace Mwale']);
+    $tadala = User::factory()->create(['name' => 'Tadala Phiri']);
+    $chisomo = User::factory()->create(['name' => 'Chisomo Banda']);
+
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach([$tadala->getKey(), $chisomo->getKey()], ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2011-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+        'due_date' => now()->addDay()->toDateString(),
+    ])->assertStatus(201);
+
+    $assignmentId = (string) $classroom->assignments()->firstOrFail()->id;
+    $this->actingAs($tadala)->postJson("/api/v1/assignments/{$assignmentId}/complete")->assertOk();
+
+    $this->artisan('notifications:reminders')->assertSuccessful();
+
+    $chisomoInbox = $this->actingAs($chisomo)->getJson('/api/v1/me/notifications')->json('data');
+    $reminders = array_values(array_filter(
+        $chisomoInbox,
+        static fn (array $message): bool => ($message['category'] ?? null) === 'reminder',
+    ));
+
+    expect($reminders)->toHaveCount(1)
+        ->and($reminders[0]['title'])->toBe('Due tomorrow: Physics Paper I');
+
+    // The learner who finished it is not chased.
+    $tadalaInbox = $this->actingAs($tadala)->getJson('/api/v1/me/notifications')->json('data');
+    expect(array_filter(
+        $tadalaInbox,
+        static fn (array $message): bool => ($message['category'] ?? null) === 'reminder',
+    ))->toBeEmpty();
+});
+
+it('leaves a paper that is not yet due alone', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true]);
+    $learner = User::factory()->create();
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach($learner->getKey(), ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2012-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+        'due_date' => now()->addDays(4)->toDateString(),
+    ])->assertStatus(201);
+
+    $this->artisan('notifications:reminders')->assertSuccessful();
+
+    $inbox = $this->actingAs($learner)->getJson('/api/v1/me/notifications')->json('data');
+    expect(array_filter(
+        $inbox,
+        static fn (array $message): bool => ($message['category'] ?? null) === 'reminder',
+    ))->toBeEmpty();
+});

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\SubscriptionStatus;
+use App\Models\ClassroomAssignment;
 use App\Models\Subscription;
 use App\Services\Push\PushDispatcher;
 use Illuminate\Console\Command;
@@ -56,8 +57,68 @@ final class SendReminders extends Command
             $sent++;
         }
 
-        $this->info("Sent {$sent} expiry reminder(s).");
+        $reading = $this->remindReadingDueTomorrow($push);
+
+        $this->info("Sent {$sent} expiry reminder(s) and {$reading} reading reminder(s).");
 
         return self::SUCCESS;
     }
+
+    /**
+     * The evening before a paper is due, and again on the day, the learners who
+     * have not read it are reminded.
+     *
+     * Only the ones still to read it: a learner who finished it does not need
+     * chasing, and a reminder to the whole class would teach them to ignore it.
+     * Keyed on the due date, so a daily sweep produces one message per learner
+     * per deadline rather than a stream.
+     */
+    private function remindReadingDueTomorrow(PushDispatcher $push): int
+    {
+        $today = now()->toDateString();
+        $tomorrow = now()->addDay()->toDateString();
+
+        $assignments = ClassroomAssignment::query()
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '>=', $today)
+            ->whereDate('due_date', '<=', $tomorrow)
+            ->with(['document', 'classroom'])
+            ->get();
+
+        $sent = 0;
+
+        foreach ($assignments as $assignment) {
+            $classroom = $assignment->classroom;
+
+            if ($classroom === null) {
+                continue;
+            }
+
+            $done = $assignment->completions()->pluck('user_id')->all();
+            $dueToday = $assignment->due_date?->toDateString() === $today;
+            $title = $assignment->document?->title ?? 'a paper';
+
+            foreach ($classroom->members()->whereNotIn('users.id', $done)->get() as $member) {
+                try {
+                    $push->toUser(
+                        $member,
+                        'reminder',
+                        ($dueToday ? 'Due today: ' : 'Due tomorrow: ').$title,
+                        $classroom->name,
+                        [
+                            'classroom_id' => (string) $classroom->id,
+                            'assignment_id' => (string) $assignment->id,
+                            'document_id' => (string) $assignment->document_id,
+                        ],
+                    );
+                    $sent++;
+                } catch (\Throwable $error) {
+                    report($error);
+                }
+            }
+        }
+
+        return $sent;
+    }
 }
+
