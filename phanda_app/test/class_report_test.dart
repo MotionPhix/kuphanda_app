@@ -16,6 +16,7 @@ import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
 import 'package:kuphanda/features/classes/class_detail_screen.dart';
+import 'package:kuphanda/features/teacher/teacher_home_screen.dart';
 import 'package:kuphanda/state/app_state.dart';
 
 class _NoFiles implements DocumentFiles {
@@ -185,5 +186,28 @@ void main() {
     expect(find.text('Who has read it'), findsOneWidget);
     expect(find.textContaining('class record is not available'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
+  });
+  testWidgets('the teaching home counts what the class has actually read',
+      (tester) async {
+    final state = await _teacherState();
+    tester.view.physicalSize = const Size(2600, 1700);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(AppScope(
+      state: state,
+      child: MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: TeacherHomeScreen(onNavigate: (_) {}),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    state.stopAutoSync();
+    await tester.pumpAndSettle();
+
+    // One paper set for two learners, one of whom has finished it.
+    expect(find.text('Read'), findsOneWidget);
+    expect(find.text('50%'), findsOneWidget);
+    expect(find.textContaining('1 read'), findsWidgets);
   });
 }

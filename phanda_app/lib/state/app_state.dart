@@ -845,6 +845,36 @@ class AppState extends ChangeNotifier {
 
   ClassReport? classReportFor(String classroomId) => _reports[classroomId];
 
+  /// Loads reports for several classes at once, for the teaching home.
+  ///
+  /// One failing class must not hide the rest, so failures are dropped and the
+  /// page falls back to what it knows locally.
+  Future<void> loadClassReports(Iterable<String> classroomIds) async {
+    final api = _api;
+    if (api == null) return;
+
+    final wanted = classroomIds.where((id) => !_reports.containsKey(id)).toList();
+    if (wanted.isEmpty) return;
+
+    final results = await Future.wait([
+      for (final id in wanted)
+        api
+            .fetchClassReport(id)
+            .then<ClassReport?>((report) => report)
+            .catchError((Object _) => null),
+    ]);
+
+    var changed = false;
+    for (var index = 0; index < wanted.length; index++) {
+      final report = results[index];
+      if (report != null) {
+        _reports[wanted[index]] = report;
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
   /// Loads the teacher's report for one class: who is in it, what was set, and
   /// who has read it.
   Future<ClassReport?> loadClassReport(String classroomId) async {

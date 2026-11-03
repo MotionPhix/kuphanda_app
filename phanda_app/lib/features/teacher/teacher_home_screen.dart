@@ -6,6 +6,7 @@ import '../../core/navigation.dart';
 import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../data/api/api_models.dart';
 import '../../data/models/classroom.dart';
 
 /// What a teacher opens the app to.
@@ -14,14 +15,32 @@ import '../../data/models/classroom.dart';
 /// reading for themselves, they are running classes. Same app, different job —
 /// so this screen leads with the rooms they run and the reading they set, and
 /// its destination list stops after those.
-class TeacherHomeScreen extends StatelessWidget {
+class TeacherHomeScreen extends StatefulWidget {
   const TeacherHomeScreen({super.key, required this.onNavigate});
 
   /// Index into the teacher shell: 0 home, 1 classes, 2 library, 3 files.
   final ValueChanged<int> onNavigate;
 
   @override
+  State<TeacherHomeScreen> createState() => _TeacherHomeScreenState();
+}
+
+class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
+  /// The numbers on this page are the class record, which lives on the server.
+  /// They are fetched once when the page opens, then kept for the session.
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final state = AppScope.read(context);
+      state.loadClassReports([for (final group in state.classes) group.id]);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final onNavigate = widget.onNavigate;
     final state = AppScope.of(context);
     final theme = Theme.of(context);
     final gutter = pageGutter(context);
@@ -32,6 +51,21 @@ class TeacherHomeScreen extends StatelessWidget {
       0,
       (sum, group) => sum + state.assignmentsForClass(group.id).length,
     );
+
+    // What the class has actually finished, when the reports are in.
+    final reports = [
+      for (final group in classes) state.classReportFor(group.id),
+    ].whereType<ClassReport>().toList();
+    final readPapers = reports.fold<int>(
+      0,
+      (sum, report) =>
+          sum + report.assignments.fold<int>(0, (papers, item) => papers + item.completedCount),
+    );
+    final possiblePapers = reports.fold<int>(
+      0,
+      (sum, report) => sum + report.assignmentCount * report.learnerCount,
+    );
+    final readPercent = possiblePapers == 0 ? null : (readPapers / possiblePapers * 100).round();
 
     final recent = <(ClassGroup, Assignment)>[
       for (final group in classes)
@@ -67,7 +101,9 @@ class TeacherHomeScreen extends StatelessWidget {
               const SizedBox(height: 18),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final columns = constraints.maxWidth >= 820 ? 3 : 2;
+                  // Four tiles need the width; three of them are counts the phone
+                  // already knows, the fourth is the class record.
+                  final columns = constraints.maxWidth >= 1080 ? 4 : 2;
                   final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
                   final tiles = <Widget>[
                     StatTile(
@@ -88,6 +124,15 @@ class TeacherHomeScreen extends StatelessWidget {
                       value: '$setPapers',
                       caption: 'reading assignments',
                       icon: Icons.menu_book_outlined,
+                    ),
+                    StatTile(
+                      label: 'Read',
+                      value: readPercent == null ? '—' : '$readPercent%',
+                      caption: readPercent == null
+                          ? 'awaiting the class record'
+                          : 'of the reading set',
+                      icon: Icons.fact_check_outlined,
+                      tint: AppColors.green,
                     ),
                   ];
                   return Wrap(
@@ -122,6 +167,10 @@ class TeacherHomeScreen extends StatelessWidget {
                   _ClassRow(
                     group: group,
                     papers: state.assignmentsForClass(group.id).length,
+                    read: state
+                        .classReportFor(group.id)
+                        ?.assignments
+                        .fold<int>(0, (sum, item) => sum + item.completedCount),
                     onTap: () => openClass(context, group.id),
                   ),
                   const SizedBox(height: 10),
@@ -188,10 +237,20 @@ class TeacherHomeScreen extends StatelessWidget {
 }
 
 class _ClassRow extends StatelessWidget {
-  const _ClassRow({required this.group, required this.papers, required this.onTap});
+  const _ClassRow({
+    required this.group,
+    required this.papers,
+    required this.onTap,
+    this.read,
+  });
 
   final ClassGroup group;
   final int papers;
+
+  /// How many papers the class has finished, once the report is in. Null while
+  /// it is still loading, or when this phone cannot reach the record.
+  final int? read;
+
   final VoidCallback onTap;
 
   @override
@@ -223,7 +282,10 @@ class _ClassRow extends StatelessWidget {
                   style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  '${plural(group.memberCount, 'learner')} · ${plural(papers, 'paper')} set',
+                   [
+                     '${plural(group.memberCount, 'learner')} · ${plural(papers, 'paper')} set',
+                     if (read != null) '$read read',
+                   ].join(' · '),
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -239,4 +301,8 @@ class _ClassRow extends StatelessWidget {
     );
   }
 }
+
+
+
+
 
