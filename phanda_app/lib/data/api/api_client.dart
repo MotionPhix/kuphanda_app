@@ -250,6 +250,27 @@ class ApiClient {
     );
   }
 
+  /// Tells the class that this learner has finished the paper it was set.
+  ///
+  /// Idempotent on the server, so a device that retries after a dropped
+  /// connection still records one completion.
+  Future<void> completeAssignment(String assignmentId) async {
+    await _send(
+      () => _http.post(
+        _uri('/assignments/$assignmentId/complete'),
+        headers: _headers,
+      ),
+    );
+  }
+
+  /// The teacher's view of a class: what was set, and who has read it.
+  Future<ClassReport> fetchClassReport(String classroomId) async {
+    final body = await _send(
+      () => _http.get(_uri('/classrooms/$classroomId/report'), headers: _headers),
+    );
+    return ClassReport.fromJson(_dataMap(body));
+  }
+
   Future<RemoteOfflineItem> acknowledge(String documentId, int version) async {
     final body = await _send(
       () => _http.post(

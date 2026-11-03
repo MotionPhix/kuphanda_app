@@ -583,3 +583,82 @@ class RemoteClassroom {
     );
   }
 }
+
+/// One line of a teacher's class report: a paper they set, and how many of the
+/// class have finished it.
+class ReportedAssignment {
+  const ReportedAssignment({
+    required this.id,
+    required this.documentId,
+    required this.completedCount,
+    this.title,
+    this.dueDate,
+  });
+
+  factory ReportedAssignment.fromJson(Map<String, Object?> json) => ReportedAssignment(
+        id: json['id'] as String,
+        documentId: json['document_id'] as String? ?? '',
+        title: json['title'] as String?,
+        dueDate: DateTime.tryParse(json['due_date'] as String? ?? ''),
+        completedCount: (json['completed_count'] as num?)?.toInt() ?? 0,
+      );
+
+  final String id;
+  final String documentId;
+  final String? title;
+  final DateTime? dueDate;
+  final int completedCount;
+}
+
+/// One learner in a class, with the assignments they have finished.
+class ReportedLearner {
+  const ReportedLearner({
+    required this.id,
+    required this.name,
+    required this.completedAssignmentIds,
+  });
+
+  factory ReportedLearner.fromJson(Map<String, Object?> json) => ReportedLearner(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        name: json['name'] as String? ?? '',
+        completedAssignmentIds: [
+          for (final id in (json['completed_assignment_ids'] as List<Object?>? ?? const []))
+            id as String,
+        ],
+      );
+
+  final int id;
+  final String name;
+  final List<String> completedAssignmentIds;
+
+  bool hasFinished(String assignmentId) => completedAssignmentIds.contains(assignmentId);
+}
+
+class ClassReport {
+  const ClassReport({
+    required this.assignments,
+    required this.learners,
+    required this.assignmentCount,
+    required this.learnerCount,
+  });
+
+  factory ClassReport.fromJson(Map<String, Object?> json) => ClassReport(
+        assignments: [
+          for (final item in (json['assignments'] as List<Object?>? ?? const []))
+            ReportedAssignment.fromJson(item as Map<String, Object?>),
+        ],
+        learners: [
+          for (final item in (json['learners'] as List<Object?>? ?? const []))
+            ReportedLearner.fromJson(item as Map<String, Object?>),
+        ],
+        assignmentCount: (json['assignment_count'] as num?)?.toInt() ??
+            (json['assignments'] as List<Object?>? ?? const []).length,
+        learnerCount: (json['learner_count'] as num?)?.toInt() ??
+            (json['learners'] as List<Object?>? ?? const []).length,
+      );
+
+  final List<ReportedAssignment> assignments;
+  final List<ReportedLearner> learners;
+  final int assignmentCount;
+  final int learnerCount;
+}

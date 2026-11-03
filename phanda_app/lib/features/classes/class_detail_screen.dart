@@ -203,10 +203,17 @@ class ClassDetailScreen extends StatelessWidget {
                       ),
                     const SizedBox(height: 10),
                   ],
+                if (group.isMine) ...[
+                  const SizedBox(height: 20),
+                  _ClassReportSection(classroomId: group.id, memberCount: group.memberCount),
+                ],
                 const SizedBox(height: 10),
                 Text(
-                  'Progress is measured from pages actually read, not from a tick box. '
-                  'A document counts towards an assignment once you pass 90%.',
+                  group.isMine
+                      ? 'A learner counts as finished once they pass 90% of a paper. '
+                          'The report above is the class record, not this phone’s.'
+                      : 'Progress is measured from pages actually read, not from a tick box. '
+                          'A document counts towards an assignment once you pass 90%.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -386,6 +393,173 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
             ),
           ],
       ),
+    );
+  }
+}
+
+/// The teacher's side of a class: what was set, and who has finished it.
+///
+/// The list above this is the class's reading, counted from this phone. This
+/// section is the room's answer, fetched from the server, so a teacher opening
+/// the app on a laptop sees the same figures as on their phone.
+class _ClassReportSection extends StatefulWidget {
+  const _ClassReportSection({required this.classroomId, required this.memberCount});
+
+  final String classroomId;
+  final int memberCount;
+
+  @override
+  State<_ClassReportSection> createState() => _ClassReportSectionState();
+}
+
+class _ClassReportSectionState extends State<_ClassReportSection> {
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    if (!mounted) return;
+    final state = AppScope.read(context);
+    await state.loadClassReport(widget.classroomId);
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final report = AppScope.of(context).classReportFor(widget.classroomId);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text('Who has read it', style: theme.textTheme.titleMedium),
+            const Spacer(),
+            if (_loading)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (report == null)
+          AppCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _loading
+                        ? 'Loading the class record…'
+                        : 'The class record is not available offline. It appears once a '
+                            'learner finishes a paper and this phone reaches the server.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                if (!_loading)
+                  TextButton(onPressed: _load, child: const Text('Try again')),
+              ],
+            ),
+          )
+        else ...[
+          if (report.assignments.isEmpty)
+            AppCard(
+              child: Text(
+                'Nothing set yet, so there is nothing to report.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            for (final assignment in report.assignments) ...[
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            assignment.title ?? 'A paper in the library',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${assignment.completedCount} of ${report.learnerCount}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: report.learnerCount == 0
+                            ? 0
+                            : assignment.completedCount / report.learnerCount,
+                        minHeight: 4,
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          if (report.learners.isEmpty)
+            Text(
+              'No learners have joined yet. Read the code out and they appear here.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else ...[
+            const SizedBox(height: 6),
+            Text('Learners', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 6),
+            for (final learner in report.learners)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        learner.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                    Text(
+                      report.assignmentCount == 0
+                          ? '—'
+                          : '${learner.completedAssignmentIds.length} of ${report.assignmentCount} read',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ],
+      ],
     );
   }
 }

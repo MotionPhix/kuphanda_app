@@ -822,7 +822,42 @@ class AppState extends ChangeNotifier {
       final assignment = _snapshot.assignments[index];
       if (assignment.documentId == documentId && !assignment.completed) {
         _snapshot.assignments[index] = assignment.copyWith(completed: true);
+        // "Done" is the class's record, not a private note on this phone: tell
+        // the teacher as soon as the learner closes the paper.
+        unawaited(markAssignmentDone(assignment.id));
       }
+    }
+  }
+
+  /// Records a finished paper on the class so the teacher's report can show it.
+  ///
+  /// Deliberately quiet on failure: a lost connection should not interrupt
+  /// reading, and the next sync of the same document will try again.
+  Future<void> markAssignmentDone(String assignmentId) async {
+    final api = _api;
+    if (api == null) return;
+    try {
+      await api.completeAssignment(assignmentId);
+    } on ApiException catch (error) {
+      debugPrint('Could not record completion for $assignmentId: ${error.message}');
+    }
+  }
+
+  ClassReport? classReportFor(String classroomId) => _reports[classroomId];
+
+  /// Loads the teacher's report for one class: who is in it, what was set, and
+  /// who has read it.
+  Future<ClassReport?> loadClassReport(String classroomId) async {
+    final api = _api;
+    if (api == null) return null;
+    try {
+      final report = await api.fetchClassReport(classroomId);
+      _reports[classroomId] = report;
+      notifyListeners();
+      return report;
+    } on ApiException catch (error) {
+      debugPrint('Could not load the report for $classroomId: ${error.message}');
+      return null;
     }
   }
 
@@ -988,6 +1023,9 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   List<ClassGroup> get classes => _snapshot.classes;
+
+  /// The last report fetched per class, keyed by classroom id.
+  final Map<String, ClassReport> _reports = {};
 
   List<Assignment> assignmentsForClass(String classId) {
     final list = _snapshot.assignments.where((a) => a.classId == classId).toList();
