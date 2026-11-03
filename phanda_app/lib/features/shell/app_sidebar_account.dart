@@ -60,7 +60,7 @@ class AccountChip extends StatelessWidget {
     );
 
     return MenuAnchor(
-      alignmentOffset: const Offset(0, -6),
+      alignmentOffset: const Offset(0, -58),
       style: MenuStyle(
         backgroundColor: WidgetStatePropertyAll(scheme.surfaceContainerLowest),
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
@@ -68,7 +68,7 @@ class AccountChip extends StatelessWidget {
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(vertical: 6),
         ),
-        minimumSize: const WidgetStatePropertyAll(Size(252, 0)),
+        minimumSize: const WidgetStatePropertyAll(Size(240, 0)),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -230,3 +230,4 @@ class _AccountMenuItem extends StatelessWidget {
     );
   }
 }
+
