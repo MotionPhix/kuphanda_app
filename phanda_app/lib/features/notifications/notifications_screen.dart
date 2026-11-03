@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../core/navigation.dart';
 import '../../core/format.dart';
 import '../../core/responsive.dart';
 import '../../core/widgets/common.dart';
@@ -69,7 +70,7 @@ class _NotificationTile extends StatelessWidget {
     final theme = Theme.of(context);
     final sentAt = notification.sentAt;
 
-    return Container(
+    final body = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
@@ -132,6 +133,24 @@ class _NotificationTile extends StatelessWidget {
         ],
       ),
     );
+
+    if (!notification.opensSomething) return body;
+
+    // A message about a paper opens the class it was set for, or the paper
+    // itself when it names no class. Anything else stays a plain notice.
+    return InkWell(
+      onTap: () {
+        final classroomId = notification.classroomId;
+        if (classroomId != null) {
+          openClass(context, classroomId);
+          return;
+        }
+        final documentId = notification.documentId;
+        if (documentId != null) openDocument(context, documentId);
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: body,
+    );
   }
 
   IconData _iconFor(String category) => switch (category) {
@@ -142,3 +161,5 @@ class _NotificationTile extends StatelessWidget {
         _ => Icons.campaign_outlined,
       };
 }
+
+

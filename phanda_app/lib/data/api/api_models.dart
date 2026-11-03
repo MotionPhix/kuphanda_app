@@ -523,6 +523,7 @@ class AppNotification {
     required this.title,
     required this.body,
     this.sentAt,
+    this.data = const {},
   });
 
   final int id;
@@ -531,6 +532,17 @@ class AppNotification {
   final String body;
   final DateTime? sentAt;
 
+  /// Where the message points, when it points anywhere: the class a paper was
+  /// set for, the document itself. Older messages carry none.
+  final Map<String, Object?> data;
+
+  String? get classroomId => data['classroom_id']?.toString();
+
+  String? get documentId => data['document_id']?.toString();
+
+  /// A row that opens something says so, and gets a chevron.
+  bool get opensSomething => classroomId != null || documentId != null;
+
   factory AppNotification.fromJson(Map<String, Object?> json) {
     return AppNotification(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -538,6 +550,9 @@ class AppNotification {
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       sentAt: DateTime.tryParse(json['sent_at'] as String? ?? ''),
+      data: json['data'] is Map
+          ? Map<String, Object?>.from(json['data'] as Map)
+          : const {},
     );
   }
 }
@@ -665,3 +680,4 @@ class ClassReport {
   final int assignmentCount;
   final int learnerCount;
 }
+
