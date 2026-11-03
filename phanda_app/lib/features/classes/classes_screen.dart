@@ -34,7 +34,8 @@ class ClassesScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ScreenHeader(
-                eyebrow: 'Your teachers',
+                // A teacher is not looking at their teachers' classes.
+                eyebrow: isTeacher ? 'Teaching' : 'Your teachers',
                 title: 'Classes',
                 subtitle: isTeacher
                     ? 'Reading you set, and the classes you run.'
@@ -57,8 +58,11 @@ class ClassesScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               InfoBanner(
-                message: 'A class code is six characters and comes from your teacher. '
-                    'Codes work without email, which is what most schools need.',
+                message: isTeacher
+                    ? 'Learners join with the six-character code under each class. '
+                        'Codes work without email, which is what most schools need.'
+                    : 'A class code is six characters and comes from your teacher. '
+                        'Codes work without email, which is what most schools need.',
                 icon: Icons.tag_rounded,
                 actionLabel: isTeacher ? 'Create a class' : null,
                 onAction: isTeacher ? () => _createClass(context, state) : null,
@@ -71,8 +75,10 @@ class ClassesScreen extends StatelessWidget {
                   message: isTeacher
                       ? 'Join with a code, or create a class and share its code with your learners.'
                       : 'Join with the six-character code your teacher gave you.',
-                  actionLabel: 'Join a class',
-                  onAction: () => _joinClass(context, state),
+                  actionLabel: isTeacher ? 'Create a class' : 'Join a class',
+                  onAction: () => isTeacher
+                      ? _createClass(context, state)
+                      : _joinClass(context, state),
                 )
               else
                 LayoutBuilder(
@@ -83,6 +89,7 @@ class ClassesScreen extends StatelessWidget {
                         _ClassCard(
                           group: group,
                           state: state,
+                          isTeacher: isTeacher,
                           onTap: () => openClass(context, group.id),
                         ),
                     ];
@@ -318,10 +325,16 @@ class ClassesScreen extends StatelessWidget {
 }
 
 class _ClassCard extends StatelessWidget {
-  const _ClassCard({required this.group, required this.state, required this.onTap});
+  const _ClassCard({
+    required this.group,
+    required this.state,
+    required this.onTap,
+    this.isTeacher = false,
+  });
 
   final ClassGroup group;
   final AppState state;
+  final bool isTeacher;
   final VoidCallback onTap;
 
   @override
@@ -331,6 +344,10 @@ class _ClassCard extends StatelessWidget {
     final assignments = state.assignmentsForClass(group.id);
     final done = assignments.where((assignment) => assignment.completed).length;
     final percent = assignments.isEmpty ? 0.0 : done / assignments.length;
+    final nextDue = assignments
+        .where((assignment) => assignment.dueDate != null)
+        .map((assignment) => assignment.dueDate!)
+        .fold<DateTime?>(null, (soonest, due) => soonest == null || due.isBefore(soonest) ? due : soonest);
 
     return AppCard(
       onTap: onTap,
@@ -359,7 +376,9 @@ class _ClassCard extends StatelessWidget {
                     Text(group.name, style: theme.textTheme.titleSmall),
                     const SizedBox(height: 2),
                     Text(
-                      '${group.teacherName} · ${plural(group.memberCount, 'learner')}',
+                      isTeacher
+                          ? '${subject.name} · ${plural(group.memberCount, 'learner')}'
+                          : '${group.teacherName} · ${plural(group.memberCount, 'learner')}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -374,33 +393,60 @@ class _ClassCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Text(
-                plural(assignments.length, 'assignment'),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+          if (isTeacher) ...[
+            // A teacher has no reading progress of their own here; what they
+            // need is what they set and when it is next due.
+            Row(
+              children: [
+                Text(
+                  '${plural(assignments.length, 'paper')} set',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                assignments.isEmpty ? 'No reading set' : '$done of ${assignments.length} done',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+                const Spacer(),
+                Text(
+                  assignments.isEmpty
+                      ? 'Nothing set yet'
+                      : nextDue == null
+                          ? 'No deadlines'
+                          : 'Next due ${formatDate(nextDue)}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: percent,
-              minHeight: 4,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ],
             ),
-          ),
+          ] else ...[
+            Row(
+              children: [
+                Text(
+                  plural(assignments.length, 'assignment'),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  assignments.isEmpty ? 'No reading set' : '$done of ${assignments.length} done',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: percent,
+                minHeight: 4,
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [

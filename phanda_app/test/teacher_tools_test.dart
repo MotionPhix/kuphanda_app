@@ -90,4 +90,34 @@ void main() {
     );
     expect(state.classes, isEmpty);
   });
+  testWidgets('a teacher reads the page as the person running the class', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final teacher = await _state(role: StudentRole.teacher);
+    await tester.pumpWidget(_wrap(teacher));
+    await tester.pumpAndSettle();
+
+    // Not "your teachers", and not a code that "comes from your teacher".
+    expect(find.text('TEACHING'), findsOneWidget);
+    expect(find.text('YOUR TEACHERS'), findsNothing);
+    expect(find.textContaining('comes from your teacher'), findsNothing);
+    expect(find.textContaining('Learners join with the six-character code'), findsOneWidget);
+  });
+
+  testWidgets('an empty page offers the teacher a class of their own to make', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final teacher = await _state(role: StudentRole.teacher);
+    await tester.pumpWidget(_wrap(teacher));
+    await tester.pumpAndSettle();
+    expect(find.text('Create a class'), findsWidgets);
+
+    final learner = await _state(role: StudentRole.student);
+    await tester.pumpWidget(_wrap(learner));
+    await tester.pumpAndSettle();
+    expect(find.text('Join a class'), findsOneWidget);
+    expect(find.text('Create a class'), findsNothing);
+  });
 }
