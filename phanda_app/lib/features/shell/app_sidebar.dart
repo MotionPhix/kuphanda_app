@@ -18,38 +18,23 @@ class AppSidebar extends StatelessWidget {
     super.key,
     required this.index,
     required this.onSelect,
+    required this.sections,
     this.collapsed = false,
   });
 
-  /// Index into [_destinations].
+  /// The destination the shell is showing.
   final int index;
   final ValueChanged<int> onSelect;
+
+  /// Grouped destinations. A learner and a teacher do not get the same list, so
+  /// the shell owns it rather than this widget.
+  final List<SidebarSection> sections;
 
   /// Icon-only rail for the medium (tablet, split-screen) width.
   final bool collapsed;
 
   static const double expandedWidth = 252;
   static const double collapsedWidth = 76;
-
-  static const _destinations = <SidebarDestination>[
-    SidebarDestination('Home', Icons.home_outlined, Icons.home_rounded),
-    SidebarDestination(
-      'Library',
-      Icons.local_library_outlined,
-      Icons.local_library_rounded,
-    ),
-    SidebarDestination(
-      'Files',
-      Icons.folder_copy_outlined,
-      Icons.folder_copy_rounded,
-    ),
-    SidebarDestination('Classes', Icons.groups_outlined, Icons.groups_rounded),
-    SidebarDestination(
-      'Progress',
-      Icons.insights_outlined,
-      Icons.insights_rounded,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -95,18 +80,20 @@ class AppSidebar extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    if (!collapsed) ...[
-                      const _SectionLabel('Study'),
-                      const SizedBox(height: 6),
+                    for (final section in sections) ...[
+                      if (!collapsed) ...[
+                        _SectionLabel(section.label),
+                        const SizedBox(height: 6),
+                      ],
+                      for (final destination in section.destinations)
+                        _NavItem(
+                          destination: destination,
+                          selected: destination.index == index,
+                          collapsed: collapsed,
+                          onTap: () => onSelect(destination.index),
+                        ),
+                      const SizedBox(height: 18),
                     ],
-                    for (var i = 0; i < _destinations.length; i++)
-                      _NavItem(
-                        destination: _destinations[i],
-                        selected: i == index,
-                        collapsed: collapsed,
-                        onTap: () => onSelect(i),
-                      ),
-                    const SizedBox(height: 18),
                     if (!collapsed) ...[
                       const _SectionLabel('Account'),
                       const SizedBox(height: 6),
@@ -284,11 +271,27 @@ class AppSidebar extends StatelessWidget {
 }
 
 class SidebarDestination {
-  const SidebarDestination(this.label, this.icon, this.selectedIcon);
+  const SidebarDestination(
+    this.label,
+    this.icon,
+    this.selectedIcon, {
+    this.index = -1,
+  });
 
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+
+  /// Which screen of the shell this opens. Screens that are pushed (Profile,
+  /// Subscription) carry -1 and are never shown as selected.
+  final int index;
+}
+
+class SidebarSection {
+  const SidebarSection(this.label, this.destinations);
+
+  final String label;
+  final List<SidebarDestination> destinations;
 }
 
 class _SectionLabel extends StatelessWidget {

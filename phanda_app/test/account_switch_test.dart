@@ -51,6 +51,9 @@ Map<String, Object?> _user(String email) => email == 'teacher@kuphanda.test'
         'school': 'Bwaila Secondary School',
         'plan': 'free',
         'is_staff': true,
+        'role': 'teacher',
+        'form': null,
+        'profile_completed': true,
       }
     : {
         'id': 7,
@@ -61,6 +64,9 @@ Map<String, Object?> _user(String email) => email == 'teacher@kuphanda.test'
         'school': 'Bwaila Secondary School',
         'plan': 'free',
         'is_staff': false,
+        'role': 'student',
+        'form': 3,
+        'profile_completed': true,
       };
 
 /// Two accounts on one phone, as a shared school handset would have.

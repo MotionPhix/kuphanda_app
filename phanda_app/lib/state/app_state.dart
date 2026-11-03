@@ -1342,13 +1342,33 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    // An account with a school on it does not need to be interviewed again;
-    // one without goes through onboarding for its form and subjects.
-    final signedIn = (session.school ?? '').trim().isNotEmpty
-        ? merged.copyWith(onboardingComplete: true)
-        : merged;
+    // Who the account is and which side of the classroom they are on come back
+    // with the session, so a teacher opens the teaching side on any phone and a
+    // learner keeps their form.
+    final form = session.form ?? merged.form;
+    merged = merged.copyWith(
+      role: session.isTeacher ? StudentRole.teacher : StudentRole.student,
+      form: form,
+    );
 
-    _snapshot.profile = signedIn;
+    if (switched) {
+      // A different person on this phone inherits nothing: the subjects on the
+      // device belonged to the last account.
+      merged = merged.copyWith(
+        subjectIds: subjectsForForm(form).take(4).map((subject) => subject.id).toList(),
+      );
+    }
+
+    // Whether onboarding was finished is the server's answer, not a guess from a
+    // blank optional field. A learner who never named a school used to be
+    // interviewed again on every new phone.
+    //
+    // An account that already finished on this device keeps that, so an older
+    // server (one without the flag) cannot drag a settled profile backwards.
+    final completed = session.profileCompleted || (profile.onboardingComplete && !switched);
+    merged = merged.copyWith(onboardingComplete: completed);
+
+    _snapshot.profile = merged;
 
     await _persistNow();
     startAutoSync();
@@ -1553,6 +1573,22 @@ class AppState extends ChangeNotifier {
         ..accountPlan = account.plan
         ..accountSchool = account.school
         ..accountStaff = account.isStaff;
+
+      // /me carries the same account payload as login, which settles a cold
+      // start that restored an older snapshot: the role, the form, and whether
+      // onboarding was ever finished. Without this a teacher who signed in
+      // before this release kept the learner's screen until they next signed in.
+      final role = account.isTeacher ? StudentRole.teacher : StudentRole.student;
+      final form = account.form ?? profile.form;
+      final completed = profile.onboardingComplete || account.profileCompleted;
+      if (profile.role != role || profile.form != form || profile.onboardingComplete != completed) {
+        _snapshot.profile = profile.copyWith(
+          role: role,
+          form: form,
+          onboardingComplete: completed,
+        );
+      }
+
       _billingError = null;
       _schedulePersist();
       notifyListeners();

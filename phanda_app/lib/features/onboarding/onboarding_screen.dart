@@ -128,6 +128,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       setState(() => _nameError = 'Add both your first and last name.');
       return;
     }
+    // A teacher has no subjects to pick: their side of the app is classes and the
+    // reading they set, so the interview stops here.
+    if (_step == 1 && _role == StudentRole.teacher) {
+      _finish();
+      return;
+    }
+
     setState(() {
       _nameError = null;
       _step = (_step + 1).clamp(0, 2);
@@ -157,7 +164,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       form: _form,
       examYear: _examYear,
       role: _role,
-      subjectIds: _subjects.toList(),
+      // A teacher never sees the subject step, so nothing was chosen there.
+      subjectIds: _role == StudentRole.teacher ? const <String>[] : _subjects.toList(),
     );
     if (mounted) setState(() => _saving = false);
   }
@@ -390,56 +398,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 22),
-          Text('Which form are you in?', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              for (final form in <int>[1, 2, 3, 4])
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _ChoiceCard(
-                      selected: _form == form,
-                      title: 'Form $form',
-                      caption: form <= 2 ? 'JCE' : 'MSCE',
-                      onTap: () => _selectForm(form),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Exam year', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 2),
-                    Text(
-                      'When you sit ${Subject.qualificationForForm(_form)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              DropdownButton<int>(
-                value: _examYear,
-                borderRadius: BorderRadius.circular(12),
-                items: [
-                  for (final year in years)
-                    DropdownMenuItem(value: year, child: Text('$year')),
-                ],
-                onChanged: (value) {
-                  if (value != null) setState(() => _examYear = value);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
           Text('I am a…', style: theme.textTheme.titleSmall),
           const SizedBox(height: 10),
           SegmentedButton<StudentRole>(
@@ -458,6 +416,60 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             selected: <StudentRole>{_role},
             onSelectionChanged: (selection) => setState(() => _role = selection.first),
           ),
+          // A form and an exam year are the learner's questions. Asking a
+          // teacher for them made the teaching sign-up feel like the wrong door.
+          if (_role == StudentRole.student) ...[
+            const SizedBox(height: 22),
+            Text('Which form are you in?', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                for (final form in <int>[1, 2, 3, 4])
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ChoiceCard(
+                        selected: _form == form,
+                        title: 'Form $form',
+                        caption: form <= 2 ? 'JCE' : 'MSCE',
+                        onTap: () => _selectForm(form),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Exam year', style: theme.textTheme.titleSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                        'When you sit ${Subject.qualificationForForm(_form)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                DropdownButton<int>(
+                  value: _examYear,
+                  borderRadius: BorderRadius.circular(12),
+                  items: [
+                    for (final year in years)
+                      DropdownMenuItem(value: year, child: Text('$year')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setState(() => _examYear = value);
+                  },
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 28),
           FilledButton(onPressed: _next, child: const Text('Continue')),
         ],

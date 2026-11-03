@@ -183,6 +183,9 @@ class AuthSession {
     this.avatarUrl,
     this.googleLinked = false,
     this.isStaff = false,
+    this.role = 'student',
+    this.form,
+    this.profileCompleted = false,
   });
 
   final String token;
@@ -197,6 +200,19 @@ class AuthSession {
   final bool googleLinked;
   final bool isStaff;
 
+  /// 'student' or 'teacher' — the server's copy of the answer onboarding asks
+  /// once, so a returning account is not asked again on another phone.
+  final String role;
+
+  /// The school form a learner sits in. Teachers have none.
+  final int? form;
+
+  /// True once the account has answered onboarding (name, role, and form for a
+  /// learner). Only a genuinely new account is sent through it.
+  final bool profileCompleted;
+
+  bool get isTeacher => role == 'teacher';
+
   bool get isSchoolPlan => plan == 'school';
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -210,6 +226,9 @@ class AuthSession {
         'avatar_url': avatarUrl,
         'google_linked': googleLinked,
         'is_staff': isStaff,
+        'role': role,
+        'form': form,
+        'profile_completed': profileCompleted,
       };
 
   static AuthSession fromJson(Map<String, Object?> json, {required String token}) {
@@ -225,6 +244,9 @@ class AuthSession {
       avatarUrl: json['avatar_url'] as String?,
       googleLinked: json['google_linked'] as bool? ?? false,
       isStaff: json['is_staff'] as bool? ?? false,
+      role: (json['role'] as String?) ?? 'student',
+      form: (json['form'] as num?)?.toInt(),
+      profileCompleted: json['profile_completed'] as bool? ?? false,
     );
   }
 }
@@ -557,3 +579,4 @@ class RemoteClassroom {
     );
   }
 }
+
