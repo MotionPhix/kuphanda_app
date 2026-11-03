@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app.dart';
 import '../../core/format.dart';
+import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../data/api/api_models.dart';
@@ -49,81 +50,98 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Subscription')),
+      // A price list and two paragraphs of small print are unreadable when a
+      // desktop window stretches them to 1400 dp, so the page is centred in a
+      // reading column the way every other pushed screen is.
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.zero,
         children: [
-          if (!state.isSignedIn)
-            _authCard(theme, state)
-          else ...[
-            if (state.hasPendingPayment) ...[
-              _pendingBanner(theme, state),
-              const SizedBox(height: 14),
-            ],
-            _statusCard(theme, state),
-            const SizedBox(height: 18),
-            if (widget.documentId != null) ...[
-              _documentPurchaseCard(theme, state),
-              const SizedBox(height: 18),
-            ],
-            Text('Choose a plan', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              'Prices are in Malawi kwacha. Pay with mobile money or a card on PayChangu.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (state.plans.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else
-              for (final plan in state.plans) ...[
-                _PlanCard(
-                  plan: plan,
-                  active: state.billing?.subscription?.tier == plan.tier,
-                  onBuy: _busy ? null : () => _buyPlan(state, plan),
-                ),
-                const SizedBox(height: 10),
-              ],
-            const SizedBox(height: 24),
-            Row(
+          ResponsivePage(
+            maxWidth: kReadingMaxWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Payment history', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                IconButton(
-                  tooltip: 'Refresh receipts',
-                  onPressed: () => state.loadBilling(),
-                  icon: const Icon(Icons.refresh_rounded, size: 20),
-                ),
+                if (!state.isSignedIn)
+                  _authCard(theme, state)
+                else ...[
+                  if (state.hasPendingPayment) ...[
+                    _pendingBanner(theme, state),
+                    const SizedBox(height: 14),
+                  ],
+                  _statusCard(theme, state),
+                  const SizedBox(height: 18),
+                  if (widget.documentId != null) ...[
+                    _documentPurchaseCard(theme, state),
+                    const SizedBox(height: 18),
+                  ],
+                  Text('Choose a plan', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Prices are in Malawi kwacha. Pay with mobile money or a card on PayChangu.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (state.plans.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    for (final plan in state.plans) ...[
+                      _PlanCard(
+                        plan: plan,
+                        active: state.billing?.subscription?.tier == plan.tier,
+                        onBuy: _busy ? null : () => _buyPlan(state, plan),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Text(
+                        'Payment history',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'Refresh receipts',
+                        onPressed: () => state.loadBilling(),
+                        icon: const Icon(Icons.refresh_rounded, size: 20),
+                      ),
+                    ],
+                  ),
+                  if (state.payments.isEmpty)
+                    Text(
+                      'No payments yet. Receipts for subscriptions and single-document '
+                      'purchases appear here once PayChangu confirms them.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.45,
+                      ),
+                    )
+                  else
+                    for (final record in state.payments) ...[
+                      _PaymentRow(
+                        record: record,
+                        onTap: () => _showReceipt(record),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'School licences are not sold in the app. If your school has a licence, '
+                    'sign in with the account your teacher gave you and the same content is unlocked.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
               ],
             ),
-            if (state.payments.isEmpty)
-              Text(
-                'No payments yet. Receipts for subscriptions and single-document '
-                'purchases appear here once PayChangu confirms them.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.45,
-                ),
-              )
-            else
-              for (final record in state.payments) ...[
-                _PaymentRow(record: record, onTap: () => _showReceipt(record)),
-                const SizedBox(height: 8),
-              ],
-            const SizedBox(height: 16),
-            Text(
-              'School licences are not sold in the app. If your school has a licence, '
-              'sign in with the account your teacher gave you and the same content is unlocked.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.45,
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
@@ -179,7 +197,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.schedule_rounded, size: 18, color: Color(0xFF7A5200)),
+              const Icon(
+                Icons.schedule_rounded,
+                size: 18,
+                color: Color(0xFF7A5200),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -258,7 +280,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_rounded, color: AppColors.sun, size: 18),
+              const Icon(
+                Icons.verified_rounded,
+                color: AppColors.sun,
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Text(
                 state.hasPaidAccess ? 'ACTIVE ACCESS' : 'FREE ACCOUNT',
@@ -342,8 +368,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   unlocked
                       ? 'You have access to this document.'
                       : price > 0
-                          ? 'Buy just this document for ${formatMwk(price)}'
-                          : 'This document is included in a subscription.',
+                      ? 'Buy just this document for ${formatMwk(price)}'
+                      : 'This document is included in a subscription.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -360,7 +386,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       ),
     );
   }
-
 
   Future<void> _buyPlan(AppState state, RemotePlan plan) async {
     await _checkout(
@@ -387,12 +412,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     try {
       final session = await start();
       final uri = Uri.tryParse(session.checkoutUrl);
-      if (uri == null) throw const ApiException('The checkout link was invalid.');
+      if (uri == null)
+        throw const ApiException('The checkout link was invalid.');
 
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched && mounted) {
-        showSnack(context, 'Could not open the PayChangu checkout page.',
-            error: true);
+        showSnack(
+          context,
+          'Could not open the PayChangu checkout page.',
+          error: true,
+        );
         return;
       }
 
@@ -400,11 +432,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        builder: (_) => _PaymentWaiter(
-          state: state,
-          txRef: session.txRef,
-          label: label,
-        ),
+        builder: (_) =>
+            _PaymentWaiter(state: state, txRef: session.txRef, label: label),
       );
       if (mounted) await state.loadBilling();
     } on ApiException catch (error) {
@@ -450,7 +479,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               _ReceiptLine(label: 'Reference', value: record.txRef),
               _ReceiptLine(
                 label: 'Type',
-                value: record.isSubscription ? 'Subscription' : 'Single document',
+                value: record.isSubscription
+                    ? 'Subscription'
+                    : 'Single document',
               ),
               _ReceiptLine(label: 'Amount', value: formatMwk(record.amountMwk)),
               _ReceiptLine(label: 'Status', value: record.status),
@@ -462,7 +493,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   value: formatDate(record.endsAt!),
                 ),
               if (record.createdAt != null)
-                _ReceiptLine(label: 'Started', value: formatDate(record.createdAt!)),
+                _ReceiptLine(
+                  label: 'Started',
+                  value: formatDate(record.createdAt!),
+                ),
               const SizedBox(height: 10),
               Text(
                 'Keep this reference if you need to raise a payment query with your '
@@ -483,7 +517,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final confirmed = await confirmAction(
       context,
       title: 'Sign out?',
-      message: 'Downloaded files stay on this phone until their subscription ends. '
+      message:
+          'Downloaded files stay on this phone until their subscription ends. '
           'Sign in again to sync them.',
       confirmLabel: 'Sign out',
     );
@@ -495,7 +530,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 }
 
 class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.plan, required this.active, required this.onBuy});
+  const _PlanCard({
+    required this.plan,
+    required this.active,
+    required this.onBuy,
+  });
 
   final RemotePlan plan;
   final bool active;
@@ -517,7 +556,11 @@ class _PlanCard extends StatelessWidget {
                     Text(plan.name, style: theme.textTheme.titleSmall),
                     if (active) ...[
                       const SizedBox(width: 8),
-                      const Pill(label: 'Current', color: AppColors.green, compact: true),
+                      const Pill(
+                        label: 'Current',
+                        color: AppColors.green,
+                        compact: true,
+                      ),
                     ],
                   ],
                 ),
@@ -564,7 +607,11 @@ class _PlanCard extends StatelessWidget {
 }
 
 class _PaymentWaiter extends StatefulWidget {
-  const _PaymentWaiter({required this.state, required this.txRef, required this.label});
+  const _PaymentWaiter({
+    required this.state,
+    required this.txRef,
+    required this.label,
+  });
 
   final AppState state;
   final String txRef;
@@ -583,7 +630,10 @@ class _PaymentWaiterState extends State<_PaymentWaiter> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _check(silent: true));
+    _timer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _check(silent: true),
+    );
   }
 
   @override
@@ -639,7 +689,10 @@ class _PaymentWaiterState extends State<_PaymentWaiter> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Text('I have paid'),
             ),
@@ -672,15 +725,14 @@ class _PaymentWaiterState extends State<_PaymentWaiter> {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              'Status: $_status',
-              style: theme.textTheme.bodySmall,
-            ),
+            Text('Status: $_status', style: theme.textTheme.bodySmall),
             if (_error != null) ...[
               const SizedBox(height: 10),
               Text(
                 _error!,
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -720,7 +772,9 @@ class _PaymentRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            record.isSubscription ? Icons.card_membership_outlined : Icons.menu_book_outlined,
+            record.isSubscription
+                ? Icons.card_membership_outlined
+                : Icons.menu_book_outlined,
             size: 20,
             color: color,
           ),
@@ -735,8 +789,8 @@ class _PaymentRow extends StatelessWidget {
                   record.paidAt != null
                       ? formatDate(record.paidAt!)
                       : record.createdAt != null
-                          ? formatDate(record.createdAt!)
-                          : record.txRef,
+                      ? formatDate(record.createdAt!)
+                      : record.txRef,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -749,7 +803,9 @@ class _PaymentRow extends StatelessWidget {
             children: [
               Text(
                 formatMwk(record.amountMwk),
-                style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 3),
               Text(
@@ -795,7 +851,9 @@ class _ReceiptLine extends StatelessWidget {
           Expanded(
             child: SelectableText(
               value,
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -805,12 +863,9 @@ class _ReceiptLine extends StatelessWidget {
 }
 
 String _planTierLabel(AccessTier tier) => switch (tier) {
-      AccessTier.daily => 'Daily access',
-      AccessTier.weekly => 'Weekly access',
-      AccessTier.monthly => 'Monthly access',
-      AccessTier.school => 'School licence',
-      AccessTier.free => 'Free access',
-    };
-
-
-
+  AccessTier.daily => 'Daily access',
+  AccessTier.weekly => 'Weekly access',
+  AccessTier.monthly => 'Monthly access',
+  AccessTier.school => 'School licence',
+  AccessTier.free => 'Free access',
+};

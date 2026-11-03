@@ -22,17 +22,27 @@ class ProgressScreen extends StatelessWidget {
     final gutter = pageGutter(context);
     final stats = state.stats;
     final entries = state.entries;
-    final started = entries.where((entry) => entry.progressPercent > 0).toList();
-    final finished = entries.where((entry) => entry.progressPercent >= 99.5).toList();
+    final started = entries
+        .where((entry) => entry.progressPercent > 0)
+        .toList();
+    final finished = entries
+        .where((entry) => entry.progressPercent >= 99.5)
+        .toList();
     final tally = state.readingTally;
 
-    final recent = started
-        .where((entry) => state.progressFor(entry.document.id)?.lastReadAt != null)
-        .toList()
-      ..sort((a, b) => state
-          .progressFor(b.document.id)!
-          .lastReadAt!
-          .compareTo(state.progressFor(a.document.id)!.lastReadAt!));
+    final recent =
+        started
+            .where(
+              (entry) =>
+                  state.progressFor(entry.document.id)?.lastReadAt != null,
+            )
+            .toList()
+          ..sort(
+            (a, b) => state
+                .progressFor(b.document.id)!
+                .lastReadAt!
+                .compareTo(state.progressFor(a.document.id)!.lastReadAt!),
+          );
 
     return ListView(
       padding: EdgeInsets.zero,
@@ -68,8 +78,11 @@ class ProgressScreen extends StatelessWidget {
               LayoutBuilder(
                 builder: (context, constraints) {
                   final columns = constraints.maxWidth >= 820 ? 4 : 2;
-                  final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
-                  final tileHeight = constraints.maxWidth >= 820 ? 112.0 : 118.0;
+                  final width =
+                      (constraints.maxWidth - (columns - 1) * 10) / columns;
+                  final tileHeight = constraints.maxWidth >= 820
+                      ? 112.0
+                      : 118.0;
                   return Wrap(
                     spacing: 10,
                     runSpacing: 10,
@@ -80,7 +93,9 @@ class ProgressScreen extends StatelessWidget {
                           height: tileHeight,
                           label: 'Streak',
                           value: '${stats.currentStreak}',
-                          caption: stats.currentStreak == 1 ? 'day in a row' : 'days in a row',
+                          caption: stats.currentStreak == 1
+                              ? 'day in a row'
+                              : 'days in a row',
                           icon: Icons.local_fire_department_outlined,
                           tint: const Color(0xFFB45309),
                         ),
@@ -91,7 +106,8 @@ class ProgressScreen extends StatelessWidget {
                           height: tileHeight,
                           label: 'This week',
                           value: formatMinutes(stats.weekMinutes),
-                          caption: 'goal ${formatMinutes(stats.weeklyGoalMinutes)}',
+                          caption:
+                              'goal ${formatMinutes(stats.weeklyGoalMinutes)}',
                           icon: Icons.timer_outlined,
                         ),
                       ),
@@ -101,7 +117,8 @@ class ProgressScreen extends StatelessWidget {
                           height: tileHeight,
                           label: 'Finished',
                           value: '${finished.length}',
-                          caption: '${plural(started.length, 'document')} started',
+                          caption:
+                              '${plural(started.length, 'document')} started',
                           icon: Icons.task_alt_rounded,
                         ),
                       ),
@@ -112,7 +129,8 @@ class ProgressScreen extends StatelessWidget {
                           label: tally.measuredInQuestions
                               ? 'Questions read'
                               : 'Pages read',
-                          value: '${tally.measuredInQuestions ? tally.questions : tally.pages}',
+                          value:
+                              '${tally.measuredInQuestions ? tally.questions : tally.pages}',
                           caption: tally.measuredInQuestions
                               ? 'across ${plural(tally.papers, 'paper')}'
                               : 'across all documents',
@@ -138,7 +156,10 @@ class ProgressScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text('Weekly study time', style: theme.textTheme.titleSmall),
+                              Text(
+                                'Weekly study time',
+                                style: theme.textTheme.titleSmall,
+                              ),
                               const Spacer(),
                               TextButton(
                                 onPressed: () => _editGoal(context, state),
@@ -175,18 +196,22 @@ class ProgressScreen extends StatelessWidget {
                                       stats.studiedToday
                                           ? 'You studied ${formatMinutes(stats.todayMinutes)} today.'
                                           : 'No study recorded today yet.',
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'A short block every day beats one long session. '
                                       'Your streak counts any day with at least a minute.',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                        height: 1.45,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                            height: 1.45,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -243,19 +268,23 @@ class ProgressScreen extends StatelessWidget {
                                       entry.document.title,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${entry.subject.shortName} · page '
                                       '${state.progressFor(entry.document.id)?.currentPage ?? 1} · '
                                       '${formatRelative(state.progressFor(entry.document.id)!.lastReadAt!)}',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                        fontSize: 10,
-                                      ),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                            fontSize: 10,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -275,19 +304,28 @@ class ProgressScreen extends StatelessWidget {
                     const SizedBox(height: 14),
                     AppCard(
                       color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                      borderColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.12,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.verified_outlined,
-                                  size: 18, color: theme.colorScheme.primary),
+                              Icon(
+                                Icons.verified_outlined,
+                                size: 18,
+                                color: theme.colorScheme.primary,
+                              ),
                               const SizedBox(width: 6),
-                              Text('How progress is measured',
+                              Expanded(
+                                child: Text(
+                                  'How progress is measured',
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     color: theme.colorScheme.primary,
-                                  )),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 6),
@@ -295,7 +333,9 @@ class ProgressScreen extends StatelessWidget {
                             'Pages turned and time in the reader are recorded as you read. '
                             'Completing 90% of a document marks its class assignment done. '
                             'Nothing leaves this phone.',
-                            style: theme.textTheme.bodySmall?.copyWith(height: 1.45),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              height: 1.45,
+                            ),
                           ),
                         ],
                       ),
@@ -361,7 +401,8 @@ class ProgressScreen extends StatelessWidget {
                 max: 900,
                 divisions: 28,
                 label: formatMinutes(minutes),
-                onChanged: (value) => setSheetState(() => minutes = value.round()),
+                onChanged: (value) =>
+                    setSheetState(() => minutes = value.round()),
               ),
               Wrap(
                 spacing: 8,
@@ -380,8 +421,8 @@ class ProgressScreen extends StatelessWidget {
                 'Your goal affects the weekly chart and the ring. It does not lock content.',
                 textAlign: TextAlign.center,
                 style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -404,7 +445,8 @@ class _SubjectRow extends StatelessWidget {
         .toList();
     if (entries.isEmpty) return const SizedBox.shrink();
 
-    final progress = entries.fold<double>(0, (sum, entry) => sum + entry.progressPercent) /
+    final progress =
+        entries.fold<double>(0, (sum, entry) => sum + entry.progressPercent) /
         entries.length;
     final started = entries.where((entry) => entry.progressPercent > 0).length;
 

@@ -32,7 +32,14 @@ class WeeklyBars extends StatelessWidget {
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 26 + (height - 40) * (1 - (stats.weeklyGoalMinutes / 7 / scaleMax).clamp(0, 1)),
+                bottom:
+                    26 +
+                    (height - 40) *
+                        (1 -
+                            (stats.weeklyGoalMinutes / 7 / scaleMax).clamp(
+                              0,
+                              1,
+                            )),
                 child: Container(
                   height: 1,
                   color: theme.colorScheme.outlineVariant,
@@ -44,7 +51,9 @@ class WeeklyBars extends StatelessWidget {
                   for (final day in stats.weekDays)
                     Expanded(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: barSpace * 0.12),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: barSpace * 0.12,
+                        ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -58,13 +67,17 @@ class WeeklyBars extends StatelessWidget {
                             const SizedBox(height: 3),
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
-                              height: ((height - 44) * (day.minutes / scaleMax)).clamp(3, height - 44),
+                              height: ((height - 44) * (day.minutes / scaleMax))
+                                  .clamp(3, height - 44),
                               decoration: BoxDecoration(
                                 color: day.isToday
                                     ? theme.colorScheme.primary
                                     : day.minutes > 0
-                                        ? theme.colorScheme.primary.withValues(alpha: 0.32)
-                                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                    ? theme.colorScheme.primary.withValues(
+                                        alpha: 0.32,
+                                      )
+                                    : theme.colorScheme.outlineVariant
+                                          .withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                             ),
@@ -76,7 +89,9 @@ class WeeklyBars extends StatelessWidget {
                                 color: day.isToday
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: day.isToday ? FontWeight.w700 : FontWeight.w500,
+                                fontWeight: day.isToday
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
                           ],
@@ -85,6 +100,23 @@ class WeeklyBars extends StatelessWidget {
                     ),
                 ],
               ),
+              // With no minutes at all every bar collapses to a 3 dp stub, so
+              // the plot area reads as a blank box. Say why instead of leaving
+              // a hole in the page.
+              if (stats.weekMinutes == 0)
+                Positioned(
+                  left: 8,
+                  right: 8,
+                  top: (height - 34) / 2 - 8,
+                  child: Text(
+                    'No study time recorded this week',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
             ],
           );
         },
@@ -122,7 +154,9 @@ class GoalRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: percent.clamp(0, 1),
               strokeWidth: 7,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+              backgroundColor: theme.colorScheme.primary.withValues(
+                alpha: 0.12,
+              ),
               strokeCap: StrokeCap.round,
             ),
           ),
@@ -176,7 +210,12 @@ class SubjectProgressBar extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               Text(
                 detail,

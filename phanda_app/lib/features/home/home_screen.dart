@@ -39,7 +39,12 @@ class HomeScreen extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         ResponsivePage(
-          padding: EdgeInsets.fromLTRB(pageGutter(context), 12, pageGutter(context), 40),
+          padding: EdgeInsets.fromLTRB(
+            pageGutter(context),
+            12,
+            pageGutter(context),
+            40,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -89,7 +94,8 @@ class HomeScreen extends StatelessWidget {
                             final entry = continueReading[index];
                             return DocumentStripCard(
                               entry: entry,
-                              onTap: () => openDocument(context, entry.document.id),
+                              onTap: () =>
+                                  openDocument(context, entry.document.id),
                             );
                           },
                         ),
@@ -98,7 +104,8 @@ class HomeScreen extends StatelessWidget {
                     ],
                     SectionHeader(
                       title: 'For Form ${state.profile.form}',
-                      subtitle: 'Chosen for ${state.profile.examTarget} ${state.profile.examYear}',
+                      subtitle:
+                          'Chosen for ${state.profile.examTarget} ${state.profile.examYear}',
                       actionLabel: 'Library',
                       onAction: () => onNavigate(1),
                     ),
@@ -122,7 +129,8 @@ class HomeScreen extends StatelessWidget {
                             final entry = recommended[index];
                             return DocumentStripCard(
                               entry: entry,
-                              onTap: () => openDocument(context, entry.document.id),
+                              onTap: () =>
+                                  openDocument(context, entry.document.id),
                             );
                           },
                         ),
@@ -153,7 +161,8 @@ class HomeScreen extends StatelessWidget {
                             final entry = guides[index];
                             return DocumentStripCard(
                               entry: entry,
-                              onTap: () => openDocument(context, entry.document.id),
+                              onTap: () =>
+                                  openDocument(context, entry.document.id),
                             );
                           },
                         ),
@@ -173,7 +182,8 @@ class HomeScreen extends StatelessWidget {
                       EmptyState(
                         icon: Icons.check_circle_outline_rounded,
                         title: 'Nothing due',
-                        message: 'Assignments from your classes will appear here.',
+                        message:
+                            'Assignments from your classes will appear here.',
                         actionLabel: 'Join a class',
                         onAction: () => onNavigate(3),
                         compact: true,
@@ -183,12 +193,16 @@ class HomeScreen extends StatelessWidget {
                         AssignmentTile(
                           assignment: assignment,
                           state: state,
-                          onOpen: () => openDocument(context, assignment.documentId),
+                          onOpen: () =>
+                              openDocument(context, assignment.documentId),
                         ),
                         const SizedBox(height: 10),
                       ],
                     const SizedBox(height: 18),
-                    _WeeklyCard(state: state, onOpenProgress: () => onNavigate(4)),
+                    _WeeklyCard(
+                      state: state,
+                      onOpenProgress: () => onNavigate(4),
+                    ),
                   ],
                 ),
               ),
@@ -256,7 +270,10 @@ class _HomeHeader extends StatelessWidget {
             child: Container(
               width: 10,
               height: 10,
-              decoration: const BoxDecoration(color: AppColors.sun, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                color: AppColors.sun,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           Padding(
@@ -285,7 +302,9 @@ class _HomeHeader extends StatelessWidget {
                         padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35),
+                          ),
                         ),
                         child: CircleAvatar(
                           radius: 17,
@@ -334,7 +353,9 @@ class _HomeHeader extends StatelessWidget {
                     Expanded(
                       child: _HeaderStat(
                         value: '${state.stats.currentStreak}',
-                        label: state.stats.currentStreak == 1 ? 'day streak' : 'day streak',
+                        label: state.stats.currentStreak == 1
+                            ? 'day streak'
+                            : 'day streak',
                         onTap: null,
                       ),
                     ),
@@ -390,7 +411,11 @@ class _HeaderStat extends StatelessWidget {
                 ),
               ),
               if (onTap != null)
-                Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withValues(alpha: 0.6)),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
             ],
           ),
         ),
@@ -443,7 +468,11 @@ class _QuickActions extends StatelessWidget {
 }
 
 class _QuickAction extends StatelessWidget {
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -463,7 +492,9 @@ class _QuickAction extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -481,7 +512,9 @@ class _WeeklyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final stats = state.stats;
-    final readCount = state.entries.where((entry) => entry.progressPercent >= 100).length;
+    final readCount = state.entries
+        .where((entry) => entry.progressPercent >= 100)
+        .length;
 
     return AppCard(
       onTap: onOpenProgress,
@@ -505,20 +538,42 @@ class _WeeklyCard extends StatelessWidget {
           const SizedBox(height: 8),
           Divider(color: theme.colorScheme.outlineVariant),
           const SizedBox(height: 10),
-          Row(
+          // A wrap, not a spacer row: the card is only ~320 dp in the narrow
+          // desktop column, and at a large text scale the two labels collided
+          // and clipped instead of dropping to a second line.
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
             children: [
-              Icon(Icons.menu_book_outlined, size: 15, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                '$readCount ${readCount == 1 ? 'document' : 'documents'} finished',
-                style: theme.textTheme.bodySmall,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.menu_book_outlined,
+                    size: 15,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$readCount ${readCount == 1 ? 'document' : 'documents'} finished',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
               ),
-              const Spacer(),
-              Icon(Icons.timer_outlined, size: 15, color: theme.colorScheme.onSurfaceVariant),
-              const SizedBox(width: 6),
-              Text(
-                '${stats.todayMinutes} min today',
-                style: theme.textTheme.bodySmall,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.timer_outlined,
+                    size: 15,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${stats.todayMinutes} min today',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
               ),
             ],
           ),
@@ -527,7 +582,6 @@ class _WeeklyCard extends StatelessWidget {
     );
   }
 }
-
 
 /// A single line that surfaces the newest message and opens the inbox. It only
 /// appears when there is something to read, so the home screen stays calm.
