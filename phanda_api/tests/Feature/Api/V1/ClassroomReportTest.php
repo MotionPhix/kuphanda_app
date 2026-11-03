@@ -187,3 +187,33 @@ it('tells the learners when a paper is set, and not the teacher', function (): v
         ->assertOk()
         ->assertJsonCount(0, 'data');
 });
+
+it('tells the teacher when a learner finishes, once', function (): void {
+    $teacher = User::factory()->create(['is_staff' => true, 'name' => 'Grace Mwale']);
+    $learner = User::factory()->create(['name' => 'Tadala Phiri']);
+
+    $classroom = reportClassroom($teacher);
+    $classroom->members()->attach($learner->getKey(), ['joined_at' => now()]);
+
+    $document = reportDocument('ref-msce-physics-2008-p1');
+    $this->actingAs($teacher)->postJson("/api/v1/classrooms/{$classroom->id}/assignments", [
+        'document_id' => $document->id,
+    ]);
+    $assignmentId = (string) $classroom->assignments()->firstOrFail()->id;
+
+    // Reading it twice is one finish, and one message.
+    foreach ([1, 2] as $attempt) {
+        $this->actingAs($learner)
+            ->postJson("/api/v1/assignments/{$assignmentId}/complete")
+            ->assertOk();
+    }
+
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/me/notifications')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.category', 'completion')
+        ->assertJsonPath('data.0.title', 'Tadala Phiri finished Physics Paper I')
+        ->assertJsonPath('data.0.data.assignment_id', $assignmentId)
+        ->assertJsonPath('data.0.data.classroom_id', (string) $classroom->id);
+});

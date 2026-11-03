@@ -164,6 +164,40 @@ final class ClassroomController extends ApiController
      * the push token is alive — a phone that was off still shows it next time.
      * Best effort: a push provider problem must not undo the assignment.
      */
+    /**
+     * One message to the person who runs the class: a learner has finished the
+     * paper they set. Best effort, like the announcement to the class.
+     */
+    private function tellTheTeacher(
+        Classroom $classroom,
+        ClassroomAssignment $assignment,
+        User $learner,
+    ): void {
+        $teacher = $classroom->teacher;
+
+        if ($teacher === null || $teacher->getKey() === $learner->getKey()) {
+            return;
+        }
+
+        $document = $assignment->document;
+
+        try {
+            $this->push->toUser(
+                $teacher,
+                'completion',
+                $learner->name.' finished '.($document?->title ?? 'a paper'),
+                $classroom->name,
+                [
+                    'classroom_id' => (string) $classroom->id,
+                    'assignment_id' => (string) $assignment->id,
+                    'document_id' => (string) $assignment->document_id,
+                ],
+            );
+        } catch (Throwable $error) {
+            report($error);
+        }
+    }
+
     private function tellTheClass(
         Classroom $classroom,
         ClassroomAssignment $assignment,
@@ -227,6 +261,13 @@ final class ClassroomController extends ApiController
             ['user_id' => $request->user()->getKey()],
             ['completed_at' => now()],
         );
+
+        // The teacher hears about a finish once, when it happens — not every time
+        // the same paper is reopened. Someone who runs the class and also reads
+        // it does not get told about themselves.
+        if ($completion->wasRecentlyCreated) {
+            $this->tellTheTeacher($classroom, $assignment, $request->user());
+        }
 
         return $this->success([
             'assignment_id' => $assignment->id,

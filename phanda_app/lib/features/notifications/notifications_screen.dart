@@ -158,6 +158,8 @@ class _NotificationTile extends StatelessWidget {
         'subscription' => Icons.receipt_long_rounded,
         'document' => Icons.description_outlined,
         'reminder' => Icons.alarm_rounded,
+        'assignment' => Icons.menu_book_rounded,
+        'completion' => Icons.check_circle_outline_rounded,
         _ => Icons.campaign_outlined,
       };
 }
