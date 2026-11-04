@@ -181,6 +181,9 @@ class ClassesScreen extends StatelessWidget {
                     labelText: 'Class code',
                     hintText: 'Six characters',
                     errorText: error,
+                    // The server's sentence is a whole sentence; one line cut it
+                    // to "Check it with ..." beside the character counter.
+                    errorMaxLines: 3,
                     prefixIcon: const Icon(Icons.tag_rounded),
                   ),
                   onChanged: (_) {
