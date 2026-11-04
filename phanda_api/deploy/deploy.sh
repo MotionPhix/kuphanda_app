@@ -142,8 +142,11 @@ php artisan config:cache 2>&1 | tail -2
 php artisan route:clear >/dev/null 2>&1
 
 say "smoke test"
-# /up is Laravel's own health route. /api/v1/login is the only unauthenticated
-# API endpoint, so an empty POST must come back 422 (validated, never a 500).
+# This host serves the API only: the document root is denied and /up is not
+# routed, so probing either reports LiteSpeed's 403/404 and reads as a broken
+# deploy. The honest signals are the API itself — an unauthenticated GET on a
+# guarded route answers 401, and an empty login POST answers 422 (validated,
+# never a 500).
 probe() {
   local method="$1" url="$2" code body
   body=$(mktemp)
@@ -154,8 +157,7 @@ probe() {
   printf '\n'
   rm -f "$body"
 }
-probe GET  "$APP_URL_/up"
+probe GET  "$APP_URL_/api/v1/plans"
 probe POST "$APP_URL_/api/v1/login"
-probe GET  "$APP_URL_/reset-password"
 
 say "done — $(date -u '+%Y-%m-%d %H:%M:%SZ')"

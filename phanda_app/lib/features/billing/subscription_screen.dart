@@ -453,8 +453,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     try {
       final session = await start();
       final uri = Uri.tryParse(session.checkoutUrl);
-      if (uri == null)
+      if (uri == null) {
         throw const ApiException('The checkout link was invalid.');
+      }
 
       final launched = await launchUrl(
         uri,

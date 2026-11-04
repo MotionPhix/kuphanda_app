@@ -630,17 +630,42 @@ class ApiClient {
       }
     }
 
-    final message = fieldError ?? (parsed['message'] as String?) ?? switch (status) {
+    // A failure on the server's own side is not the learner's to read. Laravel
+    // answers "Server Error" with debug off, which tells them nothing and reads
+    // like a bug in the app; say what happened and what to do about it instead.
+    final serverMessage = status >= 500 ? null : _meaningfulMessage(parsed['message']);
+
+    final message = fieldError ?? serverMessage ?? switch (status) {
       401 => 'Your session has expired. Sign in again.',
       403 => 'Your library pass does not cover this document.',
       404 => 'The document is no longer available.',
       409 => 'This document is not available offline yet.',
       422 => 'The request could not be completed.',
       429 => 'Too many requests. Wait a moment and try again.',
+      500 || 502 || 503 || 504 =>
+        'The library had a problem on its side. Try again in a moment.',
       _ => 'The library could not be reached (HTTP $status).',
     };
 
     return ApiException(message, statusCode: status);
+  }
+
+  /// The server's own sentence, unless it is a framework placeholder that would
+  /// leave the learner no wiser than the status code did.
+  String? _meaningfulMessage(Object? message) {
+    if (message is! String) return null;
+    final trimmed = message.trim();
+    if (trimmed.isEmpty) return null;
+
+    const bland = {
+      'server error',
+      'internal server error',
+      'whoops, looks like something went wrong.',
+      'the given data was invalid.',
+      'unauthenticated.',
+    };
+
+    return bland.contains(trimmed.toLowerCase()) ? null : trimmed;
   }
 
   AuthSession _sessionFrom(Map<String, Object?> data) {

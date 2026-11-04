@@ -78,9 +78,6 @@ void main() {
   testWidgets('a sheet does not reserve the keyboard twice', (tester) async {
     tester.view.physicalSize = const Size(720, 1640);
     tester.view.devicePixelRatio = 2.0;
-    // 300 dp of keyboard. Android does not move a scroll-controlled sheet out
-    // of the keyboard's way, so the sheet has to reserve the inset itself.
-    tester.view.viewInsets = const FakeViewPadding(bottom: 600);
     addTearDown(tester.view.reset);
 
     final state = AppState(
@@ -100,6 +97,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Join a class').first);
+    await tester.pumpAndSettle();
+
+    // The keyboard rises after the sheet is open, as it does for a learner who
+    // taps the field: 300 dp of keyboard. Android does not move a
+    // scroll-controlled sheet out of the keyboard's way, so the sheet has to
+    // reserve the inset itself.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 600);
     await tester.pumpAndSettle();
 
     final screen = tester.view.physicalSize.height / tester.view.devicePixelRatio;

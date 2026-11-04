@@ -27,12 +27,43 @@ describe('Registration', function (): void {
             ])
             ->assertJson([
                 'success' => true,
-                'message' => 'User registered successfully. Please check your email to verify your account.',
+                'message' => 'Account created. You can start reading now.',
             ]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
         ]);
+    });
+
+    it('still creates the account when the verification mail cannot be sent', function (): void {
+        // Shared hosts lose SMTP often, and this is what answered 500 on the
+        // live server: the row was written, then mail threw, and the learner was
+        // left with an account they could not sign in to.
+        $this->app->bind(\App\Services\VerificationMailer::class, fn () => new class extends \App\Services\VerificationMailer
+        {
+            public function send(User $user): void
+            {
+                throw new RuntimeException('SMTP connection refused');
+            }
+        });
+
+        $response = $this->postJson('/api/v1/register', [
+            'name' => 'Mail Down',
+            'email' => 'maildown@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertStatus(201)->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('users', ['email' => 'maildown@example.com']);
+
+        // The token still works: a missing email does not block reading.
+        $token = $response->json('data.token');
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/me')
+            ->assertOk()
+            ->assertJsonPath('data.email', 'maildown@example.com');
     });
 
     it('fails registration with invalid data', function (): void {

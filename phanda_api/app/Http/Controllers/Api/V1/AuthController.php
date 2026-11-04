@@ -17,6 +17,7 @@ use App\Http\Requests\Api\V1\VerifyEmailRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\GoogleTokenVerifier;
+use App\Services\VerificationMailer;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
@@ -26,10 +27,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 final class AuthController extends ApiController
 {
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request, VerificationMailer $mailer): JsonResponse
     {
         $user = User::query()->create([
             'name' => $request->name,
@@ -38,14 +40,22 @@ final class AuthController extends ApiController
             'plan' => 'free',
         ]);
 
-        $user->sendEmailVerificationNotification();
+        // The account exists from this point. If SMTP is down — common on shared
+        // hosting, and the reason sign-up answered 500 on the live host — the
+        // learner must still get their account rather than an error they cannot
+        // act on.
+        try {
+            $mailer->send($user);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return $this->created([
             'user' => new UserResource($user),
             'token' => $token,
-        ], 'User registered successfully. Please check your email to verify your account.');
+        ], 'Account created. You can start reading now.');
     }
 
     public function login(LoginRequest $request): JsonResponse

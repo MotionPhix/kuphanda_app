@@ -76,42 +76,62 @@ class ScreenHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Row(
+    final heading = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (eyebrow != null) ...[
-                Text(
-                  eyebrow!.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-              ],
-              Text(title, style: theme.textTheme.headlineSmall),
-              if (subtitle != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
+        if (eyebrow != null) ...[
+          Text(
+            eyebrow!.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.4,
+            ),
           ),
-        ),
-        if (actions.isNotEmpty) ...[
-          const SizedBox(width: 12),
-          Row(mainAxisSize: MainAxisSize.min, children: actions),
+          const SizedBox(height: 6),
+        ],
+        Text(title, style: theme.textTheme.headlineSmall),
+        if (subtitle != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            subtitle!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // On a 360 dp phone two buttons beside the heading squeeze "Classes"
+        // into a column of two words and a subtitle of four lines. Below this
+        // width the actions belong under the words, not next to them.
+        final stack = actions.isNotEmpty && constraints.maxWidth < 470;
+
+        if (actions.isEmpty) return heading;
+
+        if (stack) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              heading,
+              const SizedBox(height: 12),
+              Wrap(spacing: 8, runSpacing: 8, children: actions),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: heading),
+            const SizedBox(width: 12),
+            Row(mainAxisSize: MainAxisSize.min, children: actions),
+          ],
+        );
+      },
     );
   }
 }
