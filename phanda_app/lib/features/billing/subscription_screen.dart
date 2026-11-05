@@ -124,10 +124,40 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         ],
                       ),
                     )
-                  else if (state.plans.isEmpty)
+                  else if (state.billingLoading)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (state.plans.isEmpty)
+                    // Loaded, no error, and still nothing to buy: the server has
+                    // no published plans. A spinner here was the reported bug —
+                    // it turned for ever because "empty" and "loading" were the
+                    // same state.
+                    AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'No plans are on sale yet',
+                            style: theme.textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'The library has not published its prices yet. Your account still works, and free documents open as usual.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          FilledButton.tonalIcon(
+                            onPressed: () => state.loadBilling(),
+                            icon: const Icon(Icons.refresh_rounded, size: 16),
+                            label: const Text('Try again'),
+                          ),
+                        ],
+                      ),
                     )
                   else
                     for (final plan in state.plans) ...[

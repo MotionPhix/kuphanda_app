@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Document;
+use App\Models\Plan;
 use App\Models\OfflineDocument;
 use App\Models\Subject;
 use App\Models\User;
@@ -136,6 +137,10 @@ it('restores the code-owned catalogue with library:sync', function (): void {
 
     expect($published->count())->toBeGreaterThanOrEqual(12)
         ->and($published->pluck('id'))->toContain('guide-bio-genetics', 'sample-howto');
+
+    // Documents without prices leave the subscription page empty, which is
+    // what it looked like when only the catalogue seeders ran.
+    expect(Plan::query()->count())->toBeGreaterThan(0);
 })->group('library');
 
 it('finds documents by subject, tag and year, not only by title', function (): void {
@@ -177,3 +182,4 @@ it('finds documents by subject, tag and year, not only by title', function (): v
         ->assertOk()
         ->assertJsonPath('data.0.id', 'cells-paper');
 })->group('library');
+

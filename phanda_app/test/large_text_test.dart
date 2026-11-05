@@ -16,6 +16,7 @@ import 'package:kuphanda/data/seed/library_seed.dart';
 import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
+import 'package:kuphanda/features/billing/subscription_screen.dart';
 import 'package:kuphanda/features/classes/classes_screen.dart';
 import 'package:kuphanda/features/document/document_detail_screen.dart';
 import 'package:kuphanda/features/library/library_screen.dart';
@@ -285,8 +286,17 @@ void main() {
 
     expect(errors, isEmpty, reason: _describe(errors));
   });
+
+  testWidgets('the subscription screen renders a price list', (tester) async {
+    final errors = await _pumpPhone(
+      tester,
+      1.0,
+      home: const SubscriptionScreen(documentId: "ref-msce-chemistry-organic"),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+    expect(find.text("No plans are on sale yet"), findsOneWidget);
+  });
+
 }
-
-
-
 

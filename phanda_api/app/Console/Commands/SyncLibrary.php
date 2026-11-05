@@ -27,7 +27,16 @@ final class SyncLibrary extends Command
 
     public function handle(DocumentReadiness $readiness): int
     {
-        foreach (['Database\\Seeders\\LibrarySeeder', 'Database\\Seeders\\BlockDocumentSeeder'] as $seeder) {
+        // PlanSeeder belongs here too. A server synced without it has documents
+        // but no prices, so the subscription page lists nothing — which reads as
+        // a broken screen rather than a seeder that never ran.
+        $seeders = [
+            'Database\\Seeders\\LibrarySeeder',
+            'Database\\Seeders\\BlockDocumentSeeder',
+            'Database\\Seeders\\PlanSeeder',
+        ];
+
+        foreach ($seeders as $seeder) {
             $this->line('Seeding '.class_basename($seeder).'…');
             Artisan::call('db:seed', ['--class' => $seeder, '--force' => true]);
         }

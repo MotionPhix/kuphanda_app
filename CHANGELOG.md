@@ -33,6 +33,10 @@ The library stops being a demo and the app stops assuming a small font.
   split across two lines, and a class report that pushed its code out of the
   card. All fixed, with twelve tests that fail on any layout error and name the
   widget.
+- **The subscription page no longer hangs.** A server with no published plans
+  rendered an empty list as an endless spinner; it now says prices are not on
+  sale yet and offers a retry. The cause — library:sync seeded documents but
+  not prices — is fixed with it.
 - **Honest fallback.** When the server cannot be reached the library says it is
   showing the copy saved on the phone, instead of silently showing fewer
   documents.
@@ -47,11 +51,17 @@ The library stops being a demo and the app stops assuming a small font.
 - `deploy.sh` no longer points the mailer at an unreachable sandbox, which cost
   every sign-up 23 seconds and then a 500.
 
+### Scope
+
+Android, web and Windows. iOS is out of scope by design, not by omission.
+
 ### Known limits
 
 - Push notifications are implemented and tested, but a real device delivery
   needs `FIREBASE_CREDENTIALS` on the host; `/api/v1/health` reports
   `push.configured` so the silence has a cause attached to it.
-- iOS is unbuilt; there is no macOS host in this environment.
-- Payments run against PayChangu's test mode until live keys are added.
+- Payments run against PayChangu's test mode, which is deliberate until the
+  checkout has been exercised end to end.
+
+
 

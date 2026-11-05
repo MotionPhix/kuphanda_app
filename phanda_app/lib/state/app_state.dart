@@ -124,6 +124,11 @@ class AppState extends ChangeNotifier {
   Set<String> _savedOffline = <String>{};
   List<RemotePlan> _plans = const <RemotePlan>[];
   String? _billingError;
+
+  /// True while [loadBilling] is in flight. Without it the subscription page
+  /// cannot tell "still loading" from "the server has no plans", and both used
+  /// to render as a spinner that never stopped.
+  bool _billingLoading = false;
   List<PaymentRecord> _payments = const <PaymentRecord>[];
   List<AppNotification> _notifications = const <AppNotification>[];
   BillingStatus? _billing;
@@ -165,6 +170,8 @@ class AppState extends ChangeNotifier {
   /// Why the last billing fetch failed, if it did. The subscription page
   /// uses it to stop showing a spinner that never resolves.
   String? get billingError => _billingError;
+
+  bool get billingLoading => _billingLoading;
 
   /// Why the phone stopped being signed in, when it was not the learner's own
   /// doing — a password changed elsewhere, or an account closed by the school.
@@ -1767,6 +1774,8 @@ class AppState extends ChangeNotifier {
   Future<void> loadBilling() async {
     if (!isSignedIn) return;
     _billingError = null;
+    _billingLoading = true;
+    notifyListeners();
     try {
       final (plans, status, payments, account) = await (
         _api!.fetchPlans(),
@@ -1816,6 +1825,9 @@ class AppState extends ChangeNotifier {
       _billingError =
           'Could not reach the library. Check the connection and try again.';
       debugPrint('Could not load billing: $error');
+      notifyListeners();
+    } finally {
+      _billingLoading = false;
       notifyListeners();
     }
   }
