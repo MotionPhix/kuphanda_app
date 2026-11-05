@@ -114,3 +114,15 @@ it('reports placeholders without deleting them unless asked', function (): void 
 
     expect(Document::query()->find('still-here'))->not->toBeNull();
 })->group('library');
+
+it('restores the code-owned catalogue with library:sync', function (): void {
+    Storage::fake('local');
+    catalogueSubject();
+
+    $this->artisan('library:sync')->assertSuccessful();
+
+    $published = Document::query()->where('is_published', true)->get();
+
+    expect($published->count())->toBeGreaterThanOrEqual(12)
+        ->and($published->pluck('id'))->toContain('guide-bio-genetics', 'sample-howto');
+})->group('library');
