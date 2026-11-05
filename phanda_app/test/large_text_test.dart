@@ -19,6 +19,9 @@ import 'package:kuphanda/data/store/state_store.dart';
 import 'package:kuphanda/features/classes/classes_screen.dart';
 import 'package:kuphanda/features/document/document_detail_screen.dart';
 import 'package:kuphanda/features/library/library_screen.dart';
+import 'package:kuphanda/features/documents/my_documents_screen.dart';
+import 'package:kuphanda/features/notifications/notifications_screen.dart';
+import 'package:kuphanda/features/progress/progress_screen.dart';
 import 'package:kuphanda/features/reader/block_document_view.dart';
 import 'package:kuphanda/features/reader/guide_reader_screen.dart';
 import 'package:kuphanda/features/shell/app_shell.dart';
@@ -252,6 +255,38 @@ void main() {
     expect(errors, isEmpty, reason: _describe(errors));
     expect(find.textContaining('Section'), findsWidgets);
   });
+
+  testWidgets('the progress tab survives 1.3x text', (tester) async {
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: Scaffold(body: ProgressScreen(onOpenProfile: () {})),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+  });
+
+  testWidgets('notifications survive 1.3x text', (tester) async {
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: const Scaffold(body: NotificationsScreen()),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+  });
+
+  testWidgets('my documents survives 1.3x text', (tester) async {
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: const Scaffold(body: MyDocumentsScreen()),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+  });
 }
+
+
 
 

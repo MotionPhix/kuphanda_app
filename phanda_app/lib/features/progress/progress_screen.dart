@@ -156,11 +156,17 @@ class ProgressScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                'Weekly study time',
-                                style: theme.textTheme.titleSmall,
+                              // At 1.3x this pair needed 207px more than the
+                              // card: the title now yields and the button keeps
+                              // its words, because "Edit goal" is the action.
+                              Expanded(
+                                child: Text(
+                                  'Weekly study time',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleSmall,
+                                ),
                               ),
-                              const Spacer(),
                               TextButton(
                                 onPressed: () => _editGoal(context, state),
                                 child: const Text('Edit goal'),
