@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Document;
+use App\Models\Plan;
 use App\Contracts\PushSender;
 use Illuminate\Http\JsonResponse;
 
@@ -44,6 +45,9 @@ final class HealthController
                     ->published()
                     ->whereNotNull('blocks')
                     ->count(),
+                // No plans means the subscription page has nothing to sell; the
+                // count answers that without needing a token to call /plans.
+                'plans' => Plan::query()->count(),
                 'last_content_update' => Document::query()->max('content_updated_at'),
             ],
             'features' => [
@@ -77,5 +81,6 @@ final class HealthController
         return $commit === '' ? null : mb_substr($commit, 0, 40);
     }
 }
+
 
 

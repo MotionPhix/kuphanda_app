@@ -58,6 +58,7 @@ it('reports the catalogue and the integrations without authentication', function
         // No service account in the test environment, so class notifications
         // can only reach a phone that is already open. Saying so is the point.
         ->assertJsonPath('features.push.configured', false)
+        ->assertJsonPath('catalogue.plans', 0)
         ->assertJsonStructure(['time', 'features' => ['mail_transport', 'push']]);
 });
 
@@ -83,3 +84,4 @@ it('reports the commit recorded at deploy time', function (): void {
         @unlink($path);
     }
 })->group('health');
+
