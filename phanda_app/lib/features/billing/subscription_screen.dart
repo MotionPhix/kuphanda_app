@@ -171,11 +171,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Text(
-                        'Payment history',
-                        style: theme.textTheme.titleMedium,
+                      Expanded(
+                        child: Text(
+                          'Payment history',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium,
+                        ),
                       ),
-                      const Spacer(),
                       IconButton(
                         tooltip: 'Refresh receipts',
                         onPressed: () => state.loadBilling(),
@@ -625,7 +628,16 @@ class _PlanCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(plan.name, style: theme.textTheme.titleSmall),
+                    // The name plus the "Current" pill needs 112px more than the
+                    // card has at 1.3x, so the name yields first.
+                    Flexible(
+                      child: Text(
+                        plan.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
                     if (active) ...[
                       const SizedBox(width: 8),
                       const Pill(

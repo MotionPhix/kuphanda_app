@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -27,6 +28,8 @@ import 'package:kuphanda/features/reader/block_document_view.dart';
 import 'package:kuphanda/features/reader/guide_reader_screen.dart';
 import 'package:kuphanda/features/shell/app_shell.dart';
 import 'package:kuphanda/state/app_state.dart';
+
+List<Map<String, Object?>> _planFixtures = const [];
 
 class _NoFiles implements DocumentFiles {
   @override
@@ -77,11 +80,19 @@ Future<AppState> _state() async {
       baseUrl: 'https://example.test/api/v1',
       token: 'token',
       httpClient: MockClient(
-        (request) async => http.Response(
-          '{"data":[]}',
-          200,
-          headers: {'content-type': 'application/json'},
-        ),
+        (request) async {
+          // Plans come from /plans; everything else answers with an empty list.
+          // Returns plan fixtures when a test supplies them.
+          final body = request.url.path.endsWith('/plans')
+              ? '{"data":${jsonEncode(_planFixtures)}}'
+              : '{"data":[]}';
+
+          return http.Response(
+            body,
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        },
       ),
     ),
   );
@@ -287,16 +298,41 @@ void main() {
     expect(errors, isEmpty, reason: _describe(errors));
   });
 
-  testWidgets('the subscription screen renders a price list', (tester) async {
+  testWidgets('the subscription page lists plans and their prices', (tester) async {
+    _planFixtures = [
+      {
+        'id': 1,
+        'slug': 'day',
+        'name': 'Day pass',
+        'tier': 'daily',
+        'price_mwk': 500,
+        'duration_days': 1,
+        'description': 'Full catalogue for 24 hours.',
+      },
+      {
+        'id': 2,
+        'slug': 'week',
+        'name': 'Weekly pass',
+        'tier': 'weekly',
+        'price_mwk': 1500,
+        'duration_days': 7,
+        'description': 'A week of reading.',
+      },
+    ];
+    addTearDown(() => _planFixtures = const []);
     final errors = await _pumpPhone(
       tester,
-      1.0,
+      1.3,
       home: const SubscriptionScreen(documentId: "ref-msce-chemistry-organic"),
     );
 
     expect(errors, isEmpty, reason: _describe(errors));
-    expect(find.text("No plans are on sale yet"), findsOneWidget);
+    expect(find.text('Day pass'), findsOneWidget);
+    expect(find.textContaining('1,500'), findsWidgets);
   });
 
 }
+
+
+
 
