@@ -390,8 +390,16 @@ class _PhoneSheetState extends State<_PhoneSheet> {
           ],
           const SizedBox(height: 6),
           Text(
-            'Your number is only used to sign you in. It is never shown to '
-            'other learners.',
+            // The consent sentence, where it has to be: on the screen where the
+            // number is given and the code is asked for. Meta requires opt-in
+            // for messages a business starts, and a sign-in code is one. The
+            // server records the moment the code comes back.
+            _creating || widget.linkOnly
+                ? 'By continuing you agree to receive sign-in codes from '
+                    'Kuphanda on WhatsApp at this number. Nothing else is sent, '
+                    'and the number is never shown to other learners.'
+                : 'Your number is only used to sign you in. It is never shown to '
+                    'other learners.',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               height: 1.4,

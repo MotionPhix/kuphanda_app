@@ -25,6 +25,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $email
  * @property string|null $phone_e164
  * @property Carbon|null $phone_verified_at
+ * @property Carbon|null $whatsapp_opt_in_at
  * @property string $role
  * @property int|null $form
  * @property Carbon|null $profile_completed_at
@@ -70,26 +71,6 @@ final class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            // Null unless a WhatsApp code proved the number. Nothing else may
-            // treat `phone_e164` as an identity.
-            'phone_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'plan' => LibraryPlan::class,
-            'is_staff' => 'boolean',
-            'form' => 'integer',
-            'profile_completed_at' => 'datetime',
-        ];
-    }
-
-    /**
      * @return HasMany<OfflineDocument, $this>
      */
     public function offlineDocuments(): HasMany
@@ -106,6 +87,25 @@ final class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            // Null unless a WhatsApp code proved the number. Nothing else may
+            // treat `phone_e164` as an identity.
+            'phone_verified_at' => 'datetime',
+            'whatsapp_opt_in_at' => 'datetime',
+            'password' => 'hashed',
+            'plan' => LibraryPlan::class,
+            'is_staff' => 'boolean',
+            'form' => 'integer',
+            'profile_completed_at' => 'datetime',
+        ];
+    }
 }
-
-

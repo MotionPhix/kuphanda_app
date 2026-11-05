@@ -217,7 +217,11 @@ it('creates an account from a phone, with no email and a verified number', funct
 
     expect($response->json('data.user.phone'))->toBe('+265995551234')
         ->and($response->json('data.user.phone_verified'))->toBeTrue()
-        ->and($response->json('data.user.email'))->toBeNull();
+        ->and($response->json('data.user.email'))->toBeNull()
+        // The consent record Meta's policy expects, written at the moment the
+        // code proved the number and not a second before.
+        ->and($response->json('data.user.whatsapp_opt_in'))->toBeTrue()
+        ->and($response->json('data.user.whatsapp_opt_in_at'))->not->toBeNull();
 
     $this->withHeader('Authorization', 'Bearer '.$token)
         ->getJson('/api/v1/me')
@@ -275,6 +279,21 @@ it('does not leave a usable challenge behind when delivery fails', function (): 
         ->assertJsonPath('errors.code', 'OTP_NOT_DELIVERED');
 
     expect(OtpChallenge::query()->whereNull('consumed_at')->count())->toBe(0);
+});
+
+it('records no consent for a number that was only typed', function (): void {
+    $user = User::factory()->create(['email' => 'quiet@example.mw']);
+    $token = $user->createToken('auth-token')->plainTextToken;
+
+    // A code is requested against the account, then abandoned. Nothing about the
+    // number may stick: no number, no verified mark, no consent.
+    $this->withHeader('Authorization', 'Bearer '.$token)
+        ->postJson('/api/v1/auth/otp/start', ['phone' => '0991234567', 'purpose' => 'link'])
+        ->assertOk();
+
+    expect($user->fresh()->phone_e164)->toBeNull()
+        ->and($user->fresh()->phone_verified_at)->toBeNull()
+        ->and($user->fresh()->whatsapp_opt_in_at)->toBeNull();
 });
 
 it('stores the code as a hash, not as digits', function (): void {

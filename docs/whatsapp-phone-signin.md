@@ -398,9 +398,17 @@ the app before the sheet opens — the cost is a worse first-run experience.
 ### WhatsApp Business / Meta requirements
 
 - **Opt-in.** Meta's Business Messaging Policy requires consent for
-  business-initiated messages. Asking for a code is the consent for that message;
-  record it — add a line to the sign-up terms ("I agree to receive sign-in codes
-  on WhatsApp at this number") and keep the timestamp.
+  business-initiated messages. Asking for a code is the consent for that message,
+  and it is now recorded rather than assumed:
+  - the sheet says so on the screen where the number is given — *"By continuing
+    you agree to receive sign-in codes from Kuphanda on WhatsApp at this
+    number"* — for sign-up and for linking;
+  - `users.whatsapp_opt_in_at` is written the moment a code proves the number,
+    never on a number that was merely typed;
+  - `GET /api/v1/me` exposes `whatsapp_opt_in` and `whatsapp_opt_in_at`, so
+    support can answer "when did they agree?" without opening the database.
+  A number that is typed and abandoned leaves the column null — that is asserted
+  in `PhoneAuthTest`.
 - **Template category.** Authentication only. Mixing in a reminder or an offer
   gets the template rejected or the number restricted.
 - **Number hygiene.** The business number cannot be one already on WhatsApp, and

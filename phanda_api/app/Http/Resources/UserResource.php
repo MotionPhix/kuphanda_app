@@ -33,6 +33,10 @@ final class UserResource extends JsonResource
             // with WhatsApp" is a thing this account can do.
             'phone' => $this->phone_e164,
             'phone_verified' => $this->phone_verified_at !== null,
+            // The consent record behind the codes. Exposed so support can answer
+            // "when did this learner agree?" without opening the database.
+            'whatsapp_opt_in' => $this->whatsapp_opt_in_at !== null,
+            'whatsapp_opt_in_at' => $this->whatsapp_opt_in_at?->toIso8601String(),
             'plan' => $this->plan->value,
             'role' => $this->role,
             'form' => $this->form,

@@ -283,9 +283,13 @@ final class AuthController extends ApiController
                 ]);
             }
 
+            // Consent is recorded with the number, at the moment the code came
+            // back. Meta's policy wants opt-in for business-initiated messages,
+            // and this timestamp is the evidence that it existed.
             $current->forceFill([
                 'phone_e164' => $phone,
                 'phone_verified_at' => now(),
+                'whatsapp_opt_in_at' => $current->whatsapp_opt_in_at ?? now(),
             ])->save();
 
             $otp->consume($challenge);
@@ -323,7 +327,11 @@ final class AuthController extends ApiController
                 'phone_e164' => $phone,
             ]);
 
-            $user->forceFill(['phone_verified_at' => now()])->save();
+            $user->forceFill([
+                'phone_verified_at' => now(),
+                'whatsapp_opt_in_at' => now(),
+            ])->save();
+
             $otp->consume($challenge);
 
             $token = $user->createToken('auth-token')->plainTextToken;
