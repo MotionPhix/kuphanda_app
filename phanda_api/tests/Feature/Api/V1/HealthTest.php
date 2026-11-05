@@ -70,6 +70,30 @@ it('reports google sign-in as configured once a client id is present', function 
         ->assertJsonPath('features.google_sign_in', true);
 });
 
+// Two tests, not one with a refresh: the sender is resolved once per request
+// from configuration, and the in-memory database does not survive an app
+// reboot. A fresh test gets a fresh container without either problem.
+it('reports phone sign-in as off when WhatsApp is not configured', function (): void {
+    $this->getJson('/api/v1/health')
+        ->assertOk()
+        ->assertJsonPath('features.whatsapp_otp.configured', false)
+        ->assertJsonPath('features.whatsapp_otp.transport', 'none');
+});
+
+it('reports phone sign-in as configured once the credentials exist', function (): void {
+    config([
+        'services.whatsapp.phone_number_id' => '1339113705962983',
+        'services.whatsapp.token' => 'EAAP7Q5r-token',
+        'services.whatsapp.template' => 'kuphanda_auth_code',
+    ]);
+
+    $this->getJson('/api/v1/health')
+        ->assertOk()
+        ->assertJsonPath('features.whatsapp_otp.configured', true)
+        ->assertJsonPath('features.whatsapp_otp.transport', 'whatsapp_cloud_api')
+        ->assertJsonPath('features.whatsapp_otp.template', 'kuphanda_auth_code');
+});
+
 it('reports the commit recorded at deploy time', function (): void {
     $path = storage_path('app/current-commit');
     @unlink($path);
@@ -84,4 +108,3 @@ it('reports the commit recorded at deploy time', function (): void {
         @unlink($path);
     }
 })->group('health');
-

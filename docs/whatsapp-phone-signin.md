@@ -461,6 +461,32 @@ second identity for the same person.
 
 ---
 
+## 9a. Moving from the test number to the school's own number
+
+The test number proves the pipe; it is not the sender learners should see. When
+the production SIM arrives, this is the whole switch:
+
+1. **Confirm it is free of WhatsApp.** The number must not be registered to
+   WhatsApp Messenger or the Business app. If it is on the Business app, remove
+   that account first — the deletion is permanent for that number's chat history.
+   A number that has never been on WhatsApp needs nothing.
+2. **Add it to the WABA** — WhatsApp Manager → Phone numbers → Add phone number.
+   Display name: `Kuphanda`. Meta reviews this, and it is what learners see above
+   the code. The business portfolio is Ultrashots; if review asks for the link
+   between the two, `https://kuphanda.com` is the evidence.
+3. **Verify** by SMS or voice — only the person holding the handset can do this.
+4. **Copy its Phone number ID** — a different id from the test number's. The
+   display number will not work in its place.
+5. **Change one value** in `.env`: `WHATSAPP_PHONE_NUMBER_ID=<new id>`, then
+   `php artisan config:clear && php artisan config:cache`.
+6. **Re-run the checks:** `php artisan whatsapp:check` then
+   `php artisan whatsapp:check --send=0888267278`.
+7. **Recreate the template only if the language or expiry changes.** Templates
+   belong to the WABA, not the number, so the one already approved keeps working.
+
+Keep the test number in the WABA afterwards. It costs nothing idle, and it is a
+useful second sender if the production number is ever disputed or ported.
+
 ## 10. Rollout
 
 1. Deploy with the env values **empty** first — everything else ships, phone
