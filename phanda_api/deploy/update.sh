@@ -54,6 +54,7 @@ if ! grep -q '^WHATSAPP_PHONE_NUMBER_ID=' .env 2>/dev/null; then
     {
       printf '\n# WhatsApp Cloud API — phone sign-in codes\n'
       printf 'WHATSAPP_PHONE_NUMBER_ID=%s\n' "$WHATSAPP_PHONE_NUMBER_ID_"
+      printf 'WHATSAPP_BUSINESS_ACCOUNT_ID=%s\n' "${WHATSAPP_BUSINESS_ACCOUNT_ID_:-}"
       printf 'WHATSAPP_TOKEN=%s\n' "$WHATSAPP_TOKEN_"
       printf 'WHATSAPP_OTP_TEMPLATE=%s\n' "${WHATSAPP_OTP_TEMPLATE_:-kuphanda_auth_code}"
       printf 'WHATSAPP_OTP_LANGUAGE=%s\n' "${WHATSAPP_OTP_LANGUAGE_:-en_US}"
@@ -65,7 +66,15 @@ if ! grep -q '^WHATSAPP_PHONE_NUMBER_ID=' .env 2>/dev/null; then
     echo "WHATSAPP_* not set — phone sign-in will answer 503 (email and Google still work)"
   fi
 else
-  echo "WHATSAPP_* already set"
+  # "Already set" is not the same as "will work": a block with a key but no value
+  # survives a grep and still leaves phone sign-in answering 503. Say which it is.
+  if grep -q '^WHATSAPP_TOKEN=.\+' .env 2>/dev/null \
+    && grep -q '^WHATSAPP_PHONE_NUMBER_ID=.\+' .env 2>/dev/null \
+    && grep -q '^WHATSAPP_OTP_TEMPLATE=.\+' .env 2>/dev/null; then
+    echo "WhatsApp credentials present"
+  else
+    echo "WhatsApp block present but incomplete — phone sign-in will answer 503"
+  fi
 fi
 
 # Mailtrap's sandbox is not reachable from this host, so an smtp mailer with

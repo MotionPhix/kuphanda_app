@@ -124,6 +124,19 @@ take sign-in with it, at night, with no warning.
   otherwise Meta rejects the send with a parameter-count error.
 - Submit. Approval is usually minutes, occasionally a day.
 
+**Or skip the console entirely.** The authentication body is not editable in the
+UI, and its language picker mis-selects under automation, so the command below is
+the reliable path — it posts Meta's documented shape and is safe to re-run:
+
+```bash
+php artisan whatsapp:template                 # idempotent; reports an existing one
+php artisan whatsapp:template --language=en_GB
+```
+
+It sets `code_expiration_minutes` from the same TTL the backend enforces, so the
+window WhatsApp applies and the window `OtpService` applies cannot drift apart.
+If you raise `OTP_TTL_MINUTES`, recreate the template.
+
 Write down the exact name and language — a mismatch with `.env` is `132001`.
 
 ### A6. Test the pipe before touching the app
