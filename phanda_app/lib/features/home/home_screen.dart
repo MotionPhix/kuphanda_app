@@ -27,6 +27,12 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final theme = Theme.of(context);
+    // A strip card is a fixed cover plus two lines of text. At a larger text
+    // size the text needs more room than 272dp leaves, and the card overflowed
+    // instead of growing — so the strip grows with the reader's setting.
+    final stripHeight =
+        272.0 +
+        (MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6) - 1) * 110;
     final continueReading = state.continueReading.take(6).toList();
     final dueSoon = state.upcomingAssignments.take(3).toList();
     final recommended = state.recommended(limit: 8);
@@ -85,7 +91,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
-                        height: 272,
+                        height: stripHeight,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: continueReading.length,
@@ -120,7 +126,7 @@ class HomeScreen extends StatelessWidget {
                       )
                     else
                       SizedBox(
-                        height: 272,
+                        height: stripHeight,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: recommended.length,
@@ -152,7 +158,7 @@ class HomeScreen extends StatelessWidget {
                       )
                     else
                       SizedBox(
-                        height: 272,
+                        height: stripHeight,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: guides.length,
@@ -390,18 +396,29 @@ class _HeaderStat extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: [
-              Text(
-                value,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontSize: 24,
+              // The pill is 111dp wide on a 360dp phone. At a large text size
+              // the number alone ate the label's room and pushed the row past
+              // its edge, so it scales down rather than overflowing.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 2,
+                  // Three lines: at 1.3x text the label read "days to …", which
+                  // removes the one piece of information the pill exists for.
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.8),
@@ -437,32 +454,38 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickAction(
-            icon: Icons.search_rounded,
-            label: 'Find a paper',
-            onTap: onBrowse,
+    // IntrinsicHeight, not a bare Row: the row sits in a scrolling column, so
+    // stretching its children without a height would hand them infinity.
+    // With it, a label that wraps to two lines makes all three cards match.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _QuickAction(
+              icon: Icons.search_rounded,
+              label: 'Find a paper',
+              onTap: onBrowse,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _QuickAction(
-            icon: Icons.download_for_offline_outlined,
-            label: 'Downloads',
-            onTap: onImport,
+          const SizedBox(width: 10),
+          Expanded(
+            child: _QuickAction(
+              icon: Icons.download_for_offline_outlined,
+              label: 'Downloads',
+              onTap: onImport,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _QuickAction(
-            icon: Icons.groups_outlined,
-            label: 'My classes',
-            onTap: onClasses,
+          const SizedBox(width: 10),
+          Expanded(
+            child: _QuickAction(
+              icon: Icons.groups_outlined,
+              label: 'My classes',
+              onTap: onClasses,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -488,12 +511,17 @@ class _QuickAction extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: theme.colorScheme.primary),
           const SizedBox(height: 6),
+          // Two lines, not one: at 1.3x text "Downloads" and "Find a paper"
+          // both ellipsised to nonsense ("Downloa…"), and these are the only
+          // words naming the action.
           Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
+            textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
+              height: 1.15,
             ),
           ),
         ],
@@ -521,14 +549,30 @@ class _WeeklyCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Two flexible labels rather than a Spacer: at a large text size the
+          // pair needs more than the card's 290dp and used to run over the edge.
           Row(
             children: [
-              Text('This week', style: theme.textTheme.titleSmall),
-              const Spacer(),
-              Text(
-                '${formatMinutes(stats.weekMinutes)} / ${formatMinutes(stats.weeklyGoalMinutes)}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'This week',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                flex: 4,
+                child: Text(
+                  '${formatMinutes(stats.weekMinutes)} / ${formatMinutes(stats.weeklyGoalMinutes)}',
+                  maxLines: 1,
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -554,9 +598,14 @@ class _WeeklyCard extends StatelessWidget {
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    '$readCount ${readCount == 1 ? 'document' : 'documents'} finished',
-                    style: theme.textTheme.bodySmall,
+                  // Flexible, because a Wrap child still gets the full line
+                  // width: without it this label alone overflowed the card.
+                  Flexible(
+                    child: Text(
+                      '$readCount ${readCount == 1 ? 'document' : 'documents'} finished',
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ),
                 ],
               ),
@@ -569,9 +618,12 @@ class _WeeklyCard extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    '${stats.todayMinutes} min today',
-                    style: theme.textTheme.bodySmall,
+                  Flexible(
+                    child: Text(
+                      '${stats.todayMinutes} min today',
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ),
                 ],
               ),

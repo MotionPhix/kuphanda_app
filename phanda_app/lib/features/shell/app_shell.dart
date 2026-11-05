@@ -14,7 +14,13 @@ import 'app_sidebar.dart';
 
 /// One destination in the shell: the screen, its label and the group it sits in.
 class _Destination {
-  const _Destination(this.label, this.section, this.icon, this.selectedIcon, this.screen);
+  const _Destination(
+    this.label,
+    this.section,
+    this.icon,
+    this.selectedIcon,
+    this.screen,
+  );
 
   final String label;
   final String section;
@@ -83,7 +89,10 @@ class _AppShellState extends State<AppShell> {
         'Study',
         Icons.home_outlined,
         Icons.home_rounded,
-        HomeScreen(onNavigate: _goTo, onOpenProfile: () => openProfile(context)),
+        HomeScreen(
+          onNavigate: _goTo,
+          onOpenProfile: () => openProfile(context),
+        ),
       ),
       _Destination(
         'Library',
@@ -120,7 +129,9 @@ class _AppShellState extends State<AppShell> {
     final grouped = <String, List<SidebarDestination>>{};
     for (var i = 0; i < destinations.length; i++) {
       final destination = destinations[i];
-      grouped.putIfAbsent(destination.section, () => []).add(
+      grouped
+          .putIfAbsent(destination.section, () => [])
+          .add(
             SidebarDestination(
               destination.label,
               destination.icon,
@@ -130,7 +141,8 @@ class _AppShellState extends State<AppShell> {
           );
     }
     return [
-      for (final entry in grouped.entries) SidebarSection(entry.key, entry.value),
+      for (final entry in grouped.entries)
+        SidebarSection(entry.key, entry.value),
     ];
   }
 
@@ -152,17 +164,23 @@ class _AppShellState extends State<AppShell> {
     if (size == ScreenSize.compact) {
       return Scaffold(
         body: SafeArea(bottom: false, child: content),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: _goTo,
-          destinations: [
-            for (final destination in destinations)
-              NavigationDestination(
-                icon: Icon(destination.icon),
-                selectedIcon: Icon(destination.selectedIcon),
-                label: destination.label,
-              ),
-          ],
+        // The five destinations share 72dp each. At 1.3x text "Progress" broke
+        // across two lines and spilled out of the bar, so the chrome is clamped
+        // while the content keeps the reader's full text size.
+        bottomNavigationBar: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.2,
+          child: NavigationBar(
+            selectedIndex: index,
+            onDestinationSelected: _goTo,
+            destinations: [
+              for (final destination in destinations)
+                NavigationDestination(
+                  icon: Icon(destination.icon),
+                  selectedIcon: Icon(destination.selectedIcon),
+                  label: destination.label,
+                ),
+            ],
+          ),
         ),
       );
     }

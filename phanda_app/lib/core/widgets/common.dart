@@ -13,7 +13,9 @@ class BrandMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final background = light ? Colors.white.withValues(alpha: 0.16) : AppColors.greenSoft;
+    final background = light
+        ? Colors.white.withValues(alpha: 0.16)
+        : AppColors.greenSoft;
 
     return Semantics(
       label: 'Kuphanda',
@@ -24,7 +26,9 @@ class BrandMark extends StatelessWidget {
           color: background,
           borderRadius: BorderRadius.circular(size * 0.28),
           border: Border.all(
-            color: light ? Colors.white.withValues(alpha: 0.28) : AppColors.green.withValues(alpha: 0.2),
+            color: light
+                ? Colors.white.withValues(alpha: 0.28)
+                : AppColors.green.withValues(alpha: 0.2),
           ),
         ),
         child: Stack(
@@ -158,18 +162,27 @@ class SectionHeader extends StatelessWidget {
     return Padding(
       padding: padding,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // Top-aligned: when the title wraps at a large text size, a centred
+        // action ends up level with the second line and reads as an overlap.
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: theme.textTheme.titleMedium?.copyWith(fontSize: 17)),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 17),
+                ),
                 if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       subtitle!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -184,7 +197,13 @@ class SectionHeader extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(actionLabel!),
+                  Flexible(
+                    child: Text(
+                      actionLabel!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const SizedBox(width: 2),
                   const Icon(Icons.chevron_right_rounded, size: 18),
                 ],
@@ -231,7 +250,11 @@ class Pill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: compact ? 12 : 14, color: filled ? Colors.white : tint),
+            Icon(
+              icon,
+              size: compact ? 12 : 14,
+              color: filled ? Colors.white : tint,
+            ),
             const SizedBox(width: 4),
           ],
           // A pill is often the widest thing in a narrow column: the profile
@@ -279,17 +302,17 @@ class InfoBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final (background, foreground) = switch (tone) {
       BannerTone.info => (
-          theme.colorScheme.primary.withValues(alpha: 0.07),
-          theme.colorScheme.primary,
-        ),
+        theme.colorScheme.primary.withValues(alpha: 0.07),
+        theme.colorScheme.primary,
+      ),
       BannerTone.warning => (
-          AppColors.sun.withValues(alpha: 0.14),
-          const Color(0xFF7A5200),
-        ),
+        AppColors.sun.withValues(alpha: 0.14),
+        const Color(0xFF7A5200),
+      ),
       BannerTone.locked => (
-          theme.colorScheme.tertiary.withValues(alpha: 0.08),
-          theme.colorScheme.tertiary,
-        ),
+        theme.colorScheme.tertiary.withValues(alpha: 0.08),
+        theme.colorScheme.tertiary,
+      ),
     };
 
     return Container(
@@ -311,7 +334,9 @@ class InfoBanner extends StatelessWidget {
                 if (title != null) ...[
                   Text(
                     title!,
-                    style: theme.textTheme.labelLarge?.copyWith(color: foreground),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: foreground,
+                    ),
                   ),
                   const SizedBox(height: 2),
                 ],
@@ -388,7 +413,11 @@ class EmptyState extends StatelessWidget {
             child: Icon(icon, color: theme.colorScheme.primary, size: 22),
           ),
           const SizedBox(height: 12),
-          Text(title, style: theme.textTheme.titleSmall, textAlign: TextAlign.center),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 4),
           Text(
             message,
@@ -528,13 +557,17 @@ class AppCard extends StatelessWidget {
       borderRadius: radius,
       child: InkWell(
         onTap: onTap,
-        mouseCursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click,
+        mouseCursor: onTap == null
+            ? MouseCursor.defer
+            : SystemMouseCursors.click,
         borderRadius: radius,
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
             borderRadius: radius,
-            border: Border.all(color: borderColor ?? theme.colorScheme.outlineVariant),
+            border: Border.all(
+              color: borderColor ?? theme.colorScheme.outlineVariant,
+            ),
           ),
           child: child,
         ),
@@ -569,7 +602,9 @@ class KeyValueRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -591,7 +626,10 @@ Future<bool> confirmAction(
       title: Text(title),
       content: Text(message),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
           style: destructive
@@ -618,7 +656,9 @@ void showSnack(BuildContext context, String message, {bool error = false}) {
         content: Row(
           children: [
             Icon(
-              error ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+              error
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
               size: 18,
               color: error ? Colors.white : Colors.white,
             ),
@@ -647,7 +687,11 @@ class TextControllers extends StatefulWidget {
 
   /// One entry per controller, holding its starting text.
   final List<String> initialTexts;
-  final Widget Function(BuildContext context, List<TextEditingController> controllers) builder;
+  final Widget Function(
+    BuildContext context,
+    List<TextEditingController> controllers,
+  )
+  builder;
 
   @override
   State<TextControllers> createState() => _TextControllersState();
