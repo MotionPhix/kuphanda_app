@@ -37,7 +37,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (document == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('This document is no longer in your library.')),
+        body: const Center(
+          child: Text('This document is no longer in your library.'),
+        ),
       );
     }
 
@@ -56,18 +58,30 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             tooltip: entry.saved ? 'Remove from saved' : 'Save',
             onPressed: () => state.toggleSaved(document.id),
             icon: Icon(
-              entry.saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              entry.saved
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
             ),
           ),
           PopupMenuButton<String>(
             onSelected: (value) => _handleMenu(context, state, document, value),
             itemBuilder: (context) => [
-              if (document.personal) const PopupMenuItem(value: 'edit', child: Text('Edit details')),
-              if (entry.onDevice && !(entry.asset?.isBundled ?? false))
-                const PopupMenuItem(value: 'remove-file', child: Text('Remove file from device')),
               if (document.personal)
-                const PopupMenuItem(value: 'delete', child: Text('Delete document')),
-              const PopupMenuItem(value: 'pass', child: Text('About the library pass')),
+                const PopupMenuItem(value: 'edit', child: Text('Edit details')),
+              if (entry.onDevice && !(entry.asset?.isBundled ?? false))
+                const PopupMenuItem(
+                  value: 'remove-file',
+                  child: Text('Remove file from device'),
+                ),
+              if (document.personal)
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete document'),
+                ),
+              const PopupMenuItem(
+                value: 'pass',
+                child: Text('About the library pass'),
+              ),
             ],
           ),
         ],
@@ -119,27 +133,37 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                     color: subject.color,
                                   ),
                                   Pill(
-                                    label: 'Form ${document.form} · ${document.qualification}',
+                                    label:
+                                        'Form ${document.form} · ${document.qualification}',
                                     compact: true,
                                   ),
                                   if (state.priceFor(document.id) > 0 && locked)
                                     Pill(
-                                      label: formatMwk(state.priceFor(document.id)),
+                                      label: formatMwk(
+                                        state.priceFor(document.id),
+                                      ),
                                       icon: Icons.sell_outlined,
                                       color: AppColors.red,
                                       compact: true,
                                     ),
                                   if (document.year != null)
-                                    Pill(label: '${document.year}', compact: true),
+                                    Pill(
+                                      label: '${document.year}',
+                                      compact: true,
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              if (document.ratingCount > 0 || entry.rating != null)
+                              if (document.ratingCount > 0 ||
+                                  entry.rating != null)
                                 Row(
                                   children: [
                                     for (var index = 1; index <= 5; index++)
                                       Icon(
-                                        index <= state.averageRating(document).round()
+                                        index <=
+                                                state
+                                                    .averageRating(document)
+                                                    .round()
                                             ? Icons.star_rounded
                                             : Icons.star_border_rounded,
                                         size: 16,
@@ -149,9 +173,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                     Text(
                                       '${state.averageRating(document).toStringAsFixed(1)} '
                                       '(${document.ratingCount + (entry.rating == null ? 0 : 1)})',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -177,9 +204,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     title: 'Premium document · ${document.accessTier.label}',
                     message: state.priceFor(document.id) > 0
                         ? 'Subscribe for full access, or buy this document alone for '
-                            '${formatMwk(state.priceFor(document.id))}. Payment is handled by PayChangu.'
+                              '${formatMwk(state.priceFor(document.id))}. Payment is handled by PayChangu.'
                         : 'This document is included in a paid subscription. Free papers and '
-                            'guides stay open without an account.',
+                              'guides stay open without an account.',
                     actionLabel: 'View plans & prices',
                     onAction: () => _openPass(context),
                   ),
@@ -193,8 +220,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   progress: progress,
                   locked: locked,
                   busy: _busy,
-                   onRead: () => _openReader(context, state, document, entry, guide),
-                   onDownload: () => _download(context, state, document),
+                  onRead: () =>
+                      _openReader(context, state, document, entry, guide),
+                  onDownload: () => _download(context, state, document),
                   onPass: () => _openPass(context),
                 ),
                 if (state.hasRemoteFile(document.id)) ...[
@@ -216,23 +244,27 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   onMarks: () => setState(() => _tab = 1),
                 ),
                 const SizedBox(height: 24),
-                _Tabs(value: _tab, onChanged: (value) => setState(() => _tab = value)),
+                _Tabs(
+                  value: _tab,
+                  onChanged: (value) => setState(() => _tab = value),
+                ),
                 const SizedBox(height: 18),
                 switch (_tab) {
                   0 => _Overview(
-                      state: state,
-                      document: document,
-                      subject: subject,
-                      guide: guide,
-                      entry: entry,
-                      onOpenSection: (index) => _openGuide(context, document, index),
-                      onRate: (stars) => state.rateDocument(document.id, stars),
-                    ),
+                    state: state,
+                    document: document,
+                    subject: subject,
+                    guide: guide,
+                    entry: entry,
+                    onOpenSection: (index) =>
+                        _openGuide(context, document, index),
+                    onRate: (stars) => state.rateDocument(document.id, stars),
+                  ),
                   1 => _MarksTab(
-                      state: state,
-                      document: document,
-                      onAddNote: () => _addNote(context, state, document),
-                    ),
+                    state: state,
+                    document: document,
+                    onAddNote: () => _addNote(context, state, document),
+                  ),
                   _ => _RelatedTab(state: state, document: document),
                 },
                 const SizedBox(height: 16),
@@ -256,14 +288,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       case 'remove-file':
         final confirmed = await confirmAction(
           context,
-           title: 'Remove the file?',
-           message: 'The document stays in your library and your progress is kept. '
-               'Add the file again whenever you want it on this phone.',
+          title: 'Remove the file?',
+          message:
+              'The document stays in your library and your progress is kept. '
+              'Add the file again whenever you want it on this phone.',
           confirmLabel: 'Remove',
         );
         if (confirmed) {
           await state.removeFile(document.id);
-          if (context.mounted) showSnack(context, 'File removed from this device.');
+          if (context.mounted) {
+            showSnack(context, 'File removed from this device.');
+          }
         }
       case 'delete':
         final confirmed = await confirmAction(
@@ -281,7 +316,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     }
   }
 
-  Future<void> _editDetails(BuildContext context, AppState state, Document document) async {
+  Future<void> _editDetails(
+    BuildContext context,
+    AppState state,
+    Document document,
+  ) async {
     var subjectId = document.subjectId;
     var form = document.form;
     var kind = document.kind;
@@ -294,101 +333,110 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       builder: (sheetContext) => TextControllers(
         initialTexts: [document.title],
         builder: (sheetContext, controllers) => StatefulBuilder(
-        builder: (sheetContext, setSheetState) => SheetBody(
-          title: 'Edit document',
-          actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(sheetContext),
-                child: const Text('Cancel'),
+          builder: (sheetContext, setSheetState) => SheetBody(
+            title: 'Edit document',
+            actions: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: const Text('Cancel'),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FilledButton(
-                onPressed: () async {
-                  await state.updatePersonalDocument(
-                    document.id,
-                    title: controllers.first.text,
-                    subjectId: subjectId,
-                    form: form,
-                    kind: kind,
-                  );
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
-                },
-                child: const Text('Save'),
-              ),
-            ),
-          ],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: controllers.first,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              const SizedBox(height: 16),
-              Text('Subject', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final subject in kSubjects)
-                    ChoiceChip(
-                      label: Text(subject.shortName),
-                      selected: subjectId == subject.id,
-                      onSelected: (_) => setSheetState(() => subjectId = subject.id),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text('Form', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final option in <int>[1, 2, 3, 4])
-                    ChoiceChip(
-                      label: Text('Form $option'),
-                      selected: form == option,
-                      onSelected: (_) => setSheetState(() => form = option),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text('Type', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final option in DocumentKind.values)
-                    ChoiceChip(
-                      label: Text(option.label),
-                      selected: kind == option,
-                      onSelected: (_) => setSheetState(() => kind = option),
-                    ),
-                ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () async {
+                    await state.updatePersonalDocument(
+                      document.id,
+                      title: controllers.first.text,
+                      subjectId: subjectId,
+                      form: form,
+                      kind: kind,
+                    );
+                    if (sheetContext.mounted) Navigator.pop(sheetContext);
+                  },
+                  child: const Text('Save'),
+                ),
               ),
             ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: controllers.first,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                const SizedBox(height: 16),
+                Text('Subject', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final subject in kSubjects)
+                      ChoiceChip(
+                        label: Text(subject.shortName),
+                        selected: subjectId == subject.id,
+                        onSelected: (_) =>
+                            setSheetState(() => subjectId = subject.id),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text('Form', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final option in <int>[1, 2, 3, 4])
+                      ChoiceChip(
+                        label: Text('Form $option'),
+                        selected: form == option,
+                        onSelected: (_) => setSheetState(() => form = option),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text('Type', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final option in DocumentKind.values)
+                      ChoiceChip(
+                        label: Text(option.label),
+                        selected: kind == option,
+                        onSelected: (_) => setSheetState(() => kind = option),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
   }
 
-  Future<void> _download(BuildContext context, AppState state, Document document) async {
+  Future<void> _download(
+    BuildContext context,
+    AppState state,
+    Document document,
+  ) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
       await state.markForOffline(document.id);
-      if (context.mounted) showSnack(context, 'Downloaded. You can read it without internet.');
+      if (context.mounted) {
+        showSnack(context, 'Downloaded. You can read it without internet.');
+      }
     } on ApiException catch (error) {
       if (context.mounted) showSnack(context, error.message, error: true);
     } catch (error) {
-      if (context.mounted) showSnack(context, 'Download failed: $error', error: true);
+      if (context.mounted) {
+        showSnack(context, 'Download failed: $error', error: true);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -402,7 +450,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final confirmed = await confirmAction(
       context,
       title: 'Remove the offline copy?',
-      message: 'The document stays in the catalogue. Your reading progress and notes are kept. '
+      message:
+          'The document stays in the catalogue. Your reading progress and notes are kept. '
           'You can download it again while your subscription is active.',
       confirmLabel: 'Remove download',
     );
@@ -434,10 +483,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (document.hasBlocks) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => BlockReaderScreen(
-            documentId: document.id,
-            title: document.title,
-          ),
+          builder: (_) =>
+              BlockReaderScreen(documentId: document.id, title: document.title),
         ),
       );
       return;
@@ -464,12 +511,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   void _openGuide(BuildContext context, Document document, int page) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => GuideReaderScreen(documentId: document.id, initialSection: page),
+        builder: (_) =>
+            GuideReaderScreen(documentId: document.id, initialSection: page),
       ),
     );
   }
 
-  Future<void> _addNote(BuildContext context, AppState state, Document document) async {
+  Future<void> _addNote(
+    BuildContext context,
+    AppState state,
+    Document document,
+  ) async {
     final progress = state.progressOrDefault(document);
 
     // A purpose-built composer instead of the generic sheet: the sheet grows to
@@ -483,80 +535,85 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       builder: (sheetContext) => TextControllers(
         initialTexts: ['${progress.currentPage}', ''],
         builder: (sheetContext, controllers) {
-        final controller = controllers[1];
-        final pageController = controllers[0];
-        final theme = Theme.of(sheetContext);
+          final controller = controllers[1];
+          final pageController = controllers[0];
+          final theme = Theme.of(sheetContext);
 
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Add a note', style: theme.textTheme.titleLarge),
-                const SizedBox(height: 4),
-                Text(
-                  'Notes stay on this phone and are listed with the document.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: 120,
-                  child: TextField(
-                    controller: pageController,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Page'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
-                  minLines: 3,
-                  maxLines: 5,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.sentences,
-                  keyboardType: TextInputType.multiline,
-                  decoration: const InputDecoration(
-                    hintText: 'What do you want to remember?',
-                    alignLabelWithHint: true,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(sheetContext),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () async {
-                          final page = int.tryParse(pageController.text) ??
-                              progress.currentPage;
-                          await state.addNote(document.id, page, controller.text);
-                          if (sheetContext.mounted) {
-                            Navigator.pop(sheetContext);
-                          }
-                        },
-                        child: const Text('Save note'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
             ),
-          ),
-        );
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Add a note', style: theme.textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Notes stay on this phone and are listed with the document.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: 120,
+                    child: TextField(
+                      controller: pageController,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: 'Page'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    minLines: 3,
+                    maxLines: 5,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.sentences,
+                    keyboardType: TextInputType.multiline,
+                    decoration: const InputDecoration(
+                      hintText: 'What do you want to remember?',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () async {
+                            final page =
+                                int.tryParse(pageController.text) ??
+                                progress.currentPage;
+                            await state.addNote(
+                              document.id,
+                              page,
+                              controller.text,
+                            );
+                            if (sheetContext.mounted) {
+                              Navigator.pop(sheetContext);
+                            }
+                          },
+                          child: const Text('Save note'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
         },
       ),
     );
@@ -629,10 +686,8 @@ class _DocumentActionBar extends StatelessWidget {
     );
   }
 
-  Widget _divider(ThemeData theme) => Container(
-        width: 1,
-        color: theme.colorScheme.outlineVariant,
-      );
+  Widget _divider(ThemeData theme) =>
+      Container(width: 1, color: theme.colorScheme.outlineVariant);
 }
 
 class _Segment extends StatelessWidget {
@@ -729,7 +784,8 @@ class _PrimaryActions extends StatelessWidget {
       icon = Icons.lock_open_rounded;
       action = onPass;
     } else if (downloading) {
-      label = 'Downloading ${(state.downloadProgressFor(document.id) * 100).round()}%';
+      label =
+          'Downloading ${(state.downloadProgressFor(document.id) * 100).round()}%';
       icon = Icons.downloading_rounded;
       action = null;
     } else if (isGuide) {
@@ -774,7 +830,10 @@ class _PrimaryActions extends StatelessWidget {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : Icon(icon, size: 19),
           label: Text(label),
@@ -786,7 +845,9 @@ class _PrimaryActions extends StatelessWidget {
             child: LinearProgressIndicator(
               value: state.downloadProgressFor(document.id).clamp(0, 1),
               minHeight: 4,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+              backgroundColor: theme.colorScheme.primary.withValues(
+                alpha: 0.12,
+              ),
             ),
           ),
         ],
@@ -826,18 +887,23 @@ class _OfflineStatusCard extends StatelessWidget {
     switch (offline) {
       case OfflineState.downloading:
         title = 'Downloading';
-        subtitle = '${(state.downloadProgressFor(document.id) * 100).round()}% · '
+        subtitle =
+            '${(state.downloadProgressFor(document.id) * 100).round()}% · '
             'keeps the previous copy until this one is verified';
         action = null;
         break;
       case OfflineState.downloaded:
         title = 'Available offline · v${asset?.version}';
         subtitle = '${asset?.fileName ?? ''} · stored on this phone';
-        action = OutlinedButton(onPressed: onRemove, child: const Text('Remove'));
+        action = OutlinedButton(
+          onPressed: onRemove,
+          child: const Text('Remove'),
+        );
         break;
       case OfflineState.updateAvailable:
         title = 'Update available · v$version';
-        subtitle = 'You are reading v${asset?.version}. The updated file downloads when you refresh.';
+        subtitle =
+            'You are reading v${asset?.version}. The updated file downloads when you refresh.';
         action = FilledButton(
           onPressed: onDownload,
           style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
@@ -855,8 +921,13 @@ class _OfflineStatusCard extends StatelessWidget {
         break;
       case OfflineState.failed:
         title = 'Download failed';
-        subtitle = error ?? 'The file could not be saved. Your previous copy is untouched.';
-        action = OutlinedButton(onPressed: onDownload, child: const Text('Retry'));
+        subtitle =
+            error ??
+            'The file could not be saved. Your previous copy is untouched.';
+        action = OutlinedButton(
+          onPressed: onDownload,
+          child: const Text('Retry'),
+        );
         break;
       case OfflineState.none:
         if (locked) {
@@ -866,7 +937,10 @@ class _OfflineStatusCard extends StatelessWidget {
         } else {
           title = 'Online only';
           subtitle = 'Download it to keep reading when the connection drops.';
-          action = OutlinedButton(onPressed: onDownload, child: const Text('Download'));
+          action = OutlinedButton(
+            onPressed: onDownload,
+            child: const Text('Download'),
+          );
         }
         break;
     }
@@ -911,10 +985,7 @@ class _OfflineStatusCard extends StatelessWidget {
               ],
             ),
           ),
-          if (action != null) ...[
-            const SizedBox(width: 8),
-            action,
-          ],
+          if (action != null) ...[const SizedBox(width: 8), action],
         ],
       ),
     );
@@ -937,7 +1008,11 @@ class _Tabs extends StatelessWidget {
       ),
       child: Row(
         children: [
-          for (final (index, label) in <String>['Overview', 'Marks', 'Related'].indexed)
+          for (final (index, label) in <String>[
+            'Overview',
+            'Marks',
+            'Related',
+          ].indexed)
             Expanded(
               child: TextButton(
                 onPressed: () => onChanged(index),
@@ -945,7 +1020,9 @@ class _Tabs extends StatelessWidget {
                   backgroundColor: value == index
                       ? Theme.of(context).colorScheme.surfaceContainerLowest
                       : Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
                   minimumSize: const Size(0, 38),
                 ),
                 child: Text(label),
@@ -984,17 +1061,34 @@ class _Overview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(document.description, style: theme.textTheme.bodyMedium?.copyWith(height: 1.55)),
+        Text(
+          document.description,
+          style: theme.textTheme.bodyMedium?.copyWith(height: 1.55),
+        ),
         const SizedBox(height: 20),
         if (guide != null) ...[
           Row(
             children: [
-              Text('Contents', style: theme.textTheme.titleSmall),
-              const Spacer(),
-              Text(
-                '${guide!.pageCount} sections · ${formatMinutes(guide!.estimatedMinutes)}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  'Contents',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // The meta line is longer than the title at 1.3x text; without a
+              // flex it simply ran off the right edge of the page.
+              Flexible(
+                child: Text(
+                  '${guide!.pageCount} sections · ${formatMinutes(guide!.estimatedMinutes)}',
+                  maxLines: 1,
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -1004,7 +1098,11 @@ class _Overview extends StatelessWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                for (var index = 0; index < guide!.sections.length; index++) ...[
+                for (
+                  var index = 0;
+                  index < guide!.sections.length;
+                  index++
+                ) ...[
                   ListTile(
                     onTap: () => onOpenSection(index),
                     leading: CircleAvatar(
@@ -1018,7 +1116,10 @@ class _Overview extends StatelessWidget {
                         ),
                       ),
                     ),
-                    title: Text(guide!.sections[index].title, style: theme.textTheme.bodyMedium),
+                    title: Text(
+                      guide!.sections[index].title,
+                      style: theme.textTheme.bodyMedium,
+                    ),
                     subtitle: Text(
                       '${guide!.sections[index].minutes} min · '
                       '${guide!.sections[index].difficultyLabel}',
@@ -1027,7 +1128,10 @@ class _Overview extends StatelessWidget {
                       ),
                     ),
                     trailing: index == progress.currentPage - 1
-                        ? const Icon(Icons.play_circle_outline_rounded, size: 20)
+                        ? const Icon(
+                            Icons.play_circle_outline_rounded,
+                            size: 20,
+                          )
                         : null,
                     dense: true,
                   ),
@@ -1041,16 +1145,30 @@ class _Overview extends StatelessWidget {
         ],
         Row(
           children: [
-            Text('Details', style: theme.textTheme.titleSmall),
-            const Spacer(),
-            Text(
-              entry.onDevice
-                  ? 'Available offline'
-                  : document.hasBlocks
-                      ? 'Structured content'
-                      : 'Not on this phone',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: entry.onDevice ? AppColors.green : theme.colorScheme.onSurfaceVariant,
+            Expanded(
+              child: Text(
+                'Details',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                entry.onDevice
+                    ? 'Available offline'
+                    : document.hasBlocks
+                    ? 'Structured content'
+                    : 'Not on this phone',
+                maxLines: 1,
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: entry.onDevice
+                      ? AppColors.green
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -1061,27 +1179,47 @@ class _Overview extends StatelessWidget {
           child: Column(
             children: [
               KeyValueRow(label: 'Subject', value: subject.name),
-              KeyValueRow(label: 'Form / level', value: 'Form ${document.form} · ${document.qualification}'),
+              KeyValueRow(
+                label: 'Form / level',
+                value: 'Form ${document.form} · ${document.qualification}',
+              ),
               KeyValueRow(label: 'Type', value: document.kind.label),
-              if (document.year != null) KeyValueRow(label: 'Year', value: '${document.year}'),
+              if (document.year != null)
+                KeyValueRow(label: 'Year', value: '${document.year}'),
               if (document.paperNumber != null)
-                KeyValueRow(label: 'Paper', value: 'Paper ${document.paperNumber}'),
-              if (document.session != null) KeyValueRow(label: 'Session', value: document.session!),
+                KeyValueRow(
+                  label: 'Paper',
+                  value: 'Paper ${document.paperNumber}',
+                ),
+              if (document.session != null)
+                KeyValueRow(label: 'Session', value: document.session!),
               if (document.hasBlocks && document.questionCount != null)
-                KeyValueRow(label: 'Questions', value: '${document.questionCount}'),
+                KeyValueRow(
+                  label: 'Questions',
+                  value: '${document.questionCount}',
+                ),
               if (document.displayMarks != null)
-                KeyValueRow(label: 'Total marks', value: '${document.displayMarks}'),
+                KeyValueRow(
+                  label: 'Total marks',
+                  value: '${document.displayMarks}',
+                ),
               if (document.durationMinutes != null)
-                KeyValueRow(label: 'Duration', value: formatMinutes(document.durationMinutes!)),
+                KeyValueRow(
+                  label: 'Duration',
+                  value: formatMinutes(document.durationMinutes!),
+                ),
               // A page count only means something for a PDF.
-              if (!document.hasBlocks) KeyValueRow(label: 'Pages', value: '${document.pages}'),
+              if (!document.hasBlocks)
+                KeyValueRow(label: 'Pages', value: '${document.pages}'),
               KeyValueRow(label: 'Language', value: document.language),
-              if (document.publisher != null) KeyValueRow(label: 'Publisher', value: document.publisher!),
+              if (document.publisher != null)
+                KeyValueRow(label: 'Publisher', value: document.publisher!),
               KeyValueRow(label: 'Added', value: formatDate(document.addedAt)),
               if (entry.asset != null)
                 KeyValueRow(
                   label: 'File',
-                  value: '${entry.asset!.fileName} · ${formatBytes(entry.asset!.sizeBytes)}',
+                  value:
+                      '${entry.asset!.fileName} · ${formatBytes(entry.asset!.sizeBytes)}',
                 ),
             ],
           ),
@@ -1096,7 +1234,9 @@ class _Overview extends StatelessWidget {
                 onPressed: () => onRate(star),
                 tooltip: '$star star${star == 1 ? '' : 's'}',
                 icon: Icon(
-                  star <= (entry.rating ?? 0) ? Icons.star_rounded : Icons.star_border_rounded,
+                  star <= (entry.rating ?? 0)
+                      ? Icons.star_rounded
+                      : Icons.star_border_rounded,
                   color: AppColors.sun,
                 ),
               ),
@@ -1154,14 +1294,17 @@ class _MarksTab extends StatelessWidget {
                 for (var index = 0; index < bookmarks.length; index++) ...[
                   ListTile(
                     leading: const Icon(Icons.bookmark_rounded, size: 20),
-                    title: Text(bookmarks[index].label ?? 'Page ${bookmarks[index].page}'),
+                    title: Text(
+                      bookmarks[index].label ?? 'Page ${bookmarks[index].page}',
+                    ),
                     subtitle: Text(
                       'Page ${bookmarks[index].page} · ${formatRelative(bookmarks[index].createdAt)}',
                       style: theme.textTheme.labelSmall,
                     ),
                     trailing: IconButton(
                       tooltip: 'Remove bookmark',
-                      onPressed: () => state.removeBookmark(bookmarks[index].id),
+                      onPressed: () =>
+                          state.removeBookmark(bookmarks[index].id),
                       icon: const Icon(Icons.close_rounded, size: 18),
                     ),
                     dense: true,
@@ -1200,14 +1343,20 @@ class _MarksTab extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: () => state.removeNote(note.id),
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 18,
+                        ),
                         visualDensity: VisualDensity.compact,
                         tooltip: 'Delete note',
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(note.text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
+                  Text(
+                    note.text,
+                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+                  ),
                 ],
               ),
             ),
@@ -1228,10 +1377,12 @@ class _RelatedTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final related = state.entries
-        .where((entry) =>
-            entry.document.id != document.id &&
-            (entry.document.subjectId == document.subjectId ||
-                entry.document.form == document.form))
+        .where(
+          (entry) =>
+              entry.document.id != document.id &&
+              (entry.document.subjectId == document.subjectId ||
+                  entry.document.form == document.form),
+        )
         .take(6)
         .toList();
 
@@ -1258,6 +1409,3 @@ class _RelatedTab extends StatelessWidget {
     );
   }
 }
-
-
-

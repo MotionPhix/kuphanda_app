@@ -57,7 +57,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     final favoriteSubjects = <Subject>[];
     for (final subject in state.profile.subjects) {
-      if (!favoriteSubjects.any((s) => s.id == subject.id)) favoriteSubjects.add(subject);
+      if (!favoriteSubjects.any((s) => s.id == subject.id)) {
+        favoriteSubjects.add(subject);
+      }
     }
     final quickSubjects = favoriteSubjects.take(5).toList();
 
@@ -107,7 +109,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         : IconButton(
                             tooltip: 'Clear search',
                             icon: const Icon(Icons.close_rounded),
-                            onPressed: () => _update(_query.copyWith(search: '')),
+                            onPressed: () =>
+                                _update(_query.copyWith(search: '')),
                           ),
                   ),
                 ),
@@ -120,18 +123,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       _SubjectChip(
                         label: 'All subjects',
                         selected: _query.subjectIds.isEmpty,
-                        onTap: () => _update(_query.copyWith(subjectIds: <String>{})),
+                        onTap: () =>
+                            _update(_query.copyWith(subjectIds: <String>{})),
                       ),
                       for (final subject in quickSubjects) ...[
                         const SizedBox(width: 8),
                         _SubjectChip(
                           label: subject.name,
                           emoji: subject.emoji,
-                          selected: _query.subjectIds.length == 1 &&
+                          selected:
+                              _query.subjectIds.length == 1 &&
                               _query.subjectIds.contains(subject.id),
                           onTap: () => _update(
                             _query.copyWith(
-                              subjectIds: _query.subjectIds.length == 1 &&
+                              subjectIds:
+                                  _query.subjectIds.length == 1 &&
                                       _query.subjectIds.contains(subject.id)
                                   ? <String>{}
                                   : <String>{subject.id},
@@ -143,10 +149,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       _SubjectChip(
                         label: 'On device',
                         icon: Icons.offline_pin_outlined,
-                        selected: _query.availability == AvailabilityFilter.offline,
+                        selected:
+                            _query.availability == AvailabilityFilter.offline,
                         onTap: () => _update(
                           _query.copyWith(
-                            availability: _query.availability == AvailabilityFilter.offline
+                            availability:
+                                _query.availability ==
+                                    AvailabilityFilter.offline
                                 ? AvailabilityFilter.all
                                 : AvailabilityFilter.offline,
                           ),
@@ -158,17 +167,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Text(
-                      plural(entries.length, 'result'),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    // Flexible pair, not a Spacer: at 1.3x text the count and
+                    // the sort label together ran 98px past the row edge.
+                    Expanded(
+                      child: Text(
+                        plural(entries.length, 'result'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     PopupMenuButton<LibrarySort>(
                       initialValue: _query.sort,
                       tooltip: 'Sort',
-                      onSelected: (sort) => _update(_query.copyWith(sort: sort)),
+                      onSelected: (sort) =>
+                          _update(_query.copyWith(sort: sort)),
                       itemBuilder: (context) => [
                         for (final sort in LibrarySort.values)
                           PopupMenuItem(value: sort, child: Text(sort.label)),
@@ -178,7 +194,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         children: [
                           const Icon(Icons.sort_rounded, size: 18),
                           const SizedBox(width: 4),
-                          Text(_query.sort.label, style: theme.textTheme.labelMedium),
+                          Flexible(
+                            child: Text(
+                              _query.sort.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium,
+                            ),
+                          ),
                           const Icon(Icons.arrow_drop_down_rounded, size: 18),
                         ],
                       ),
@@ -196,13 +219,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         if (_query.search.isNotEmpty)
                           _ActiveFilter(
                             label: '“${_query.search}”',
-                            onRemove: () => _update(_query.copyWith(search: '')),
+                            onRemove: () =>
+                                _update(_query.copyWith(search: '')),
                           ),
                         for (final form in _query.forms)
                           _ActiveFilter(
                             label: 'Form $form',
                             onRemove: () {
-                              final next = Set<int>.from(_query.forms)..remove(form);
+                              final next = Set<int>.from(_query.forms)
+                                ..remove(form);
                               _update(_query.copyWith(forms: next));
                             },
                           ),
@@ -210,7 +235,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           _ActiveFilter(
                             label: subjectById(id).name,
                             onRemove: () {
-                              final next = Set<String>.from(_query.subjectIds)..remove(id);
+                              final next = Set<String>.from(_query.subjectIds)
+                                ..remove(id);
                               _update(_query.copyWith(subjectIds: next));
                             },
                           ),
@@ -218,15 +244,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           _ActiveFilter(
                             label: kind.pluralLabel,
                             onRemove: () {
-                              final next = Set<DocumentKind>.from(_query.kinds)..remove(kind);
+                              final next = Set<DocumentKind>.from(_query.kinds)
+                                ..remove(kind);
                               _update(_query.copyWith(kinds: next));
                             },
                           ),
                         if (_query.availability != AvailabilityFilter.all)
                           _ActiveFilter(
                             label: _query.availability.label,
-                            onRemove: () =>
-                                _update(_query.copyWith(availability: AvailabilityFilter.all)),
+                            onRemove: () => _update(
+                              _query.copyWith(
+                                availability: AvailabilityFilter.all,
+                              ),
+                            ),
                           ),
                         TextButton(
                           onPressed: () => _update(_query.cleared()),
@@ -264,16 +294,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
               ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final entry = entries[index];
-                  return DocumentGridCard(
-                    entry: entry,
-                    onTap: () => openDocument(context, entry.document.id),
-                  );
-                },
-                childCount: entries.length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final entry = entries[index];
+                return DocumentGridCard(
+                  entry: entry,
+                  onTap: () => openDocument(context, entry.document.id),
+                );
+              }, childCount: entries.length),
             ),
           )
         else
@@ -327,7 +354,9 @@ class _SubjectChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
             ),
           ),
           child: Row(
@@ -340,7 +369,9 @@ class _SubjectChip extends StatelessWidget {
                 Icon(
                   icon,
                   size: 14,
-                  color: selected ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                  color: selected
+                      ? Colors.white
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 5),
               ],
@@ -427,7 +458,9 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
                 ChoiceChip(
                   label: Text(option.label),
                   selected: _draft.availability == option,
-                  onSelected: (_) => setState(() => _draft = _draft.copyWith(availability: option)),
+                  onSelected: (_) => setState(
+                    () => _draft = _draft.copyWith(availability: option),
+                  ),
                 ),
             ],
           ),
@@ -441,7 +474,8 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
                 ChoiceChip(
                   label: Text(option.label),
                   selected: _draft.access == option,
-                  onSelected: (_) => setState(() => _draft = _draft.copyWith(access: option)),
+                  onSelected: (_) =>
+                      setState(() => _draft = _draft.copyWith(access: option)),
                 ),
             ],
           ),
@@ -472,7 +506,10 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
             children: [
               for (final subject in kSubjects)
                 FilterChip(
-                  avatar: Text(subject.emoji, style: const TextStyle(fontSize: 12)),
+                  avatar: Text(
+                    subject.emoji,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   label: Text(subject.shortName),
                   selected: _draft.subjectIds.contains(subject.id),
                   onSelected: (selected) {
@@ -508,7 +545,9 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
           RadioGroup<LibrarySort>(
             groupValue: _draft.sort,
             onChanged: (value) {
-              if (value != null) setState(() => _draft = _draft.copyWith(sort: value));
+              if (value != null) {
+                setState(() => _draft = _draft.copyWith(sort: value));
+              }
             },
             child: Column(
               children: [

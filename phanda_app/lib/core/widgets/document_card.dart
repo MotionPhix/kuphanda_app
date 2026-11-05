@@ -32,7 +32,9 @@ class DocumentCover extends StatelessWidget {
     final theme = Theme.of(context);
     final base = subject.color;
     final dark = Color.lerp(base, Colors.black, 0.32)!;
-    final view = document.guideId != null ? 'GUIDE' : document.kind.label.toUpperCase();
+    final view = document.guideId != null
+        ? 'GUIDE'
+        : document.kind.label.toUpperCase();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -98,16 +100,23 @@ class DocumentCover extends StatelessWidget {
                             ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               'F${document.form}',
+                              // A two-character marker on a 138dp cover: scaled
+                              // up it pushed the row past the card edge, and it
+                              // carries no sentence to read.
+                              textScaler: TextScaler.noScaling,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: Colors.white,
-                                fontSize: 8,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -170,7 +179,9 @@ class DocumentTile extends StatelessWidget {
 
     final meta = <String>[
       entry.subject.name,
-      document.kind == DocumentKind.pastPaper ? document.examLabel : document.kind.label,
+      document.kind == DocumentKind.pastPaper
+          ? document.examLabel
+          : document.kind.label,
     ].join('  ·  ');
 
     return Material(
@@ -236,7 +247,9 @@ class DocumentTile extends StatelessWidget {
                           )
                         else if (entry.onDevice)
                           Pill(
-                            label: entry.asset?.isBundled ?? false ? 'Included' : 'Offline',
+                            label: entry.asset?.isBundled ?? false
+                                ? 'Included'
+                                : 'Offline',
                             icon: Icons.offline_pin_outlined,
                             color: AppColors.green,
                             compact: true,
@@ -274,10 +287,14 @@ class DocumentTile extends StatelessWidget {
                             color: AppColors.green,
                             compact: true,
                           ),
-                        if (document.year != null && document.kind != DocumentKind.pastPaper)
+                        if (document.year != null &&
+                            document.kind != DocumentKind.pastPaper)
                           Pill(label: '${document.year}', compact: true),
                         if (document.paperNumber != null)
-                          Pill(label: 'Paper ${document.paperNumber}', compact: true),
+                          Pill(
+                            label: 'Paper ${document.paperNumber}',
+                            compact: true,
+                          ),
                       ],
                     ),
                     if (showProgress && entry.progressPercent > 0) ...[
@@ -287,7 +304,9 @@ class DocumentTile extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: entry.progressPercent / 100,
                           minHeight: 4,
-                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          backgroundColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -322,11 +341,7 @@ class DocumentTile extends StatelessWidget {
 }
 
 class DocumentGridCard extends StatelessWidget {
-  const DocumentGridCard({
-    super.key,
-    required this.entry,
-    required this.onTap,
-  });
+  const DocumentGridCard({super.key, required this.entry, required this.onTap});
 
   final LibraryEntry entry;
   final VoidCallback onTap;
@@ -373,7 +388,10 @@ class DocumentGridCard extends StatelessWidget {
                 document.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(fontSize: 13.5, height: 1.25),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontSize: 13.5,
+                  height: 1.25,
+                ),
               ),
               const SizedBox(height: 3),
               Text(
@@ -397,7 +415,9 @@ class DocumentGridCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   if (entry.locked)
                     Text(
-                      entry.priceMwk > 0 ? formatMwk(entry.priceMwk) : 'Premium',
+                      entry.priceMwk > 0
+                          ? formatMwk(entry.priceMwk)
+                          : 'Premium',
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontSize: 10,
                         color: AppColors.red,
@@ -425,7 +445,11 @@ class DocumentGridCard extends StatelessWidget {
                   if (entry.onDevice)
                     const Padding(
                       padding: EdgeInsets.only(left: 5),
-                      child: Icon(Icons.offline_pin_outlined, size: 13, color: AppColors.green),
+                      child: Icon(
+                        Icons.offline_pin_outlined,
+                        size: 13,
+                        color: AppColors.green,
+                      ),
                     ),
                   const Spacer(),
                   if (entry.progressPercent > 0)
@@ -495,7 +519,11 @@ class DocumentStripCard extends StatelessWidget {
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.lock_outline_rounded, size: 12, color: Colors.white),
+                          child: const Icon(
+                            Icons.lock_outline_rounded,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                   ],
@@ -506,7 +534,10 @@ class DocumentStripCard extends StatelessWidget {
                 document.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(fontSize: 12.5, height: 1.25),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontSize: 12.5,
+                  height: 1.25,
+                ),
               ),
               const SizedBox(height: 3),
               Text(
@@ -525,7 +556,9 @@ class DocumentStripCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: entry.progressPercent / 100,
                     minHeight: 3,
-                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.1,
+                    ),
                   ),
                 ),
               ],

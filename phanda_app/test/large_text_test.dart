@@ -13,6 +13,9 @@ import 'package:kuphanda/data/models/profile.dart';
 import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
+import 'package:kuphanda/data/seed/library_seed.dart';
+import 'package:kuphanda/features/document/document_detail_screen.dart';
+import 'package:kuphanda/features/library/library_screen.dart';
 import 'package:kuphanda/features/shell/app_shell.dart';
 import 'package:kuphanda/state/app_state.dart';
 
@@ -83,8 +86,9 @@ Future<AppState> _state() async {
 /// while pumping, so a failure names the widget rather than a pixel count.
 Future<List<FlutterErrorDetails>> _pumpPhone(
   WidgetTester tester,
-  double scale,
-) async {
+  double scale, {
+  Widget home = const AppShell(),
+}) async {
   tester.view.physicalSize = const Size(720, 1600);
   tester.view.devicePixelRatio = 2.0;
   addTearDown(tester.view.reset);
@@ -100,12 +104,11 @@ Future<List<FlutterErrorDetails>> _pumpPhone(
       child: MaterialApp(
         theme: buildAppTheme(Brightness.light),
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(scale),
-          ),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(scale)),
           child: child!,
         ),
-        home: const AppShell(),
+        home: home,
       ),
     ),
   );
@@ -140,4 +143,24 @@ void main() {
     expect(find.text('Downloads'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);
   });
+
+  testWidgets('the library grid survives 1.3x text', (tester) async {
+    final errors = await _pumpPhone(tester, 1.3, home: const Scaffold(body: LibraryScreen()));
+
+    expect(errors, isEmpty, reason: _describe(errors));
+    expect(find.textContaining('document'), findsWidgets);
+  });
+
+  testWidgets('a document page survives 1.3x text', (tester) async {
+    final id = buildCatalogue().first.id;
+
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: DocumentDetailScreen(documentId: id),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+  });
 }
+
