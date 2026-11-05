@@ -172,6 +172,31 @@ flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
 
 Android emulator: `--dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1`.
 
+### Checking what a server is actually running
+
+A pull is not a deploy: PHP can serve cached bytecode, the checkout can be the
+wrong one, and a new class can be missing from the composer classmap — all of
+which look like "the site ignored the fix". One unauthenticated request answers
+it:
+
+```bash
+curl -s https://app.kuphanda.com/api/v1/health | python -m json.tool
+```
+
+```json
+{
+  "status": "ok",
+  "catalogue": { "published": 27, "readable": 27, "unreadable": 0, "structured": 11 },
+  "features": { "google_sign_in": true, "mail_transport": "log" }
+}
+```
+
+`unreadable` above zero means the catalogue still holds placeholders — run
+`php artisan library:prune --delete`. `google_sign_in: false` means
+`GOOGLE_CLIENT_ID` is missing from that server's config and the app will answer
+503 when someone taps Continue with Google. `mail_transport: "log"` means mail is
+discarded: sign-up succeeds, no email arrives.
+
 ### Pointing at the deployed API
 
 The compiled default is the local development API (`127.0.0.1:8000`), so nothing

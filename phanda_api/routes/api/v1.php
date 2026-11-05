@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\ClassroomController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\DownloadController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OfflineLibraryController;
 use App\Http\Controllers\Api\V1\StaffDocumentController;
@@ -21,6 +22,10 @@ use Illuminate\Support\Facades\Route;
 | Routes for API version 1.
 |
 */
+
+// Deployment health, unauthenticated so an operator can read it with curl
+// straight after a deploy, and throttled so it cannot be used to load the box.
+Route::get('health', HealthController::class)->middleware('throttle:60,1')->name('api.v1.health');
 
 // Public routes with auth rate limiter (5/min - brute force protection)
 Route::middleware('throttle:auth')->group(function (): void {
