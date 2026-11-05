@@ -35,6 +35,10 @@ return [
         // holding the message log. `phone_number_id` is the numeric ID in the app
         // dashboard, not the display number.
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        // The WhatsApp Business Account id (WABA), not the phone number id.
+        // Only used by `php artisan whatsapp:check` to read the template's
+        // approval status; sending works without it.
+        'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
         // Permanent system-user token with whatsapp_business_messaging. Never the
         // 24-hour test token, which expires and takes sign-in with it.
         'token' => env('WHATSAPP_TOKEN'),

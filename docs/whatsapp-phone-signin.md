@@ -54,7 +54,14 @@ Do this first; template approval is the long pole.
    the school's or company's legal name and address — this is what appears in
    Meta's records and on invoices.
 3. **Accounts → WhatsApp accounts → Add** → create a WhatsApp Business Account
-   (WABA).
+   (WABA). Note the WABA id afterwards: it is a separate number from the phone
+   number ID and is easy to lose.
+
+   Confirmed on 5 Nov 2026: the portfolio in use is **Ultrashots**
+   (`business_id=936951391726878`) and it holds **no** WABA yet, so this is the
+   step that starts everything. The working URL is
+   `business.facebook.com/latest/settings/whatsapp_business_presence?business_id=936951391726878`
+   — the older `/latest/settings/whatsapp_accounts` path redirects to home.
 
 ### A2. A phone number for the business
 
@@ -148,6 +155,26 @@ curl -s -X POST \
 `200` with `messages[0].id` means everything downstream will work. Anything else
 — see §8.
 
+### A7. Then let the app check itself
+
+Once the five values are in `.env`, this replaces the curl above and checks each
+layer in the order it can fail:
+
+```bash
+php artisan whatsapp:check                        # config, token, number, template
+php artisan whatsapp:check --send=0991234567      # and one real message
+```
+
+It prints a checklist, never the token, and names the broken layer: a `404`
+means the display number was pasted where the phone number ID belongs, `190`
+means the token expired, a template that exists but is `PENDING` is called out as
+such, and a rejected send prints Meta's code with one plain sentence about what
+to do. Exit code is `0` only when every layer answered.
+
+`--send` bills one authentication message. Use it once.
+
+
+
 ---
 
 ## 4. Part B — Server configuration
@@ -156,6 +183,8 @@ Add to `phanda_api/.env` on the server (values from Part A):
 
 ```dotenv
 WHATSAPP_PHONE_NUMBER_ID=123456789012345
+# WABA id — only read by `whatsapp:check` to verify template approval
+WHATSAPP_BUSINESS_ACCOUNT_ID=987654321098765
 WHATSAPP_TOKEN=EAAG...permanent-system-user-token
 WHATSAPP_OTP_TEMPLATE=kuphanda_auth_code
 WHATSAPP_OTP_LANGUAGE=en_US
