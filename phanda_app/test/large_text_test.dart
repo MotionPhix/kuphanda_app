@@ -209,6 +209,22 @@ void main() {
     expect(errors, isEmpty, reason: _describe(errors));
   });
 
+  testWidgets('the library says when it is showing the bundled copy', (
+    tester,
+  ) async {
+    final errors = await _pumpPhone(
+      tester,
+      1.0,
+      home: const Scaffold(body: LibraryScreen()),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+    // A signed-in learner with no server catalogue used to see ten fewer
+    // papers and no explanation at all.
+    expect(find.textContaining('copy saved on this phone'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
   testWidgets('the classes screen survives 1.3x text', (tester) async {
     final errors = await _pumpPhone(
       tester,

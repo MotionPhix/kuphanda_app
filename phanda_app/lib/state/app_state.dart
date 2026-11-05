@@ -50,7 +50,14 @@ class DayStat {
   final String label;
 }
 
-enum OfflineState { none, queued, downloading, downloaded, updateAvailable, failed }
+enum OfflineState {
+  none,
+  queued,
+  downloading,
+  downloaded,
+  updateAvailable,
+  failed,
+}
 
 class StudyStats {
   const StudyStats({
@@ -69,8 +76,9 @@ class StudyStats {
   final int weeklyGoalMinutes;
   final List<DayStat> weekDays;
 
-  double get weekPercent =>
-      weeklyGoalMinutes <= 0 ? 0 : (weekMinutes / weeklyGoalMinutes).clamp(0, 1).toDouble();
+  double get weekPercent => weeklyGoalMinutes <= 0
+      ? 0
+      : (weekMinutes / weeklyGoalMinutes).clamp(0, 1).toDouble();
 
   bool get studiedToday => todayMinutes > 0;
 }
@@ -88,12 +96,12 @@ class AppState extends ChangeNotifier {
     ApiClient? api,
     TokenStore? tokenStore,
     BlockDocumentCache? blockCache,
-  })  : _store = store,
-        _files = files,
-        _clock = clock ?? DateTime.now,
-        _api = api,
-        _tokenStore = tokenStore ?? SecureTokenStore(),
-        _blockCache = blockCache;
+  }) : _store = store,
+       _files = files,
+       _clock = clock ?? DateTime.now,
+       _api = api,
+       _tokenStore = tokenStore ?? SecureTokenStore(),
+       _blockCache = blockCache;
 
   final StateStore _store;
   final DocumentFiles _files;
@@ -149,6 +157,11 @@ class AppState extends ChangeNotifier {
   bool get isSyncing => _syncing;
   String? get syncError => _syncError;
 
+  /// True until a server catalogue has loaded, so the library on screen is the
+  /// copy that shipped with the app rather than the live one. A signed-in
+  /// learner seeing ten fewer papers deserves to be told why.
+  bool get showingBundledCatalogue => _remoteCatalogue.isEmpty;
+
   /// Why the last billing fetch failed, if it did. The subscription page
   /// uses it to stop showing a spinner that never resolves.
   String? get billingError => _billingError;
@@ -179,6 +192,7 @@ class AppState extends ChangeNotifier {
   void clearLastPush() {
     _lastPush = null;
   }
+
   DateTime? get lastSyncAt => _snapshot.lastSyncAt;
   int get offlineMarkCount => _snapshot.offlineMarked.length;
   int get pendingRemovalCount => _snapshot.pendingRemovals.length;
@@ -190,7 +204,8 @@ class AppState extends ChangeNotifier {
   List<RemotePlan> get plans => _plans;
   List<PaymentRecord> get payments => _payments;
   BillingStatus? get billing => _billing;
-  AccessTier get entitlementTier => _billing?.tier ?? AccessTier.fromName(profile.plan.name);
+  AccessTier get entitlementTier =>
+      _billing?.tier ?? AccessTier.fromName(profile.plan.name);
   bool get hasPaidAccess => _billing?.hasPaidAccess ?? false;
 
   int priceFor(String documentId) {
@@ -224,8 +239,9 @@ class AppState extends ChangeNotifier {
   }
 
   /// A document has a server file and can therefore be downloaded or updated.
-  bool hasRemoteFile(String documentId) =>
-      _remoteCatalogue.any((item) => item.document.id == documentId && item.file != null);
+  bool hasRemoteFile(String documentId) => _remoteCatalogue.any(
+    (item) => item.document.id == documentId && item.file != null,
+  );
 
   int? remoteVersionFor(String documentId) => _remoteVersions[documentId];
 
@@ -235,7 +251,10 @@ class AppState extends ChangeNotifier {
   bool updateAvailable(String documentId) {
     final asset = _snapshot.assets[documentId];
     final latest = _remoteVersions[documentId];
-    return asset != null && asset.remote && latest != null && asset.version < latest;
+    return asset != null &&
+        asset.remote &&
+        latest != null &&
+        asset.version < latest;
   }
 
   OfflineState offlineStateFor(String documentId) {
@@ -245,13 +264,16 @@ class AppState extends ChangeNotifier {
 
     final asset = _snapshot.assets[documentId];
     if (asset != null && asset.remote) {
-      return updateAvailable(documentId) ? OfflineState.updateAvailable : OfflineState.downloaded;
+      return updateAvailable(documentId)
+          ? OfflineState.updateAvailable
+          : OfflineState.downloaded;
     }
     if (isMarkedOffline(documentId)) return OfflineState.queued;
     return OfflineState.none;
   }
 
-  double downloadProgressFor(String documentId) => _downloadProgress[documentId] ?? 0;
+  double downloadProgressFor(String documentId) =>
+      _downloadProgress[documentId] ?? 0;
   String? downloadErrorFor(String documentId) => _downloadErrors[documentId];
 
   /// Starts the periodic refresh. Safe to call more than once.
@@ -341,7 +363,6 @@ class AppState extends ChangeNotifier {
       _token = null;
     }
 
-
     // Runs after the token is known: only a signed-in learner can be restored.
     if (_restoreEjectedSession(snapshot)) migrated = true;
 
@@ -364,7 +385,6 @@ class AppState extends ChangeNotifier {
       unawaited(startPush());
     }
   }
-
 
   List<Document> _mergeDocuments() {
     final merged = <String, Document>{};
@@ -410,9 +430,11 @@ class AppState extends ChangeNotifier {
   DocumentAsset? assetFor(String documentId) => _snapshot.assets[documentId];
 
   /// Reading counted in the unit each document actually has.
-  ReadingTally get readingTally => tallyReading(_allDocuments, _snapshot.progress);
+  ReadingTally get readingTally =>
+      tallyReading(_allDocuments, _snapshot.progress);
 
-  ReadingProgress? progressFor(String documentId) => _snapshot.progress[documentId];
+  ReadingProgress? progressFor(String documentId) =>
+      _snapshot.progress[documentId];
 
   ReadingProgress progressOrDefault(Document document) =>
       _snapshot.progress[document.id] ??
@@ -444,7 +466,10 @@ class AppState extends ChangeNotifier {
   }
 
   List<LibraryEntry> entriesForForm(int form, {int limit = 10}) {
-    return entries.where((entry) => entry.document.form == form).take(limit).toList();
+    return entries
+        .where((entry) => entry.document.form == form)
+        .take(limit)
+        .toList();
   }
 
   List<LibraryEntry> recommended({int limit = 8}) {
@@ -460,7 +485,9 @@ class AppState extends ChangeNotifier {
 
   List<LibraryEntry> get continueReading {
     final list = entries
-        .where((entry) => entry.progressPercent > 0 && entry.progressPercent < 100)
+        .where(
+          (entry) => entry.progressPercent > 0 && entry.progressPercent < 100,
+        )
         .toList();
     list.sort((a, b) {
       final aDate = progressFor(a.document.id)?.lastReadAt ?? DateTime(1970);
@@ -486,13 +513,17 @@ class AppState extends ChangeNotifier {
   }
 
   List<Bookmark> bookmarksFor(String documentId) {
-    final list = _snapshot.bookmarks.where((bookmark) => bookmark.documentId == documentId).toList();
+    final list = _snapshot.bookmarks
+        .where((bookmark) => bookmark.documentId == documentId)
+        .toList();
     list.sort((a, b) => a.page.compareTo(b.page));
     return list;
   }
 
   List<DocumentNote> notesFor(String documentId) {
-    final list = _snapshot.notes.where((note) => note.documentId == documentId).toList();
+    final list = _snapshot.notes
+        .where((note) => note.documentId == documentId)
+        .toList();
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }
@@ -570,14 +601,16 @@ class AppState extends ChangeNotifier {
     // An account settles it: this is a real learner whose name happens to match
     // the sample. The real Chisomo Banda at Bwaila in Form 4 is exactly who the
     // first version of this released by mistake.
-    if (snapshot.accountId != null || snapshot.accountEmail != null) return false;
+    if (snapshot.accountId != null || snapshot.accountEmail != null) {
+      return false;
+    }
 
     final isRetiredSample =
         profile.name == _retiredSampleProfile.name &&
-            profile.givenName == _retiredSampleProfile.givenName &&
-            profile.familyName == _retiredSampleProfile.familyName &&
-            profile.school == _retiredSampleProfile.school &&
-            profile.form == _retiredSampleProfile.form;
+        profile.givenName == _retiredSampleProfile.givenName &&
+        profile.familyName == _retiredSampleProfile.familyName &&
+        profile.school == _retiredSampleProfile.school &&
+        profile.form == _retiredSampleProfile.form;
 
     if (!isRetiredSample) return false;
 
@@ -605,7 +638,9 @@ class AppState extends ChangeNotifier {
     if (seeded.isEmpty) return false;
 
     snapshot.classes.removeWhere((group) => seeded.contains(group.id));
-    snapshot.assignments.removeWhere((assignment) => seeded.contains(assignment.classId));
+    snapshot.assignments.removeWhere(
+      (assignment) => seeded.contains(assignment.classId),
+    );
     return true;
   }
 
@@ -616,7 +651,12 @@ class AppState extends ChangeNotifier {
   /// The four days the old seeder wrote: minutes and session count, in order of
   /// the days it produced. Kept here so the pattern can be recognised without
   /// guessing at minutes somebody really studied.
-  static const _seededStudyPattern = <(int, int)>[(35, 2), (20, 1), (48, 3), (15, 1)];
+  static const _seededStudyPattern = <(int, int)>[
+    (35, 2),
+    (20, 1),
+    (48, 3),
+    (15, 1),
+  ];
 
   bool _clearDemoStudyHistory(AppSnapshot snapshot) {
     if (snapshot.studyDays.isEmpty) return false;
@@ -636,7 +676,9 @@ class AppState extends ChangeNotifier {
     if (days.length != _seededStudyPattern.length) return false;
 
     String signature(Iterable<(int, int)> pairs) =>
-        (pairs.map((pair) => '${pair.$1}x${pair.$2}').toList()..sort()).join(',');
+        (pairs.map((pair) => '${pair.$1}x${pair.$2}').toList()..sort()).join(
+          ',',
+        );
 
     final actual = days.map((day) => (day.seconds ~/ 60, day.sessions));
     return signature(actual) == signature(_seededStudyPattern);
@@ -649,7 +691,9 @@ class AppState extends ChangeNotifier {
     final profile = snapshot.profile;
     if (profile.onboardingComplete) return false;
     if (!isSignedIn) return false;
-    if (profile.name.trim().isEmpty || profile.school.trim().isEmpty) return false;
+    if (profile.name.trim().isEmpty || profile.school.trim().isEmpty) {
+      return false;
+    }
 
     snapshot.profile = profile.copyWith(onboardingComplete: true);
     snapshot.sampleProfileReleased = true;
@@ -687,13 +731,17 @@ class AppState extends ChangeNotifier {
     // names the learner just confirmed so the server copy matches.
     if (isSignedIn) {
       unawaited(
-        _api!.updateProfile(
-          firstName: profile.firstName == 'learner' ? '' : profile.firstName,
-          lastName: profile.lastName,
-          school: profile.school,
-          role: role == StudentRole.teacher ? 'teacher' : 'student',
-          form: role == StudentRole.student ? form : null,
-        ).catchError((Object _) {}),
+        _api!
+            .updateProfile(
+              firstName: profile.firstName == 'learner'
+                  ? ''
+                  : profile.firstName,
+              lastName: profile.lastName,
+              school: profile.school,
+              role: role == StudentRole.teacher ? 'teacher' : 'student',
+              form: role == StudentRole.student ? form : null,
+            )
+            .catchError((Object _) {}),
       );
     }
   }
@@ -746,7 +794,8 @@ class AppState extends ChangeNotifier {
     int seconds = 0,
     double? fraction,
   }) {
-    final existing = _snapshot.progress[documentId] ??
+    final existing =
+        _snapshot.progress[documentId] ??
         ReadingProgress(documentId: documentId, totalPages: totalPages);
     final safeTotal = totalPages <= 0 ? existing.totalPages : totalPages;
     final safePage = page.clamp(1, safeTotal <= 0 ? 1 : safeTotal);
@@ -766,7 +815,9 @@ class AppState extends ChangeNotifier {
       // Sticky only for page-based documents: a PDF that was finished stays
       // finished. A measured fraction is re-derived on every report, which is
       // what corrects the stale "finished" written by the old arithmetic.
-      completed: measured != null ? completed : (existing.completed || completed),
+      completed: measured != null
+          ? completed
+          : (existing.completed || completed),
       fraction: fraction,
     );
 
@@ -790,7 +841,8 @@ class AppState extends ChangeNotifier {
 
     // A record created for time alone must not claim page 1 of 1: that reads as
     // 100% and would auto-complete an assignment the learner has not opened.
-    final existing = _snapshot.progress[documentId] ??
+    final existing =
+        _snapshot.progress[documentId] ??
         ReadingProgress(documentId: documentId, currentPage: 0, totalPages: 0);
 
     _snapshot.progress[documentId] = existing.copyWith(
@@ -812,7 +864,9 @@ class AppState extends ChangeNotifier {
         sessions: day.sessions + (seconds >= 60 ? 1 : 0),
       );
     } else {
-      _snapshot.studyDays.add(StudyDay(date: key, seconds: seconds, sessions: 1));
+      _snapshot.studyDays.add(
+        StudyDay(date: key, seconds: seconds, sessions: 1),
+      );
     }
   }
 
@@ -840,7 +894,9 @@ class AppState extends ChangeNotifier {
     try {
       await api.completeAssignment(assignmentId);
     } on ApiException catch (error) {
-      debugPrint('Could not record completion for $assignmentId: ${error.message}');
+      debugPrint(
+        'Could not record completion for $assignmentId: ${error.message}',
+      );
     }
   }
 
@@ -870,7 +926,9 @@ class AppState extends ChangeNotifier {
     final api = _api;
     if (api == null) return;
 
-    final wanted = classroomIds.where((id) => !_reports.containsKey(id)).toList();
+    final wanted = classroomIds
+        .where((id) => !_reports.containsKey(id))
+        .toList();
     if (wanted.isEmpty) return;
 
     final results = await Future.wait([
@@ -903,12 +961,18 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return report;
     } on ApiException catch (error) {
-      debugPrint('Could not load the report for $classroomId: ${error.message}');
+      debugPrint(
+        'Could not load the report for $classroomId: ${error.message}',
+      );
       return null;
     }
   }
 
-  Future<Bookmark> addBookmark(String documentId, int page, {String? label}) async {
+  Future<Bookmark> addBookmark(
+    String documentId,
+    int page, {
+    String? label,
+  }) async {
     final bookmark = Bookmark(
       id: 'bm-${_clock().microsecondsSinceEpoch}',
       documentId: documentId,
@@ -995,7 +1059,9 @@ class AppState extends ChangeNotifier {
     final timestamp = _clock().microsecondsSinceEpoch;
     final document = Document(
       id: 'personal-$timestamp',
-      title: title.trim().isEmpty ? _titleFromFile(picked.fileName) : title.trim(),
+      title: title.trim().isEmpty
+          ? _titleFromFile(picked.fileName)
+          : title.trim(),
       subjectId: subjectId,
       form: form,
       kind: kind,
@@ -1032,14 +1098,12 @@ class AppState extends ChangeNotifier {
     int? form,
     DocumentKind? kind,
   }) async {
-    final index = _snapshot.personalDocuments.indexWhere((doc) => doc.id == documentId);
-    if (index < 0) return;
-    _snapshot.personalDocuments[index] = _snapshot.personalDocuments[index].copyWith(
-      title: title,
-      subjectId: subjectId,
-      form: form,
-      kind: kind,
+    final index = _snapshot.personalDocuments.indexWhere(
+      (doc) => doc.id == documentId,
     );
+    if (index < 0) return;
+    _snapshot.personalDocuments[index] = _snapshot.personalDocuments[index]
+        .copyWith(title: title, subjectId: subjectId, form: form, kind: kind);
     _recomputeDocuments();
     notifyListeners();
     await _persistNow();
@@ -1047,13 +1111,19 @@ class AppState extends ChangeNotifier {
 
   Future<void> deletePersonalDocument(String documentId) async {
     await removeFile(documentId);
-    _snapshot.personalDocuments.removeWhere((document) => document.id == documentId);
+    _snapshot.personalDocuments.removeWhere(
+      (document) => document.id == documentId,
+    );
     _snapshot.progress.remove(documentId);
     _snapshot.savedIds.remove(documentId);
     _snapshot.ratings.remove(documentId);
-    _snapshot.bookmarks.removeWhere((bookmark) => bookmark.documentId == documentId);
+    _snapshot.bookmarks.removeWhere(
+      (bookmark) => bookmark.documentId == documentId,
+    );
     _snapshot.notes.removeWhere((note) => note.documentId == documentId);
-    _snapshot.assignments.removeWhere((assignment) => assignment.documentId == documentId);
+    _snapshot.assignments.removeWhere(
+      (assignment) => assignment.documentId == documentId,
+    );
     _recomputeDocuments();
     notifyListeners();
     await _persistNow();
@@ -1063,7 +1133,8 @@ class AppState extends ChangeNotifier {
       .where((asset) => !asset.isBundled)
       .fold<int>(0, (total, asset) => total + asset.sizeBytes);
 
-  int get importedFileCount => _snapshot.assets.values.where((asset) => !asset.isBundled).length;
+  int get importedFileCount =>
+      _snapshot.assets.values.where((asset) => !asset.isBundled).length;
 
   // ---------------------------------------------------------------------------
   // Classes and assignments
@@ -1075,7 +1146,9 @@ class AppState extends ChangeNotifier {
   final Map<String, ClassReport> _reports = {};
 
   List<Assignment> assignmentsForClass(String classId) {
-    final list = _snapshot.assignments.where((a) => a.classId == classId).toList();
+    final list = _snapshot.assignments
+        .where((a) => a.classId == classId)
+        .toList();
     // Undated reading sorts last: it is never urgent.
     list.sort((a, b) {
       final left = a.dueDate;
@@ -1095,7 +1168,9 @@ class AppState extends ChangeNotifier {
   }
 
   List<Assignment> get upcomingAssignments {
-    final list = _snapshot.assignments.where((assignment) => !assignment.completed).toList();
+    final list = _snapshot.assignments
+        .where((assignment) => !assignment.completed)
+        .toList();
     // Undated reading sorts last: it is never urgent.
     list.sort((a, b) {
       final left = a.dueDate;
@@ -1120,7 +1195,9 @@ class AppState extends ChangeNotifier {
       return const ClassActionResult.error('A class code has six characters.');
     }
     if (_snapshot.classes.any((group) => group.code == code)) {
-      return const ClassActionResult.error('You have already joined this class.');
+      return const ClassActionResult.error(
+        'You have already joined this class.',
+      );
     }
 
     if (!isSignedIn) {
@@ -1128,7 +1205,9 @@ class AppState extends ChangeNotifier {
     }
 
     if (_snapshot.classes.any((group) => group.code == code)) {
-      return const ClassActionResult.error('You have already joined this class.');
+      return const ClassActionResult.error(
+        'You have already joined this class.',
+      );
     }
 
     try {
@@ -1159,7 +1238,11 @@ class AppState extends ChangeNotifier {
       throw const ApiException('Sign in to create a class.');
     }
 
-    final classroom = await _api!.createClass(name: name, form: form, subjectId: subjectId);
+    final classroom = await _api!.createClass(
+      name: name,
+      form: form,
+      subjectId: subjectId,
+    );
     _snapshot.classes.add(classroom.group);
     notifyListeners();
     await _persistNow();
@@ -1218,7 +1301,9 @@ class AppState extends ChangeNotifier {
     final index = _snapshot.assignments.indexWhere((a) => a.id == assignmentId);
     if (index < 0) return;
     final assignment = _snapshot.assignments[index];
-    _snapshot.assignments[index] = assignment.copyWith(completed: !assignment.completed);
+    _snapshot.assignments[index] = assignment.copyWith(
+      completed: !assignment.completed,
+    );
     notifyListeners();
     await _persistNow();
   }
@@ -1241,7 +1326,10 @@ class AppState extends ChangeNotifier {
     final api = _api;
     if (api != null && classroomId != null) {
       try {
-        await api.unassignPaper(classroomId: classroomId, assignmentId: assignmentId);
+        await api.unassignPaper(
+          classroomId: classroomId,
+          assignmentId: assignmentId,
+        );
       } on ApiException catch (error) {
         debugPrint('Could not remove $assignmentId: ${error.message}');
         return false;
@@ -1269,7 +1357,8 @@ class AppState extends ChangeNotifier {
 
     var current = 0;
     var cursor = today;
-    if (minutesOn(today) == 0 && minutesOn(today.subtract(const Duration(days: 1))) > 0) {
+    if (minutesOn(today) == 0 &&
+        minutesOn(today.subtract(const Duration(days: 1))) > 0) {
       cursor = today.subtract(const Duration(days: 1));
     }
     while (minutesOn(cursor) > 0) {
@@ -1277,12 +1366,13 @@ class AppState extends ChangeNotifier {
       cursor = cursor.subtract(const Duration(days: 1));
     }
 
-    final dates = _snapshot.studyDays
-        .where((day) => day.minutes > 0)
-        .map((day) => DateTime.tryParse(day.date))
-        .whereType<DateTime>()
-        .toList()
-      ..sort();
+    final dates =
+        _snapshot.studyDays
+            .where((day) => day.minutes > 0)
+            .map((day) => DateTime.tryParse(day.date))
+            .whereType<DateTime>()
+            .toList()
+          ..sort();
 
     var longest = 0;
     var run = 0;
@@ -1355,15 +1445,14 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     // Two accounts, one at a time. Swapping means signing out of the account in
     // use and then signing in with the other — never replacing a live session
     // from underneath the person holding the phone.
     if (isSignedIn && (_snapshot.accountEmail ?? '') != email.trim()) {
-      throw const ApiException('Sign out before signing in with another account.');
+      throw const ApiException(
+        'Sign out before signing in with another account.',
+      );
     }
 
     final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
@@ -1396,7 +1485,10 @@ class AppState extends ChangeNotifier {
     required String password,
   }) async {
     final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
-    await api.changePassword(currentPassword: currentPassword, password: password);
+    await api.changePassword(
+      currentPassword: currentPassword,
+      password: password,
+    );
   }
 
   /// Sends a password reset link. The learner follows it on the web app, so
@@ -1414,13 +1506,17 @@ class AppState extends ChangeNotifier {
     // the teacher's classes would be listed under the learner's name. Signing out
     // clears the stored identity, so this covers both "switched directly" and
     // "signed out, then someone else signed in".
-    final switched = _snapshot.accountEmail == null ||
+    final switched =
+        _snapshot.accountEmail == null ||
         _snapshot.accountEmail != session.email ||
         _snapshot.accountId != session.userId;
 
     _token = session.token;
     _account = session;
-    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: session.token);
+    final api = _api ??= ApiClient(
+      baseUrl: ApiConfig.baseUrl,
+      token: session.token,
+    );
     api.token = session.token;
     await _tokenStore.write(session.token);
 
@@ -1468,7 +1564,10 @@ class AppState extends ChangeNotifier {
       // A different person on this phone inherits nothing: the subjects on the
       // device belonged to the last account.
       merged = merged.copyWith(
-        subjectIds: subjectsForForm(form).take(4).map((subject) => subject.id).toList(),
+        subjectIds: subjectsForForm(form)
+            .take(4)
+            .map((subject) => subject.id)
+            .toList(),
       );
     }
 
@@ -1478,7 +1577,8 @@ class AppState extends ChangeNotifier {
     //
     // An account that already finished on this device keeps that, so an older
     // server (one without the flag) cannot drag a settled profile backwards.
-    final completed = session.profileCompleted || (profile.onboardingComplete && !switched);
+    final completed =
+        session.profileCompleted || (profile.onboardingComplete && !switched);
     merged = merged.copyWith(onboardingComplete: completed);
 
     _snapshot.profile = merged;
@@ -1524,9 +1624,7 @@ class AppState extends ChangeNotifier {
   List<String> _audienceTopics() {
     if (!isSignedIn) return const <String>[];
     final topics = <String>{'all'};
-    topics.add(
-      profile.role == StudentRole.teacher ? 'teachers' : 'students',
-    );
+    topics.add(profile.role == StudentRole.teacher ? 'teachers' : 'students');
     if (profile.role == StudentRole.student) {
       topics.add('form-${profile.form}');
     }
@@ -1541,8 +1639,8 @@ class AppState extends ChangeNotifier {
         platform: defaultTargetPlatform == TargetPlatform.iOS
             ? 'ios'
             : defaultTargetPlatform == TargetPlatform.android
-                ? 'android'
-                : 'other',
+            ? 'android'
+            : 'other',
         appVersion: AppInfo.version,
       );
     } catch (error) {
@@ -1696,7 +1794,9 @@ class AppState extends ChangeNotifier {
           : (account.isTeacher ? StudentRole.teacher : StudentRole.student);
       final form = account.form ?? profile.form;
       final completed = profile.onboardingComplete || account.profileCompleted;
-      if (profile.role != role || profile.form != form || profile.onboardingComplete != completed) {
+      if (profile.role != role ||
+          profile.form != form ||
+          profile.onboardingComplete != completed) {
         _snapshot.profile = profile.copyWith(
           role: role,
           form: form,
@@ -1713,7 +1813,8 @@ class AppState extends ChangeNotifier {
       _billingError = error.message;
       notifyListeners();
     } catch (error) {
-      _billingError = 'Could not reach the library. Check the connection and try again.';
+      _billingError =
+          'Could not reach the library. Check the connection and try again.';
       debugPrint('Could not load billing: $error');
       notifyListeners();
     }
@@ -1759,7 +1860,8 @@ class AppState extends ChangeNotifier {
     if (txRef == null || txRef.isEmpty) return null;
 
     final startedAt = _snapshot.pendingPaymentAt;
-    if (startedAt != null && _clock().difference(startedAt) > const Duration(hours: 48)) {
+    if (startedAt != null &&
+        _clock().difference(startedAt) > const Duration(hours: 48)) {
       await clearPendingPayment();
       return null;
     }
@@ -1875,7 +1977,9 @@ class AppState extends ChangeNotifier {
         ..clear()
         ..addAll(catalogue.map((item) => item.document));
       for (final item in catalogue) {
-        if (item.file != null) _remoteVersions[item.document.id] = item.file!.version;
+        if (item.file != null) {
+          _remoteVersions[item.document.id] = item.file!.version;
+        }
       }
       _recomputeDocuments();
       notifyListeners();
@@ -1886,7 +1990,9 @@ class AppState extends ChangeNotifier {
         ..addAll(offline.map((item) => item.documentId));
 
       for (final item in offline) {
-        if (item.file != null) _remoteVersions[item.documentId] = item.file!.version;
+        if (item.file != null) {
+          _remoteVersions[item.documentId] = item.file!.version;
+        }
         _entitled[item.documentId] = item.isEntitled;
       }
 
@@ -1910,7 +2016,8 @@ class AppState extends ChangeNotifier {
 
       _snapshot.lastSyncAt = _clock();
       if (failed > 0) {
-        _syncError = '$failed document${failed == 1 ? '' : 's'} could not be downloaded.';
+        _syncError =
+            '$failed document${failed == 1 ? '' : 's'} could not be downloaded.';
       }
     } on ApiException catch (error) {
       _syncError = error.message;
@@ -1978,7 +2085,9 @@ class AppState extends ChangeNotifier {
 
       final digest = sha256.convert(bytes).toString();
       if (file.checksum.isNotEmpty && digest != file.checksum) {
-        throw const ApiException('The downloaded file failed its integrity check.');
+        throw const ApiException(
+          'The downloaded file failed its integrity check.',
+        );
       }
 
       final previous = _snapshot.assets[id];
@@ -1992,7 +2101,9 @@ class AppState extends ChangeNotifier {
       );
 
       // Only replace the working copy after the new bytes are safely stored.
-      if (previous != null && previous.path != null && previous.path != asset.path) {
+      if (previous != null &&
+          previous.path != null &&
+          previous.path != asset.path) {
         await _files.delete(previous);
       }
 
@@ -2027,7 +2138,9 @@ class AppState extends ChangeNotifier {
   /// Explicitly marks a document for offline reading and downloads it now.
   Future<void> markForOffline(String documentId) async {
     if (!isSignedIn) {
-      throw const ApiException('Sign in to download documents for offline reading.');
+      throw const ApiException(
+        'Sign in to download documents for offline reading.',
+      );
     }
     final api = _api!;
     final item = await api.markOffline(documentId);
@@ -2060,7 +2173,10 @@ class AppState extends ChangeNotifier {
   Future<void> refreshOffline(String documentId) => markForOffline(documentId);
 
   /// Removes the file and the mark. Works offline by queueing the server call.
-  Future<void> removeOffline(String documentId, {bool removeFromServer = true}) async {
+  Future<void> removeOffline(
+    String documentId, {
+    bool removeFromServer = true,
+  }) async {
     await _removeLocalOnly(documentId);
 
     if (removeFromServer && isSignedIn) {
@@ -2071,7 +2187,8 @@ class AppState extends ChangeNotifier {
           if (!_snapshot.pendingRemovals.contains(documentId)) {
             _snapshot.pendingRemovals.add(documentId);
           }
-          _syncError = 'Removal saved. It will reach the library on the next sync.';
+          _syncError =
+              'Removal saved. It will reach the library on the next sync.';
         } else if (error.statusCode != 404) {
           _downloadErrors[documentId] = error.message;
         }
@@ -2151,9 +2268,18 @@ String _titleFromFile(String fileName) {
 
 String _shortDate(DateTime date) {
   const months = <String>[
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   return '${date.day} ${months[date.month - 1]} ${date.year}';
 }
-

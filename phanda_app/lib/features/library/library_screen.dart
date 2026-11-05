@@ -114,6 +114,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           ),
                   ),
                 ),
+                if (state.showingBundledCatalogue && state.isSignedIn)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _BundledCatalogueNotice(
+                      message: state.syncError,
+                      onRetry: () => state.syncNow(silent: true),
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 38,
@@ -561,6 +569,49 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when the library on screen is the copy that shipped with the app
+/// rather than the server's catalogue, which happens when a sync fails or has
+/// not run yet. Without it a learner simply sees fewer papers and no reason.
+class _BundledCatalogueNotice extends StatelessWidget {
+  const _BundledCatalogueNotice({required this.onRetry, this.message});
+
+  final VoidCallback onRetry;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.cloud_off_rounded,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message ?? 'You are reading the copy saved on this phone. Reconnect to load the rest of the library.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
