@@ -46,7 +46,9 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
     if (guide == null) return;
 
     _guide = guide;
-    final progress = _state.progressOrDefault(_state.documentById(widget.documentId)!);
+    final progress = _state.progressOrDefault(
+      _state.documentById(widget.documentId)!,
+    );
     final resume = widget.initialSection > 0
         ? widget.initialSection
         : (progress.currentPage - 1).clamp(0, guide.pageCount - 1);
@@ -162,20 +164,25 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          // Wrap, not Row: three pills at 1.3x text need 194px
+                          // more than the line has, and the third one is the
+                          // difficulty the paper is aimed at.
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Pill(
-                                label: 'Section ${index + 1} of ${_guide.pageCount}',
+                                label:
+                                    'Section ${index + 1} of ${_guide.pageCount}',
                                 color: subject.color,
                                 compact: true,
                               ),
-                              const SizedBox(width: 6),
                               Pill(
                                 label: '${item.minutes} min',
                                 icon: Icons.schedule_rounded,
                                 compact: true,
                               ),
-                              const SizedBox(width: 6),
                               Pill(label: item.difficultyLabel, compact: true),
                             ],
                           ),
@@ -218,7 +225,10 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
                             child: Column(
                               children: [
                                 for (var i = 0; i < item.keyIdeas.length; i++)
-                                  _Numbered(index: i + 1, text: item.keyIdeas[i]),
+                                  _Numbered(
+                                    index: i + 1,
+                                    text: item.keyIdeas[i],
+                                  ),
                               ],
                             ),
                           ),
@@ -239,10 +249,7 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
                             ),
                           ),
                           const SizedBox(height: 14),
-                          _ExamTip(
-                            section: item,
-                            subject: subject.name,
-                          ),
+                          _ExamTip(section: item, subject: subject.name),
                           const SizedBox(height: 24),
                           if (index == _guide.sections.length - 1)
                             SizedBox(
@@ -257,11 +264,16 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
                                   );
                                   await state.flush();
                                   if (context.mounted) {
-                                    showSnack(context, 'Guide finished. Your progress is saved.');
+                                    showSnack(
+                                      context,
+                                      'Guide finished. Your progress is saved.',
+                                    );
                                     Navigator.of(context).pop();
                                   }
                                 },
-                                icon: const Icon(Icons.check_circle_outline_rounded),
+                                icon: const Icon(
+                                  Icons.check_circle_outline_rounded,
+                                ),
                                 label: const Text('Finish this guide'),
                               ),
                             ),
@@ -288,7 +300,9 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerLowest,
-                border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant)),
+                border: Border(
+                  top: BorderSide(color: theme.colorScheme.outlineVariant),
+                ),
               ),
               child: Row(
                 children: [
@@ -320,7 +334,9 @@ class _GuideReaderScreenState extends State<GuideReaderScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: _page == _guide.pageCount - 1 ? null : () => _goTo(_page + 1),
+                    onPressed: _page == _guide.pageCount - 1
+                        ? null
+                        : () => _goTo(_page + 1),
                     icon: const Icon(Icons.chevron_right_rounded),
                     tooltip: 'Next section',
                   ),
@@ -362,10 +378,20 @@ class _ReaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon, size: 17, color: tint),
               const SizedBox(width: 7),
-              Text(title, style: theme.textTheme.labelLarge?.copyWith(color: tint)),
+              // These headings are sentences ("By the end of this section…"),
+              // not labels, so at 1.3x they ran 214px past the card.
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(color: tint),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -397,7 +423,10 @@ class _Bullet extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+            ),
           ),
         ],
       ),
@@ -439,7 +468,10 @@ class _Numbered extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+            ),
           ),
         ],
       ),
@@ -466,7 +498,11 @@ class _ExamTip extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.tips_and_updates_outlined, size: 20, color: AppColors.green),
+          const Icon(
+            Icons.tips_and_updates_outlined,
+            size: 20,
+            color: AppColors.green,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -474,7 +510,9 @@ class _ExamTip extends StatelessWidget {
               children: [
                 Text(
                   'Turn this into marks',
-                  style: theme.textTheme.labelLarge?.copyWith(color: AppColors.green),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: AppColors.green,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(

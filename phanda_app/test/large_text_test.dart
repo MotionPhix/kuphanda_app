@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -8,14 +9,17 @@ import 'package:kuphanda/app.dart';
 import 'package:kuphanda/core/theme.dart';
 import 'package:kuphanda/data/api/api_client.dart';
 import 'package:kuphanda/data/api/token_store.dart';
+import 'package:kuphanda/data/models/block_document.dart';
 import 'package:kuphanda/data/models/document.dart';
 import 'package:kuphanda/data/models/profile.dart';
+import 'package:kuphanda/data/seed/library_seed.dart';
 import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
-import 'package:kuphanda/data/seed/library_seed.dart';
 import 'package:kuphanda/features/document/document_detail_screen.dart';
 import 'package:kuphanda/features/library/library_screen.dart';
+import 'package:kuphanda/features/reader/block_document_view.dart';
+import 'package:kuphanda/features/reader/guide_reader_screen.dart';
 import 'package:kuphanda/features/shell/app_shell.dart';
 import 'package:kuphanda/state/app_state.dart';
 
@@ -104,8 +108,9 @@ Future<List<FlutterErrorDetails>> _pumpPhone(
       child: MaterialApp(
         theme: buildAppTheme(Brightness.light),
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(scale)),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(scale),
+          ),
           child: child!,
         ),
         home: home,
@@ -113,6 +118,9 @@ Future<List<FlutterErrorDetails>> _pumpPhone(
     ),
   );
   await tester.pumpAndSettle();
+  // The reader records progress on first build, which schedules a 350ms
+  // persistence debounce; let it fire so the test does not end holding a timer.
+  await tester.pump(const Duration(milliseconds: 400));
 
   FlutterError.onError = previous;
   return errors;
@@ -145,7 +153,11 @@ void main() {
   });
 
   testWidgets('the library grid survives 1.3x text', (tester) async {
-    final errors = await _pumpPhone(tester, 1.3, home: const Scaffold(body: LibraryScreen()));
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: const Scaffold(body: LibraryScreen()),
+    );
 
     expect(errors, isEmpty, reason: _describe(errors));
     expect(find.textContaining('document'), findsWidgets);
@@ -161,6 +173,56 @@ void main() {
     );
 
     expect(errors, isEmpty, reason: _describe(errors));
+  });
+
+  testWidgets('a structured paper reads at 1.3x without overflowing', (
+    tester,
+  ) async {
+    final document = BlockDocument.fromJsonString(
+      File('assets/samples/mechanics_sample.json').readAsStringSync(),
+    );
+
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: Scaffold(body: BlockDocumentView(document: document)),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+    expect(find.textContaining('Mechanics'), findsWidgets);
+  });
+
+  testWidgets('a structured paper reads at 2.0x without overflowing', (
+    tester,
+  ) async {
+    final document = BlockDocument.fromJsonString(
+      File('assets/samples/mechanics_sample.json').readAsStringSync(),
+    );
+
+    final errors = await _pumpPhone(
+      tester,
+      2.0,
+      home: Scaffold(body: BlockDocumentView(document: document)),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+  });
+
+  testWidgets('a study guide reads at 1.3x without overflowing', (
+    tester,
+  ) async {
+    final guide = buildCatalogue().firstWhere(
+      (document) => document.guideId != null,
+    );
+
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: GuideReaderScreen(documentId: guide.id),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+    expect(find.textContaining('Section'), findsWidgets);
   });
 }
 
