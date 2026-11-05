@@ -233,6 +233,29 @@ HTTPS.
 
 ## Publishing content
 
+## What belongs in the catalogue
+
+A document is listed only if a learner can open it. That means one of three
+things: it carries structured blocks, it has a published version with a file, or
+its guide sections ship inside the app. The rule lives in
+`DocumentReadiness`, and `GET /api/v1/documents` applies the same rule, so a
+record with a promising title and nothing behind it cannot appear in the library
+even if someone inserts it straight into the database.
+
+For a database that already holds such records:
+
+```bash
+php artisan documents:readiness          # what is unreadable, and why
+php artisan library:prune                # what would be deleted
+php artisan library:prune --delete       # delete it
+```
+
+`library:prune` never deletes a record that has been purchased, marked for
+offline reading or set as class work. Those are unpublished instead, so the
+purchase and the assignment still resolve.
+
+## Publishing content
+
 The library team owns the catalogue; students never upload material. Publish a
 new immutable version from a PDF on the server:
 
@@ -271,9 +294,9 @@ kept, so publishing again restores access without learners re-marking anything.
 ## Tests and builds
 
 ```bash
-cd phanda_api && php artisan test        # 61 tests
+cd phanda_api && php artisan test        # 145 tests
 cd phanda_app && flutter analyze         # no issues
-cd phanda_app && flutter test            # 24 tests
+cd phanda_app && flutter test            # 157 tests
 cd phanda_app && flutter build windows --debug
 ```
 
