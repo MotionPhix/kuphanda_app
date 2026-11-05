@@ -1,0 +1,176 @@
+{
+  "guides": [
+    {
+      "id": "bio-genetics",
+      "subject_id": "biology",
+      "title": "Genetics",
+      "blurb": "Inheritance, DNA, variation. Highest-yield MSCE Paper 2 topic.",
+      "pages": 5,
+      "sections": [
+        "Mendelian inheritance",
+        "Punnett squares",
+        "Dihybrid crosses",
+        "DNA structure & replication",
+        "Variation & mutation"
+      ]
+    },
+    {
+      "id": "chem-atoms",
+      "subject_id": "chemistry",
+      "title": "Atomic structure & bonding",
+      "blurb": "Atoms, electron configuration, ionic and covalent bonds.",
+      "pages": 3,
+      "sections": [
+        "Atomic structure",
+        "Ionic bonding",
+        "Covalent bonding"
+      ]
+    },
+    {
+      "id": "math-algebra",
+      "subject_id": "mathematics",
+      "title": "Algebra",
+      "blurb": "Equations, inequalities, quadratics, sequences.",
+      "pages": 3,
+      "sections": [
+        "Linear equations & inequalities",
+        "Quadratic equations",
+        "Sequences & series"
+      ]
+    },
+    {
+      "id": "phys-mechanics",
+      "subject_id": "physics",
+      "title": "Mechanics",
+      "blurb": "Kinematics, Newton's laws, momentum, energy.",
+      "pages": 3,
+      "sections": [
+        "Kinematics",
+        "Newton's laws",
+        "Momentum & impulse"
+      ]
+    },
+    {
+      "id": "bio-cell",
+      "subject_id": "biology",
+      "title": "Cell biology",
+      "blurb": "Cell structure, transport, division. Foundational for everything else.",
+      "pages": 3,
+      "sections": [
+        "Cell structure",
+        "Membrane transport",
+        "Mitosis & meiosis"
+      ]
+    },
+    {
+      "id": "chem-moles",
+      "subject_id": "chemistry",
+      "title": "The mole & stoichiometry",
+      "blurb": "Moles, formulae, balancing equations, yield.",
+      "pages": 2,
+      "sections": [
+        "The mole concept",
+        "Stoichiometry & yield"
+      ]
+    },
+    {
+      "id": "math-geometry",
+      "subject_id": "mathematics",
+      "title": "Geometry & trigonometry",
+      "blurb": "Angles, similarity, circles, sine/cosine rules.",
+      "pages": 3,
+      "sections": [
+        "Trigonometry basics",
+        "Sine & cosine rules",
+        "Circle theorems"
+      ]
+    },
+    {
+      "id": "phys-electricity",
+      "subject_id": "physics",
+      "title": "Electricity & magnetism",
+      "blurb": "Circuits, Ohm's law, magnetic fields, induction.",
+      "pages": 2,
+      "sections": [
+        "Ohm's law & simple circuits",
+        "Electrical power & energy"
+      ]
+    },
+    {
+      "id": "bio-ecology",
+      "subject_id": "biology",
+      "title": "Ecology",
+      "blurb": "Ecosystems, energy flow, human impact on the environment.",
+      "pages": 2,
+      "sections": [
+        "Ecosystems & energy flow",
+        "Carbon & nitrogen cycles"
+      ]
+    },
+    {
+      "id": "chem-reactions",
+      "subject_id": "chemistry",
+      "title": "Reactions & energetics",
+      "blurb": "Acids/bases, redox, rates, energy changes.",
+      "pages": 2,
+      "sections": [
+        "Acids, bases & salts",
+        "Redox reactions"
+      ]
+    },
+    {
+      "id": "math-calculus",
+      "subject_id": "mathematics",
+      "title": "Introductory calculus",
+      "blurb": "Differentiation and integration of polynomials.",
+      "pages": 2,
+      "sections": [
+        "Differentiation of polynomials",
+        "Integration of polynomials"
+      ]
+    },
+    {
+      "id": "phys-waves",
+      "subject_id": "physics",
+      "title": "Waves & optics",
+      "blurb": "Wave properties, sound, reflection, refraction.",
+      "pages": 2,
+      "sections": [
+        "Wave properties",
+        "Reflection & refraction"
+      ]
+    },
+    {
+      "id": "bio-human",
+      "subject_id": "biology",
+      "title": "Human systems",
+      "blurb": "Digestion, circulation, respiration, excretion, reproduction.",
+      "pages": 2,
+      "sections": [
+        "Digestion",
+        "Circulation"
+      ]
+    },
+    {
+      "id": "chem-organic",
+      "subject_id": "chemistry",
+      "title": "Organic chemistry",
+      "blurb": "Hydrocarbons, alcohols, carboxylic acids, polymers.",
+      "pages": 1,
+      "sections": [
+        "Hydrocarbons"
+      ]
+    },
+    {
+      "id": "math-stats",
+      "subject_id": "mathematics",
+      "title": "Statistics & probability",
+      "blurb": "Measures of centre/spread, probability rules.",
+      "pages": 2,
+      "sections": [
+        "Measures of centre & spread",
+        "Probability"
+      ]
+    }
+  ]
+}

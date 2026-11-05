@@ -62,6 +62,17 @@ it('seeds a catalogue in which every published document can be opened', function
             "{$document->id} is published but has nothing to read",
         );
     }
+
+    // The guides' sections ship inside the app; the catalogue still has to list
+    // them, or an online learner sees a smaller library than an offline one.
+    /** @var array{guides: array<int, array{id: string}>} $guides */
+    $guides = json_decode((string) file_get_contents(database_path('seeders/files/guides.json')), true);
+
+    foreach ($guides['guides'] as $guide) {
+        expect(Document::query()->find('guide-'.$guide['id']))->not->toBeNull(
+            'guide-'.$guide['id'].' is missing from the catalogue',
+        );
+    }
 })->group('library');
 
 it('keeps the retired placeholder out of a freshly seeded catalogue', function (): void {

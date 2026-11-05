@@ -12,9 +12,13 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Seeds the library catalogue owned by Kuphanda. Only the two Kuphanda-authored
- * guides have files; every other record is metadata until the library team
- * publishes a version. That mirrors production: students never upload content.
+ * Seeds the library catalogue owned by Kuphanda.
+ *
+ * Every record this creates can be opened: a published PDF, a set of structured
+ * blocks, or a guide whose sections ship inside the app. Nothing here is a
+ * placeholder waiting for a file that does not exist, because the catalogue is
+ * the product — a learner who taps a title and gets a dead button learns not to
+ * trust the library.
  */
 final class LibrarySeeder extends Seeder
 {
@@ -59,6 +63,76 @@ final class LibrarySeeder extends Seeder
                     ?? Carbon::now(),
             ])->save();
         }
+
+        $this->seedGuides();
+    }
+
+    /**
+     * Adds the curriculum guides the app already carries.
+     *
+     * Their sections live in the app bundle, so the record needs no blocks and no
+     * file: `guide_id` is enough for the reader to resolve the content. Without
+     * these rows an online learner sees a smaller library than an offline one.
+     *
+     * The list is generated from `curriculum_seed.dart` by `tool/dump_guides.dart`
+     * rather than retyped here, so the two catalogues cannot drift.
+     */
+    private function seedGuides(): void
+    {
+        $path = database_path('seeders/files/guides.json');
+        $raw = @file_get_contents($path);
+
+        if ($raw === false) {
+            $this->command?->warn('Guides skipped: guides.json is missing.');
+
+            return;
+        }
+
+        /** @var array{guides?: array<int, array<string, mixed>>} $json */
+        $json = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        $created = 0;
+
+        foreach ($json['guides'] ?? [] as $guide) {
+            $id = is_string($guide['id'] ?? null) ? $guide['id'] : null;
+
+            if ($id === null) {
+                continue;
+            }
+
+            $documentId = 'guide-'.$id;
+
+            // A guide that already has its own record — the authored genetics
+            // blocks, for instance — keeps it; seeding must not replace richer
+            // content with a pointer to the bundled sections.
+            if (Document::query()->whereKey($documentId)->exists()) {
+                continue;
+            }
+
+            $sections = array_slice((array) ($guide['sections'] ?? []), 0, 4);
+            $blurb = (string) ($guide['blurb'] ?? '');
+
+            Document::query()->create([
+                'id' => $documentId,
+                'subject_id' => $guide['subject_id'] ?? 'biology',
+                'title' => ($guide['title'] ?? 'Study guide').' — MSCE study guide',
+                'form' => 4,
+                'kind' => 'studyGuide',
+                'description' => trim($blurb.' Covers '.implode(', ', $sections).'.'),
+                'pages' => max(1, (int) ($guide['pages'] ?? 1)),
+                'access_tier' => 'free',
+                'price_mwk' => 0,
+                'author' => 'Kuphanda Curriculum Team',
+                'language' => 'English',
+                'guide_id' => $id,
+                'is_published' => true,
+                'content_updated_at' => Carbon::now(),
+                'tags' => ['study guide'],
+            ]);
+
+            $created++;
+        }
+
+        $this->command?->info(sprintf('Added %d bundled guide(s) to the catalogue.', $created));
     }
 
     /**
