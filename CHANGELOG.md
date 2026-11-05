@@ -37,6 +37,10 @@ The library stops being a demo and the app stops assuming a small font.
   rendered an empty list as an endless spinner; it now says prices are not on
   sale yet and offers a retry. The cause — library:sync seeded documents but
   not prices — is fixed with it.
+- **Web boots.** The project had no web scaffold; it now builds, and startup
+  picks a localStorage store instead of the native file one, which used to throw
+  before the first frame and leave a blank page. PDF download is not wired for
+  the browser yet.
 - **Honest fallback.** When the server cannot be reached the library says it is
   showing the copy saved on the phone, instead of silently showing fewer
   documents.
@@ -62,6 +66,7 @@ Android, web and Windows. iOS is out of scope by design, not by omission.
   `push.configured` so the silence has a cause attached to it.
 - Payments run against PayChangu's test mode, which is deliberate until the
   checkout has been exercised end to end.
+
 
 
 
