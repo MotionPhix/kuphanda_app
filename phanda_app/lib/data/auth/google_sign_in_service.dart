@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -17,6 +20,19 @@ class GoogleSignInService {
   static bool _initialised = false;
 
   bool get isConfigured => _serverClientId.isNotEmpty;
+
+  /// Whether this build can hand the sign-in to a platform that actually has
+  /// the plugin.
+  ///
+  /// `google_sign_in` ships implementations for Android, iOS, macOS and the
+  /// browser — not Windows. On Windows `GoogleSignIn.instance` throws an
+  /// [UnimplementedError] before any of the handled exceptions, so the button
+  /// did nothing at all with no message. The button is now only drawn where it
+  /// can work.
+  static bool get isSupported {
+    if (kIsWeb) return true;
+    return Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+  }
 
   Future<String> idToken() async {
     if (_serverClientId.isEmpty) {
@@ -67,6 +83,12 @@ class GoogleSignInService {
         'Google sign-in failed: ${error.message ?? error.code}. Check the OAuth '
         'client configuration.',
       );
+    } catch (error) {
+      // UnimplementedError on a platform without the plugin used to escape this
+      // method, which surfaced as a button that did nothing. Anything left over
+      // becomes a sentence the screen can show.
+      throw ApiException('Google sign-in failed: $error');
     }
   }
 }
+

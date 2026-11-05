@@ -324,9 +324,12 @@ class _SignInSheetState extends State<_SignInSheet> {
           const SizedBox(height: 4),
           // Google stays available: it is how a learner signs in without an
           // email account at all.
-          TextButton.icon(
-            onPressed: _busy ? null : _signInWithGoogle,
-            icon: const Icon(Icons.account_circle_outlined, size: 18),
+          // Hidden where the plugin has no implementation (Windows), because
+          // the tap used to produce nothing at all.
+          if (GoogleSignInService.isSupported)
+            TextButton.icon(
+              onPressed: _busy ? null : _signInWithGoogle,
+              icon: const Icon(Icons.account_circle_outlined, size: 18),
             label: const Text('Use Google instead'),
           ),
           TextButton(
