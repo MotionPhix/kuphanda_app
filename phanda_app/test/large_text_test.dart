@@ -16,6 +16,7 @@ import 'package:kuphanda/data/seed/library_seed.dart';
 import 'package:kuphanda/data/store/document_files.dart';
 import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
+import 'package:kuphanda/features/classes/classes_screen.dart';
 import 'package:kuphanda/features/document/document_detail_screen.dart';
 import 'package:kuphanda/features/library/library_screen.dart';
 import 'package:kuphanda/features/reader/block_document_view.dart';
@@ -208,6 +209,17 @@ void main() {
     expect(errors, isEmpty, reason: _describe(errors));
   });
 
+  testWidgets('the classes screen survives 1.3x text', (tester) async {
+    final errors = await _pumpPhone(
+      tester,
+      1.3,
+      home: const Scaffold(body: ClassesScreen()),
+    );
+
+    expect(errors, isEmpty, reason: _describe(errors));
+    expect(find.textContaining('class'), findsWidgets);
+  });
+
   testWidgets('a study guide reads at 1.3x without overflowing', (
     tester,
   ) async {
@@ -225,4 +237,5 @@ void main() {
     expect(find.textContaining('Section'), findsWidgets);
   });
 }
+
 
