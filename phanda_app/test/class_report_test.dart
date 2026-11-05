@@ -335,4 +335,45 @@ void main() {
 
     expect(find.text('Reminded one learner.'), findsOneWidget);
   });
+
+  testWidgets('the class report survives 1.3x text', (tester) async {
+    final state = await _teacherState();
+
+    // A teacher reading a roster on a cheap phone with the font turned up is
+    // the worst case for this screen: names, codes and counts all in one row.
+    tester.view.physicalSize = const Size(720, 1600);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    final errors = <FlutterErrorDetails>[];
+    final previous = FlutterError.onError;
+    FlutterError.onError = errors.add;
+
+    await tester.pumpWidget(
+      AppScope(
+        state: state,
+        child: MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(1.3),
+            ),
+            child: child!,
+          ),
+          home: const ClassDetailScreen(classId: 'c1'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    FlutterError.onError = previous;
+
+    expect(
+      errors,
+      isEmpty,
+      reason: errors.map((error) => error.exceptionAsString()).join('\n\n'),
+    );
+    expect(find.text('Tadala Phiri'), findsOneWidget);
+  });
 }

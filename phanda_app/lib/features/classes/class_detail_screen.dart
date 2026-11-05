@@ -25,7 +25,9 @@ class ClassDetailScreen extends StatelessWidget {
     if (group == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('This class is no longer in your list.')),
+        body: const Center(
+          child: Text('This class is no longer in your list.'),
+        ),
       );
     }
 
@@ -36,11 +38,13 @@ class ClassDetailScreen extends StatelessWidget {
     final readingProgress = assignments.isEmpty
         ? 0.0
         : assignments
-                .map((assignment) => state.documentById(assignment.documentId))
-                .whereType<Document>()
-                .map((document) => state.progressOrDefault(document).percent)
-                .fold<double>(0, (sum, value) => sum + value) /
-            assignments.length;
+                  .map(
+                    (assignment) => state.documentById(assignment.documentId),
+                  )
+                  .whereType<Document>()
+                  .map((document) => state.progressOrDefault(document).percent)
+                  .fold<double>(0, (sum, value) => sum + value) /
+              assignments.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +71,10 @@ class ClassDetailScreen extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [subject.color, Color.lerp(subject.color, Colors.black, 0.3)!],
+                      colors: [
+                        subject.color,
+                        Color.lerp(subject.color, Colors.black, 0.3)!,
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.large),
                   ),
@@ -76,7 +83,10 @@ class ClassDetailScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(subject.emoji, style: const TextStyle(fontSize: 24)),
+                          Text(
+                            subject.emoji,
+                            style: const TextStyle(fontSize: 24),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -91,7 +101,9 @@ class ClassDetailScreen extends StatelessWidget {
                       const SizedBox(height: 14),
                       Text(
                         group.teacherName,
-                        style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                       Text(
                         plural(group.memberCount, 'learner'),
@@ -129,25 +141,45 @@ class ClassDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 AppCard(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.tag_rounded, size: 18),
                       const SizedBox(width: 8),
-                      Text('Class code', style: theme.textTheme.bodySmall),
+                      // At 1.3x this row (label, code, "Copy") needed 141px more
+                      // than the card. The label now yields, and copying is an
+                      // icon button with a tooltip instead of a worded button.
+                      Flexible(
+                        child: Text(
+                          'Class code',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
                       const SizedBox(width: 10),
                       Text(
                         group.code,
-                        style: theme.textTheme.titleSmall?.copyWith(letterSpacing: 2),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          letterSpacing: 2,
+                        ),
                       ),
                       const Spacer(),
-                      TextButton.icon(
+                      IconButton(
                         onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: group.code));
-                          if (context.mounted) showSnack(context, 'Class code copied.');
+                          await Clipboard.setData(
+                            ClipboardData(text: group.code),
+                          );
+                          if (context.mounted) {
+                            showSnack(context, 'Class code copied.');
+                          }
                         },
+                        tooltip: 'Copy class code',
+                        visualDensity: VisualDensity.compact,
                         icon: const Icon(Icons.copy_rounded, size: 16),
-                        label: const Text('Copy'),
                       ),
                     ],
                   ),
@@ -155,12 +187,24 @@ class ClassDetailScreen extends StatelessWidget {
                 const SizedBox(height: 22),
                 Row(
                   children: [
-                    Text('Reading set', style: theme.textTheme.titleMedium),
-                    const Spacer(),
-                    Text(
-                      '$done/${assignments.length} done',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    Expanded(
+                      child: Text(
+                        'Reading set',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '$done/${assignments.length} done',
+                        maxLines: 1,
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
@@ -174,7 +218,9 @@ class ClassDetailScreen extends StatelessWidget {
                         ? 'Set a document for the class to read, with a due date.'
                         : 'Your teacher has not set any reading for this class.',
                     actionLabel: group.isMine ? 'Set reading' : null,
-                    onAction: group.isMine ? () => _addAssignment(context, state, group) : null,
+                    onAction: group.isMine
+                        ? () => _addAssignment(context, state, group)
+                        : null,
                   )
                 else
                   for (final assignment in assignments) ...[
@@ -182,8 +228,10 @@ class ClassDetailScreen extends StatelessWidget {
                       assignment: assignment,
                       state: state,
                       showClass: false,
-                      onOpen: () => openDocument(context, assignment.documentId),
-                      onToggleDone: () => state.toggleAssignmentDone(assignment.id),
+                      onOpen: () =>
+                          openDocument(context, assignment.documentId),
+                      onToggleDone: () =>
+                          state.toggleAssignmentDone(assignment.id),
                     ),
                     if (group.isMine)
                       Align(
@@ -197,7 +245,9 @@ class ClassDetailScreen extends StatelessWidget {
                               confirmLabel: 'Remove',
                             );
                             if (!confirmed) return;
-                            final removed = await state.deleteAssignment(assignment.id);
+                            final removed = await state.deleteAssignment(
+                              assignment.id,
+                            );
                             if (!removed && context.mounted) {
                               showSnack(
                                 context,
@@ -205,7 +255,10 @@ class ClassDetailScreen extends StatelessWidget {
                               );
                             }
                           },
-                          icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 16,
+                          ),
                           label: const Text('Remove assignment'),
                         ),
                       ),
@@ -213,15 +266,18 @@ class ClassDetailScreen extends StatelessWidget {
                   ],
                 if (group.isMine) ...[
                   const SizedBox(height: 20),
-                  _ClassReportSection(classroomId: group.id, memberCount: group.memberCount),
+                  _ClassReportSection(
+                    classroomId: group.id,
+                    memberCount: group.memberCount,
+                  ),
                 ],
                 const SizedBox(height: 10),
                 Text(
                   group.isMine
                       ? 'A learner counts as finished once they pass 90% of a paper. '
-                          'The report above is the class record, not this phone’s.'
+                            'The report above is the class record, not this phone’s.'
                       : 'Progress is measured from pages actually read, not from a tick box. '
-                          'A document counts towards an assignment once you pass 90%.',
+                            'A document counts towards an assignment once you pass 90%.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -234,7 +290,11 @@ class ClassDetailScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _addAssignment(BuildContext context, AppState state, ClassGroup group) async {
+  Future<void> _addAssignment(
+    BuildContext context,
+    AppState state,
+    ClassGroup group,
+  ) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -304,102 +364,110 @@ class _AddAssignmentSheetState extends State<_AddAssignmentSheet> {
     final theme = Theme.of(context);
     final query = _searchController.text.toLowerCase();
     final documents = widget.state.entries
-        .where((entry) => query.isEmpty || entry.document.title.toLowerCase().contains(query))
+        .where(
+          (entry) =>
+              query.isEmpty ||
+              entry.document.title.toLowerCase().contains(query),
+        )
         .take(30)
         .toList();
 
     return SheetBody(
-        title: 'Set reading',
-        subtitle: '${widget.group.name} · due ${formatDate(_dueDate)}',
-        maxHeightFactor: 0.9,
-        actions: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+      title: 'Set reading',
+      subtitle: '${widget.group.name} · due ${formatDate(_dueDate)}',
+      maxHeightFactor: 0.9,
+      actions: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: FilledButton(
+            onPressed: _selected == null
+                ? null
+                : () async {
+                    final picked = _selected!;
+                    try {
+                      await widget.state.assignPaper(
+                        classroomId: widget.group.id,
+                        documentId: picked.id,
+                        dueDate: _dueDate,
+                      );
+                    } catch (error) {
+                      if (context.mounted) {
+                        showSnack(
+                          context,
+                          'Could not set reading: $error',
+                          error: true,
+                        );
+                      }
+                      return;
+                    }
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      showSnack(context, 'Reading set: ${picked.title}');
+                    }
+                  },
+            child: const Text('Set assignment'),
+          ),
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _dueDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) setState(() => _dueDate = picked);
+                  },
+                  icon: const Icon(Icons.event_outlined, size: 18),
+                  label: Text('Due ${formatDate(_dueDate)}'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Choose a document', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              hintText: 'Search the library',
+              prefixIcon: Icon(Icons.search_rounded),
+              isDense: true,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 2,
-            child: FilledButton(
-              onPressed: _selected == null
-                  ? null
-                  : () async {
-                      final picked = _selected!;
-                      try {
-                        await widget.state.assignPaper(
-                          classroomId: widget.group.id,
-                          documentId: picked.id,
-                          dueDate: _dueDate,
-                        );
-                      } catch (error) {
-                        if (context.mounted) {
-                          showSnack(context, 'Could not set reading: $error', error: true);
-                        }
-                        return;
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        showSnack(context, 'Reading set: ${picked.title}');
-                      }
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 260,
+            child: documents.isEmpty
+                ? const Center(child: Text('No matching documents'))
+                : ListView.builder(
+                    itemCount: documents.length,
+                    itemBuilder: (context, index) {
+                      final document = documents[index].document;
+                      return DocumentPickerTile(
+                        document: document,
+                        selected: _selected?.id == document.id,
+                        onTap: () => setState(() => _selected = document),
+                      );
                     },
-              child: const Text('Set assignment'),
-            ),
+                  ),
           ),
         ],
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _dueDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (picked != null) setState(() => _dueDate = picked);
-                    },
-                    icon: const Icon(Icons.event_outlined, size: 18),
-                    label: Text('Due ${formatDate(_dueDate)}'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text('Choose a document', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                hintText: 'Search the library',
-                prefixIcon: Icon(Icons.search_rounded),
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 260,
-              child: documents.isEmpty
-                  ? const Center(child: Text('No matching documents'))
-                  : ListView.builder(
-                      itemCount: documents.length,
-                      itemBuilder: (context, index) {
-                        final document = documents[index].document;
-                        return DocumentPickerTile(
-                          document: document,
-                          selected: _selected?.id == document.id,
-                          onTap: () => setState(() => _selected = document),
-                        );
-                      },
-                    ),
-            ),
-          ],
       ),
     );
   }
@@ -416,15 +484,21 @@ int lateCountFor(ClassReport report, ReportedAssignment assignment) {
   final endOfDueDay = DateTime(due.year, due.month, due.day, 23, 59, 59);
   if (endOfDueDay.isAfter(DateTime.now())) return 0;
 
-  return report.learners.where((learner) => !learner.hasFinished(assignment.id)).length;
+  return report.learners
+      .where((learner) => !learner.hasFinished(assignment.id))
+      .length;
 }
+
 /// The teacher's side of a class: what was set, and who has finished it.
 ///
 /// The list above this is the class's reading, counted from this phone. This
 /// section is the room's answer, fetched from the server, so a teacher opening
 /// the app on a laptop sees the same figures as on their phone.
 class _ClassReportSection extends StatefulWidget {
-  const _ClassReportSection({required this.classroomId, required this.memberCount});
+  const _ClassReportSection({
+    required this.classroomId,
+    required this.memberCount,
+  });
 
   final String classroomId;
   final int memberCount;
@@ -448,7 +522,11 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
   /// The detail behind a learner's count: every paper the class was set, and
   /// whether this learner has read it. Inline, so it works the same on a phone
   /// and on a desktop window and needs no second surface.
-  Widget _learnerPapers(ThemeData theme, ClassReport report, ReportedLearner learner) {
+  Widget _learnerPapers(
+    ThemeData theme,
+    ClassReport report,
+    ReportedLearner learner,
+  ) {
     if (report.assignments.isEmpty) {
       return Text(
         'Nothing has been set for this class yet.',
@@ -474,7 +552,9 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                   size: 15,
                   color: learner.hasFinished(assignment.id)
                       ? AppColors.green
-                      : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      : theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.6,
+                        ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -494,22 +574,32 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
       ],
     );
   }
+
   /// Reminds the learners still to read this paper, and says how many it reached
   /// rather than leaving the teacher to guess.
   Future<void> _remind(ReportedAssignment assignment) async {
     final state = AppScope.read(context);
-    final sent = await state.remindUnfinished(widget.classroomId, assignment.id);
+    final sent = await state.remindUnfinished(
+      widget.classroomId,
+      assignment.id,
+    );
     if (!mounted) return;
 
     if (sent == null) {
-      showSnack(context, 'Could not send the reminder. Check the connection and try again.');
+      showSnack(
+        context,
+        'Could not send the reminder. Check the connection and try again.',
+      );
       return;
     }
     if (sent == 0) {
       showSnack(context, 'Everyone has already read this one.');
       return;
     }
-    showSnack(context, sent == 1 ? 'Reminded one learner.' : 'Reminded $sent learners.');
+    showSnack(
+      context,
+      sent == 1 ? 'Reminded one learner.' : 'Reminded $sent learners.',
+    );
   }
 
   Future<void> _load() async {
@@ -529,8 +619,14 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
       children: [
         Row(
           children: [
-            Text('Who has read it', style: theme.textTheme.titleMedium),
-            const Spacer(),
+            Expanded(
+              child: Text(
+                'Who has read it',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
             if (_loading)
               const SizedBox(
                 width: 14,
@@ -549,7 +645,7 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                     _loading
                         ? 'Loading the class record…'
                         : 'The class record is not available offline. It appears once a '
-                            'learner finishes a paper and this phone reaches the server.',
+                              'learner finishes a paper and this phone reaches the server.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -617,7 +713,9 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                             ? 0
                             : assignment.completedCount / report.learnerCount,
                         minHeight: 4,
-                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
                       ),
                     ),
                     if (report.learnerCount - assignment.completedCount > 0)
@@ -626,7 +724,10 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                         child: TextButton.icon(
                           // Chases only the people still to read it.
                           onPressed: () => _remind(assignment),
-                          icon: const Icon(Icons.notifications_active_outlined, size: 15),
+                          icon: const Icon(
+                            Icons.notifications_active_outlined,
+                            size: 15,
+                          ),
                           label: Text(
                             'Remind ${report.learnerCount - assignment.completedCount}',
                           ),
@@ -662,7 +763,10 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
                   }),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 4,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -706,7 +810,3 @@ class _ClassReportSectionState extends State<_ClassReportSection> {
     );
   }
 }
-
-
-
-
