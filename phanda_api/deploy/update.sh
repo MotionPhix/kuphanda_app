@@ -46,6 +46,28 @@ else
   echo "GOOGLE_CLIENT_ID already set"
 fi
 
+# WhatsApp sign-in codes. The values come from the operator, never from the
+# script: a missing token means phone sign-in answers 503 and email/Google keep
+# working, which is a safe default but a silent one — so it is said out loud.
+if ! grep -q '^WHATSAPP_PHONE_NUMBER_ID=' .env 2>/dev/null; then
+  if [ -n "${WHATSAPP_PHONE_NUMBER_ID_:-}" ] && [ -n "${WHATSAPP_TOKEN_:-}" ]; then
+    {
+      printf '\n# WhatsApp Cloud API — phone sign-in codes\n'
+      printf 'WHATSAPP_PHONE_NUMBER_ID=%s\n' "$WHATSAPP_PHONE_NUMBER_ID_"
+      printf 'WHATSAPP_TOKEN=%s\n' "$WHATSAPP_TOKEN_"
+      printf 'WHATSAPP_OTP_TEMPLATE=%s\n' "${WHATSAPP_OTP_TEMPLATE_:-kuphanda_auth_code}"
+      printf 'WHATSAPP_OTP_LANGUAGE=%s\n' "${WHATSAPP_OTP_LANGUAGE_:-en_US}"
+      printf 'WHATSAPP_API_VERSION=%s\n' "${WHATSAPP_API_VERSION_:-v21.0}"
+      printf 'WHATSAPP_OTP_CODE_BUTTON=%s\n' "${WHATSAPP_OTP_CODE_BUTTON_:-true}"
+    } >> .env
+    echo "added WhatsApp credentials"
+  else
+    echo "WHATSAPP_* not set — phone sign-in will answer 503 (email and Google still work)"
+  fi
+else
+  echo "WHATSAPP_* already set"
+fi
+
 # Mailtrap's sandbox is not reachable from this host, so an smtp mailer with
 # empty credentials makes every sign-up wait for a timeout and then 500.
 if grep -q '^MAIL_MAILER=smtp$' .env 2>/dev/null; then

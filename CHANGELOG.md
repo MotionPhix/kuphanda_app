@@ -1,5 +1,44 @@
 # Kuphanda
 
+## 1.2.0 — 5 November 2026
+
+A number and a code, instead of a password nobody remembers.
+
+### Signing in
+
+- **Phone sign-in with a WhatsApp code.** `POST /auth/otp/start` sends a
+  six-digit code through Meta's WhatsApp Cloud API; `POST /auth/otp/verify`
+  exchanges it for a session. Malawian numbers are accepted as typed —
+  `099 123 4567`, `0991234567`, `265991234567` or `+265991234567` — and stored
+  in one E.164 form so a number cannot become two accounts.
+- **Sign-up from a phone.** A number that is on no account can create one: the
+  account exists only after the code comes back, so nobody can block a number by
+  typing it. Name is required; email is not.
+- **Linking, for accounts that already exist.** Every account made before this
+  release has an email and no number. Profile → *Add a WhatsApp number* verifies
+  one from inside the session, which is the only safe way to attach a number to
+  an account that was never matched against it.
+- **Email and Google are untouched.** The login screen leads with the phone, but
+  "Sign in with email" and "Continue with Google" are exactly where they were.
+  An account with no verified number can still get in the old way, which matters
+  when WhatsApp is down, the phone is flat, or the number has changed hands.
+- **Codes are not secrets we keep.** Only a password hash of each code is
+  stored; one code per send, ten minutes, five guesses, one send a minute and
+  five an hour per number. The code is never in an API response, in any
+  environment.
+- **An unconfigured server says so.** With no WhatsApp credentials the endpoint
+  answers 503 `OTP_CHANNEL_UNAVAILABLE` instead of accepting a request and
+  sending nothing, and `/api/v1/health` reports `whatsapp_otp.configured`.
+
+### Why Meta directly, not a provider
+
+Kuphanda owns its own WhatsApp Business Account. A business provider in the
+middle would hold the message log, add a per-message margin and add a second
+failure mode, and Mithenga's own send-code endpoint exists to sign people into
+Mithenga, not to be an API for another product. The transport sits behind
+`App\Contracts\OtpSender`, so a provider can be added later without touching the
+sign-in flow.
+
 ## 1.1.0 — 5 November 2026
 
 The library stops being a demo and the app stops assuming a small font.

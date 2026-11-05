@@ -29,6 +29,28 @@ return [
         'credentials' => env('FIREBASE_CREDENTIALS'),
     ],
 
+    'whatsapp' => [
+        // Meta WhatsApp Cloud API, called directly: Kuphanda owns the WhatsApp
+        // Business Account, so no provider sits in the middle taking a margin or
+        // holding the message log. `phone_number_id` is the numeric ID in the app
+        // dashboard, not the display number.
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        // Permanent system-user token with whatsapp_business_messaging. Never the
+        // 24-hour test token, which expires and takes sign-in with it.
+        'token' => env('WHATSAPP_TOKEN'),
+        // An AUTHENTICATION category template. Utility or marketing templates are
+        // rejected for login codes.
+        'template' => env('WHATSAPP_OTP_TEMPLATE', 'kuphanda_auth_code'),
+        'language' => env('WHATSAPP_OTP_LANGUAGE', 'en_US'),
+        'version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+        // True when the template carries a "Copy code" button, which needs the
+        // code passed a second time against button index 0.
+        'code_button' => (bool) env('WHATSAPP_OTP_CODE_BUTTON', true),
+        // Echoed back by Meta's webhook handshake. Optional: delivery receipts
+        // only, sign-in works without it.
+        'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+    ],
+
     'paychangu' => [
         'base_url' => env('PAYCHANGU_BASE_URL', 'https://api.paychangu.com'),
         'secret_key' => env('PAYCHANGU_SECRET_KEY'),

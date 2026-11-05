@@ -34,6 +34,8 @@ class AppSnapshot {
     this.accountPlan,
     this.accountSchool,
     this.accountStaff = false,
+    this.accountPhone,
+    this.accountPhoneVerified = false,
     this.pendingPaymentTxRef,
     this.pendingPaymentKind,
     this.pendingPaymentAt,
@@ -83,6 +85,12 @@ class AppSnapshot {
   String? accountPlan;
   String? accountSchool;
   bool accountStaff = false;
+
+  /// The WhatsApp number on this account, and whether a code proved it. Kept
+  /// locally so the profile screen can offer "add a number" without a request,
+  /// and so the sign-in sheet never claims a number works when it does not.
+  String? accountPhone;
+  bool accountPhoneVerified = false;
 
   /// Checkout started but not confirmed. Kept so closing the app while paying
   /// in the browser does not lose the reference.
@@ -134,6 +142,8 @@ class AppSnapshot {
         'accountPlan': accountPlan,
         'accountSchool': accountSchool,
         'accountStaff': accountStaff,
+      'accountPhone': accountPhone,
+      'accountPhoneVerified': accountPhoneVerified,
         'pendingPaymentTxRef': pendingPaymentTxRef,
         'pendingPaymentKind': pendingPaymentKind,
         'pendingPaymentAt': pendingPaymentAt?.toIso8601String(),
@@ -196,6 +206,8 @@ class AppSnapshot {
       accountPlan: json['accountPlan'] as String?,
       accountSchool: json['accountSchool'] as String?,
       accountStaff: json['accountStaff'] as bool? ?? false,
+      accountPhone: json['accountPhone'] as String?,
+      accountPhoneVerified: json['accountPhoneVerified'] as bool? ?? false,
       pendingPaymentTxRef: json['pendingPaymentTxRef'] as String?,
       pendingPaymentKind: json['pendingPaymentKind'] as String?,
       pendingPaymentAt: DateTime.tryParse(json['pendingPaymentAt'] as String? ?? ''),

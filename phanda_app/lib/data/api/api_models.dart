@@ -186,6 +186,8 @@ class AuthSession {
     this.role,
     this.form,
     this.profileCompleted = false,
+    this.phone,
+    this.phoneVerified = false,
   });
 
   final String token;
@@ -215,6 +217,17 @@ class AuthSession {
   /// learner). Only a genuinely new account is sent through it.
   final bool profileCompleted;
 
+  /// The number on the account, in E.164. Null for an account that only has an
+  /// email — most accounts today, until they add one.
+  final String? phone;
+
+  /// True only when a WhatsApp code proved [phone]. An unverified number is a
+  /// claim, and the app must not offer it as a way to sign in.
+  final bool phoneVerified;
+
+  /// Whether this account can be signed in to with a phone code.
+  bool get canSignInWithPhone => phone != null && phoneVerified;
+
   bool get isTeacher => role == 'teacher';
 
   bool get isSchoolPlan => plan == 'school';
@@ -233,6 +246,8 @@ class AuthSession {
         'role': role,
         'form': form,
         'profile_completed': profileCompleted,
+        'phone': phone,
+        'phone_verified': phoneVerified,
       };
 
   static AuthSession fromJson(Map<String, Object?> json, {required String token}) {
@@ -251,6 +266,45 @@ class AuthSession {
       role: json['role'] as String?,
       form: (json['form'] as num?)?.toInt(),
       profileCompleted: json['profile_completed'] as bool? ?? false,
+      phone: json['phone'] as String?,
+      phoneVerified: json['phone_verified'] as bool? ?? false,
+    );
+  }
+}
+
+/// What the server said when asked to send a sign-in code.
+///
+/// [exists] is the one field that changes what the sheet does next: false means
+/// no code was sent, because no account uses that number.
+class OtpStart {
+  const OtpStart({
+    required this.exists,
+    required this.phone,
+    this.challenge,
+    this.masked,
+    this.expiresIn = 600,
+    this.resendAfter = 60,
+  });
+
+  final bool exists;
+  final String phone;
+  final String? challenge;
+
+  /// The number as it may be shown back, e.g. "+265 ••• ••• 567".
+  final String? masked;
+  final int expiresIn;
+  final int resendAfter;
+
+  bool get sent => challenge != null && challenge!.isNotEmpty;
+
+  static OtpStart fromJson(Map<String, Object?> json) {
+    return OtpStart(
+      exists: json['exists'] as bool? ?? false,
+      phone: (json['phone'] as String?) ?? '',
+      challenge: json['challenge'] as String?,
+      masked: json['masked'] as String?,
+      expiresIn: (json['expires_in'] as num?)?.toInt() ?? 600,
+      resendAfter: (json['resend_after'] as num?)?.toInt() ?? 60,
     );
   }
 }

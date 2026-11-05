@@ -28,6 +28,11 @@ final class UserResource extends JsonResource
             'is_staff' => (bool) $this->is_staff,
             'school' => $this->school,
             'email' => $this->email,
+            // The stored number and whether a code proved it. The app shows the
+            // number back on the profile screen and decides whether "sign in
+            // with WhatsApp" is a thing this account can do.
+            'phone' => $this->phone_e164,
+            'phone_verified' => $this->phone_verified_at !== null,
             'plan' => $this->plan->value,
             'role' => $this->role,
             'form' => $this->form,

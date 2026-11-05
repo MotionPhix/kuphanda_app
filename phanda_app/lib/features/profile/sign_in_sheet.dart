@@ -4,6 +4,7 @@ import '../../core/widgets/common.dart';
 import '../../data/api/api_models.dart';
 import '../../data/auth/google_sign_in_service.dart';
 import '../../state/app_state.dart';
+import 'phone_sign_in_sheet.dart';
 
 /// Signing in on a phone that already has a profile — a teacher on a school
 /// handset, or someone checking a second account.
@@ -177,6 +178,17 @@ class _SignInSheetState extends State<_SignInSheet> {
     }
   }
 
+  /// The phone route, opened on top of this sheet and closing it on success.
+  ///
+  /// It has to be a second sheet rather than a second form: the phone flow needs
+  /// a code step with its own countdown, and folding that into this one would
+  /// make both harder to follow.
+  Future<void> _usePhone() async {
+    final navigator = Navigator.of(context);
+    final done = await showPhoneSignInSheet(context, widget.state);
+    if (done && mounted) navigator.pop();
+  }
+
   /// A link by mail is the only way back in for a learner who has forgotten the
   /// password: the sheet hands off to the web app rather than pretending to
   /// reset anything itself.
@@ -251,7 +263,8 @@ class _SignInSheetState extends State<_SignInSheet> {
       title: _creating ? 'Create an account' : 'Sign in',
       subtitle: _creating
           ? 'Your papers and progress follow this account to any phone.'
-          : 'Use the email and password for the account you want.',
+          : 'Use your phone, the email and password for the account you want, '
+              'or Google.',
       actions: [
         Expanded(
           child: OutlinedButton(
@@ -331,6 +344,13 @@ class _SignInSheetState extends State<_SignInSheet> {
               ),
             ),
           const SizedBox(height: 4),
+          // The three routes sit together, none hidden behind the other. The
+          // phone route is first because it needs no password to remember.
+          TextButton.icon(
+            onPressed: _busy ? null : _usePhone,
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+            label: const Text('Use my phone number instead'),
+          ),
           // Google stays available: it is how a learner signs in without an
           // email account at all. Where the plugin does not exist (Windows) the
           // tap explains that rather than the option disappearing.

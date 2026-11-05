@@ -423,6 +423,56 @@ class ApiClient {
     return _sessionFrom(_dataMap(body));
   }
 
+  /// Asks for a WhatsApp code.
+  ///
+  /// [purpose] is `login`, `signup`, or `link`. The server decides what each
+  /// one means; sending the intent rather than a hidden flag keeps an
+  /// authenticated "add my number" call honest.
+  Future<OtpStart> startOtp({
+    required String phone,
+    required String purpose,
+  }) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/auth/otp/start'),
+        headers: _headers,
+        body: jsonEncode(<String, String>{'phone': phone, 'purpose': purpose}),
+      ),
+    );
+    return OtpStart.fromJson(_dataMap(body));
+  }
+
+  /// Hands the code back. Returns a session for login and sign-up; for a link
+  /// the server answers with the user, and the token already on this client
+  /// stays the one in use.
+  Future<AuthSession> verifyOtp({
+    required String challenge,
+    required String code,
+    String? name,
+  }) async {
+    final body = await _send(
+      () => _http.post(
+        _uri('/auth/otp/verify'),
+        headers: _headers,
+        body: jsonEncode(<String, Object?>{
+          'challenge': challenge,
+          'code': code,
+          if (name != null && name.isNotEmpty) 'name': name,
+        }),
+      ),
+    );
+
+    final data = _dataMap(body);
+    if (data['token'] is String) return _sessionFrom(data);
+
+    // A link reply carries only the user. Keep the existing token so the
+    // session object stays whole for the caller.
+    return AuthSession.fromJson(
+      (data['user'] as Map<String, Object?>?) ?? data,
+      token: token ?? '',
+    );
+  }
+
   Future<List<RemotePlan>> fetchPlans() async {
     final body = await _send(() => _http.get(_uri('/plans'), headers: _headers));
     final rows = body['data'];

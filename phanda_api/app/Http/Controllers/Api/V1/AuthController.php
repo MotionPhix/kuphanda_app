@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\OtpException;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Requests\Api\V1\ChangePasswordRequest;
 use App\Http\Requests\Api\V1\ForgotPasswordRequest;
 use App\Http\Requests\Api\V1\GoogleSignInRequest;
-use App\Http\Requests\Api\V1\UpdateProfileRequest;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Requests\Api\V1\ResendVerificationRequest;
 use App\Http\Requests\Api\V1\ResetPasswordRequest;
+use App\Http\Requests\Api\V1\StartOtpRequest;
+use App\Http\Requests\Api\V1\UpdateProfileRequest;
 use App\Http\Requests\Api\V1\VerifyEmailRequest;
+use App\Http\Requests\Api\V1\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\GoogleTokenVerifier;
+use App\Services\OtpService;
 use App\Services\VerificationMailer;
+use App\Support\PhoneNumber;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
@@ -144,6 +149,211 @@ final class AuthController extends ApiController
         ], $current !== null ? 'Google account linked' : 'Signed in with Google');
     }
 
+    /**
+     * Sends a six-digit code to a WhatsApp number.
+     *
+     * Three purposes, one endpoint, because the only real difference is which
+     * account the number is allowed to belong to:
+     *
+     *  - login  — the number must already be on an account;
+     *  - signup — it must not be, and the account is created on verification;
+     *  - link   — someone signed in is adding a number to their own account.
+     *
+     * A number is only ever an identity once `phone_verified_at` is set. Until
+     * then it is a claim, and anyone could type someone else's number.
+     */
+    public function startOtp(StartOtpRequest $request, OtpService $otp): JsonResponse
+    {
+        $phone = PhoneNumber::toE164($request->string('phone')->toString());
+
+        if ($phone === null) {
+            return $this->error(
+                'That does not look like a mobile number. Use 099 123 4567.',
+                422,
+                ['code' => 'PHONE_INVALID']
+            );
+        }
+
+        $purpose = (string) $request->input('purpose');
+
+        /** @var User|null $current */
+        $current = Auth::guard('sanctum')->user();
+
+        if ($purpose === OtpService::PURPOSE_LINK && $current === null) {
+            return $this->unauthorized('Sign in first, then add a number to this account.');
+        }
+
+        $owner = User::query()->where('phone_e164', $phone)->first();
+
+        if ($purpose === OtpService::PURPOSE_LOGIN) {
+            if ($owner === null) {
+                // No code is sent and no challenge is created: there is nothing
+                // to verify against, and the app offers "create an account"
+                // instead of a box that can never be filled.
+                return $this->success([
+                    'exists' => false,
+                    'phone' => $phone,
+                    'channel' => 'whatsapp',
+                ], 'No account uses that number yet.');
+            }
+
+            $user = $owner;
+        } elseif ($purpose === OtpService::PURPOSE_SIGNUP) {
+            if ($owner !== null) {
+                return $this->error(
+                    'That number already has an account. Sign in instead.',
+                    409,
+                    ['code' => 'PHONE_TAKEN']
+                );
+            }
+
+            $user = null;
+        } else {
+            if ($owner !== null && $owner->id !== $current?->id) {
+                return $this->error(
+                    'That number is already on another account.',
+                    409,
+                    ['code' => 'PHONE_TAKEN']
+                );
+            }
+
+            $user = $current;
+        }
+
+        try {
+            $challenge = $otp->issue($phone, $purpose, $user, $request->ip());
+        } catch (OtpException $exception) {
+            return $this->error($exception->getMessage(), $exception->status(), [
+                'code' => $exception->reason,
+            ]);
+        }
+
+        $resendAfter = config('otp.resend_seconds', 60);
+
+        return $this->success([
+            'exists' => true,
+            'challenge' => $challenge->id,
+            'phone' => $phone,
+            'masked' => PhoneNumber::mask($phone),
+            'channel' => 'whatsapp',
+            'expires_in' => max(0, (int) now()->diffInSeconds($challenge->expires_at, false)),
+            // The code is never in this response, in any environment. If it were
+            // here, the WhatsApp message would be theatre.
+            // Sent so the sheet can count down instead of letting someone tap
+            // "send again" into a refusal.
+            'resend_after' => is_numeric($resendAfter) ? (int) $resendAfter : 60,
+        ], 'A code is on its way to WhatsApp.');
+    }
+
+    /**
+     * Checks the code and, for a sign-up, creates the account.
+     *
+     * Linking is allowed to happen without the password being re-entered because
+     * the session token already proves the account; what the code proves is the
+     * number, which is the part that was never verified.
+     */
+    public function verifyOtp(VerifyOtpRequest $request, OtpService $otp): JsonResponse
+    {
+        try {
+            $challenge = $otp->verify($request->challenge, $request->code);
+        } catch (OtpException $exception) {
+            return $this->error($exception->getMessage(), $exception->status(), [
+                'code' => $exception->reason,
+            ]);
+        }
+
+        $phone = $challenge->phone_e164;
+
+        /** @var User|null $current */
+        $current = Auth::guard('sanctum')->user();
+
+        if ($challenge->purpose === OtpService::PURPOSE_LINK) {
+            if ($current === null || $challenge->user_id !== $current->id) {
+                return $this->unauthorized('Sign in first, then add this number to the account.');
+            }
+
+            $taken = User::query()
+                ->where('phone_e164', $phone)
+                ->whereKeyNot($current->id)
+                ->exists();
+
+            if ($taken) {
+                return $this->error('That number is already on another account.', 409, [
+                    'code' => 'PHONE_TAKEN',
+                ]);
+            }
+
+            $current->forceFill([
+                'phone_e164' => $phone,
+                'phone_verified_at' => now(),
+            ])->save();
+
+            $otp->consume($challenge);
+
+            return $this->success(
+                new UserResource($current->fresh()),
+                'Number verified. You can sign in with it from now on.'
+            );
+        }
+
+        if ($challenge->purpose === OtpService::PURPOSE_SIGNUP) {
+            $name = mb_trim((string) $request->name);
+
+            if ($name === '') {
+                return $this->error(
+                    'Add your name to finish creating the account.',
+                    422,
+                    ['code' => 'NAME_REQUIRED']
+                );
+            }
+
+            if (User::query()->where('phone_e164', $phone)->exists()) {
+                return $this->error('That number already has an account. Sign in instead.', 409, [
+                    'code' => 'PHONE_TAKEN',
+                ]);
+            }
+
+            $user = User::query()->create([
+                'name' => $name,
+                // No address yet. The column is nullable for exactly this case:
+                // a learner whose only contact is a phone still gets an account.
+                'email' => null,
+                'password' => Str::random(40),
+                'plan' => 'free',
+                'phone_e164' => $phone,
+            ]);
+
+            $user->forceFill(['phone_verified_at' => now()])->save();
+            $otp->consume($challenge);
+
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+            return $this->created([
+                'user' => new UserResource($user->fresh()),
+                'token' => $token,
+            ], 'Account created. You can start reading now.');
+        }
+
+        $user = $challenge->user_id === null
+            ? null
+            : User::query()->find($challenge->user_id);
+
+        // A number can be removed from an account between sending and verifying.
+        // Refusing here is what stops a stale challenge from signing in.
+        if ($user === null || $user->phone_e164 !== $phone) {
+            return $this->unauthorized('That number is no longer on an account. Sign in with your email.');
+        }
+
+        $otp->consume($challenge);
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return $this->success([
+            'user' => new UserResource($user),
+            'token' => $token,
+        ], 'Signed in with WhatsApp');
+    }
+
     public function logout(Request $request): JsonResponse
     {
         /** @var User $user */
@@ -164,22 +374,22 @@ final class AuthController extends ApiController
         $data = $request->validated();
 
         $first = array_key_exists('first_name', $data)
-            ? trim((string) $data['first_name'])
+            ? mb_trim((string) $data['first_name'])
             : (string) $user->first_name;
         $last = array_key_exists('last_name', $data)
-            ? trim((string) $data['last_name'])
+            ? mb_trim((string) $data['last_name'])
             : (string) $user->last_name;
 
         if (array_key_exists('first_name', $data) || array_key_exists('last_name', $data)) {
             $user->first_name = $first;
             $user->last_name = $last;
-            $user->name = trim($first.' '.$last);
+            $user->name = mb_trim($first.' '.$last);
         } elseif (array_key_exists('name', $data)) {
-            $user->name = trim((string) $data['name']);
+            $user->name = mb_trim((string) $data['name']);
         }
 
         if (array_key_exists('school', $data)) {
-            $user->school = $data['school'] === null ? null : trim((string) $data['school']);
+            $user->school = $data['school'] === null ? null : mb_trim((string) $data['school']);
         }
 
         // Audience fields: they decide which class and role notifications this
@@ -204,15 +414,6 @@ final class AuthController extends ApiController
         }
 
         return $this->success(new UserResource($user->fresh()), 'Profile updated.');
-    }
-
-    private function profileIsComplete(User $user): bool
-    {
-        $named = filled($user->first_name) && filled($user->last_name);
-        $role = in_array($user->role, ['student', 'teacher'], true);
-        $form = $user->role === 'teacher' || $user->form !== null;
-
-        return $named && $role && $form;
     }
 
     public function me(Request $request): JsonResponse
@@ -314,5 +515,13 @@ final class AuthController extends ApiController
             400
         );
     }
-}
 
+    private function profileIsComplete(User $user): bool
+    {
+        $named = filled($user->first_name) && filled($user->last_name);
+        $role = in_array($user->role, ['student', 'teacher'], true);
+        $form = $user->role === 'teacher' || $user->form !== null;
+
+        return $named && $role && $form;
+    }
+}

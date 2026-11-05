@@ -752,6 +752,11 @@ class SheetBody extends StatelessWidget {
     // scroll-controlled sheet offers, which left a short form sitting above a
     // field of empty space. The content is sized by what is in it, and the scroll
     // view only starts scrolling once that exceeds the cap.
+    //
+    // The buttons are outside that scroll view. They used to be its last row, so
+    // a form that grew by one link pushed the thing the learner came to press
+    // below the fold — where it stayed until they scrolled a sheet that gave no
+    // sign of being scrollable. Now the body scrolls and the actions stay put.
     return Align(
       alignment: Alignment.topCenter,
       heightFactor: 1,
@@ -763,29 +768,37 @@ class SheetBody extends StatelessWidget {
             right: 20,
             bottom: bottomInset + 20,
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(title, style: theme.textTheme.titleLarge),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(title, style: theme.textTheme.titleLarge),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      child,
+                    ],
                   ),
-                ],
+                ),
+              ),
+              if (actions.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                child,
-                if (actions.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Row(children: actions),
-                ],
+                Row(children: actions),
               ],
-            ),
+            ],
           ),
         ),
       ),

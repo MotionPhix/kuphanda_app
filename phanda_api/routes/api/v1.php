@@ -34,6 +34,15 @@ Route::middleware('throttle:auth')->group(function (): void {
     Route::post('auth/google', [AuthController::class, 'google'])->name('api.v1.auth.google');
 });
 
+// Phone sign-in: a WhatsApp code instead of a password. Public because the
+// purpose covers sign-up, and because linking calls it with a bearer token that
+// the controller checks itself rather than behind `auth:sanctum` — a 401 from
+// middleware would hide the "sign in first" explanation from the app.
+Route::middleware('throttle:otp')->group(function (): void {
+    Route::post('auth/otp/start', [AuthController::class, 'startOtp'])->name('api.v1.auth.otp.start');
+    Route::post('auth/otp/verify', [AuthController::class, 'verifyOtp'])->name('api.v1.auth.otp.verify');
+});
+
 // Protected routes with authenticated rate limiter (120/min)
 Route::middleware(['auth:sanctum', 'throttle:authenticated'])->group(function (): void {
     Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
@@ -136,5 +145,3 @@ Route::middleware('throttle:6,1')->group(function (): void {
     Route::post('reset-password', [AuthController::class, 'resetPassword'])
         ->name('password.reset');
 });
-
-

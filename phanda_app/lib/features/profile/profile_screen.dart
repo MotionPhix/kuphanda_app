@@ -9,6 +9,7 @@ import '../../data/models/profile.dart';
 import '../../data/models/subject.dart';
 import '../../state/app_state.dart';
 import 'change_password_sheet.dart';
+import 'phone_sign_in_sheet.dart';
 import 'sign_in_sheet.dart';
 import '../billing/subscription_screen.dart';
 import '../staff/staff_library_screen.dart';
@@ -142,15 +143,34 @@ class ProfileScreen extends StatelessWidget {
                       // Only for a signed-in account: without a session there
                       // is no current password to prove, and the reset link on
                       // the sign-in sheet covers everyone else.
-                      if (state.isSignedIn) ...[
-                        const Divider(height: 1),
-                        _ProfileItem(
-                          icon: Icons.password_rounded,
-                          title: 'Change password',
-                          subtitle: 'Signs out your other devices',
-                          onTap: () => showChangePasswordSheet(context, state),
-                        ),
-                      ],
+                       if (state.isSignedIn) ...[
+                         const Divider(height: 1),
+                         // The bridge from the old world to the new one: an
+                         // account that has only ever had an email needs a
+                         // verified number before it can be signed in to with
+                         // one. Nobody is forced through this.
+                         _ProfileItem(
+                           icon: Icons.chat_bubble_outline_rounded,
+                           title: state.accountPhoneVerified
+                               ? 'WhatsApp number'
+                               : 'Add a WhatsApp number',
+                           subtitle: state.accountPhoneVerified
+                               ? 'Sign in with a code instead of a password'
+                               : 'Then you can sign in with a code, not a password',
+                           onTap: () => showPhoneSignInSheet(
+                             context,
+                             state,
+                             linkOnly: true,
+                           ),
+                         ),
+                         const Divider(height: 1),
+                         _ProfileItem(
+                           icon: Icons.password_rounded,
+                           title: 'Change password',
+                           subtitle: 'Signs out your other devices',
+                           onTap: () => showChangePasswordSheet(context, state),
+                         ),
+                       ],
                     ],
                   ),
                 ),

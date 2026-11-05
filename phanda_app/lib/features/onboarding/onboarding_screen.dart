@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../profile/phone_sign_in_sheet.dart';
 import '../profile/sign_in_sheet.dart';
 import '../../core/theme.dart';
 import '../../data/api/api_models.dart';
@@ -259,8 +260,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text('Sign in to continue', style: theme.textTheme.headlineMedium),
           const SizedBox(height: 6),
           Text(
-            'Your papers, classes and progress belong to your account. Use the '
-            'email your school gave you, or continue with Google.',
+            'Your papers, classes and progress belong to your account. Sign in '
+            'with your mobile number and a code on WhatsApp, with the email '
+            'your school gave you, or with Google.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -289,7 +291,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
           const SizedBox(height: 26),
-          FilledButton(
+          // Phone first: it is the way in for a learner whose school never gave
+          // them an email, and it is what most of them will reach for.
+          FilledButton.icon(
+            onPressed: _googleBusy ? null : _signInWithPhone,
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+            label: const Text('Continue with phone'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
             onPressed: _googleBusy ? null : _signInWithEmail,
             child: const Text('Sign in with email'),
           ),
@@ -319,6 +329,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _signInWithEmail() async {
     await showSignInSheet(context, AppScope.read(context));
+  }
+
+  Future<void> _signInWithPhone() async {
+    await showPhoneSignInSheet(context, AppScope.read(context));
   }
 
   Widget _buildDetails(ThemeData theme) {

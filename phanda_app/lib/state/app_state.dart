@@ -158,6 +158,8 @@ class AppState extends ChangeNotifier {
   AuthSession? get account => _account;
   String? get accountName => _snapshot.accountName;
   String? get accountEmail => _snapshot.accountEmail;
+  String? get accountPhone => _snapshot.accountPhone;
+  bool get accountPhoneVerified => _snapshot.accountPhoneVerified;
   String? get accountPlan => _snapshot.accountPlan;
   bool get isSyncing => _syncing;
   String? get syncError => _syncError;
@@ -1485,6 +1487,90 @@ class AppState extends ChangeNotifier {
     await syncNow();
   }
 
+  // ---------------------------------------------------------------------------
+  // Phone sign-in (WhatsApp code)
+  // ---------------------------------------------------------------------------
+
+  /// Asks the server to send a code.
+  ///
+  /// [purpose] is `login`, `signup`, or `link`. Nothing about the account is
+  /// changed here — a number only becomes an identity when the code comes back.
+  Future<OtpStart> startPhoneCode({
+    required String phone,
+    String purpose = 'login',
+  }) async {
+    // One account at a time, for the same reason the email path refuses it: a
+    // half-swapped session would show one person's library under another name.
+    if (purpose != 'link' && isSignedIn) {
+      throw const ApiException(
+        'Sign out before signing in with another account.',
+      );
+    }
+
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
+
+    return api.startOtp(phone: phone, purpose: purpose);
+  }
+
+  /// Signs in with a code that was sent to a number on an existing account.
+  Future<void> signInWithPhoneCode({
+    required String challenge,
+    required String code,
+  }) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
+    final session = await api.verifyOtp(challenge: challenge, code: code);
+
+    await _adoptSession(session);
+    await loadBilling();
+    await syncNow();
+  }
+
+  /// Creates the account the code was proving.
+  ///
+  /// The account exists only after this call: an unverified number never
+  /// reserves a name, so nobody can block a classmate's number by typing it.
+  Future<void> registerWithPhoneCode({
+    required String challenge,
+    required String code,
+    required String name,
+  }) async {
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: null);
+    final session = await api.verifyOtp(
+      challenge: challenge,
+      code: code,
+      name: name.trim(),
+    );
+
+    await _adoptSession(session);
+    await loadBilling();
+    await syncNow();
+  }
+
+  /// Adds a verified number to the account that is already signed in.
+  ///
+  /// The session token proves which account; the code proves the number. This
+  /// is the only safe way for an existing learner to gain phone sign-in, since
+  /// there is no number on the account to match against yet.
+  Future<void> verifyPhoneLink({
+    required String challenge,
+    required String code,
+  }) async {
+    if (!isSignedIn) {
+      throw const ApiException('Sign in first, then add a number.');
+    }
+
+    final api = _api ??= ApiClient(baseUrl: ApiConfig.baseUrl, token: _token);
+    final session = await api.verifyOtp(challenge: challenge, code: code);
+
+    _account = session;
+    _snapshot
+      ..accountPhone = session.phone
+      ..accountPhoneVerified = session.phoneVerified;
+
+    notifyListeners();
+    await _persistNow();
+  }
+
   /// Changes the password from this phone. Other devices are signed out by the
   /// server; this session carries on.
   Future<void> changePassword({
@@ -1531,6 +1617,8 @@ class AppState extends ChangeNotifier {
       ..accountId = session.userId
       ..accountName = session.name
       ..accountEmail = session.email
+      ..accountPhone = session.phone
+      ..accountPhoneVerified = session.phoneVerified
       ..accountPlan = session.plan
       ..accountSchool = session.school
       ..accountStaff = session.isStaff;
@@ -1710,6 +1798,8 @@ class AppState extends ChangeNotifier {
       ..accountId = null
       ..accountName = null
       ..accountEmail = null
+      ..accountPhone = null
+      ..accountPhoneVerified = false
       ..accountPlan = null
       ..accountSchool = null
       ..pendingPaymentTxRef = null
@@ -1790,6 +1880,8 @@ class AppState extends ChangeNotifier {
       _snapshot
         ..accountName = account.name
         ..accountEmail = account.email
+        ..accountPhone = account.phone
+        ..accountPhoneVerified = account.phoneVerified
         ..accountPlan = account.plan
         ..accountSchool = account.school
         ..accountStaff = account.isStaff;

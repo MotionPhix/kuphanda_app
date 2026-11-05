@@ -22,7 +22,9 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $name
  * @property string|null $school
  * @property LibraryPlan $plan
- * @property string $email
+ * @property string|null $email
+ * @property string|null $phone_e164
+ * @property Carbon|null $phone_verified_at
  * @property string $role
  * @property int|null $form
  * @property Carbon|null $profile_completed_at
@@ -37,6 +39,7 @@ use Laravel\Sanctum\HasApiTokens;
     'last_name',
     'school',
     'email',
+    'phone_e164',
     'password',
     'plan',
     'role',
@@ -75,6 +78,9 @@ final class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            // Null unless a WhatsApp code proved the number. Nothing else may
+            // treat `phone_e164` as an identity.
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'plan' => LibraryPlan::class,
             'is_staff' => 'boolean',

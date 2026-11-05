@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\OtpSender;
+use App\Contracts\PushSender;
 use App\Models\Document;
 use App\Models\Plan;
-use App\Contracts\PushSender;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -24,7 +25,7 @@ use Illuminate\Http\JsonResponse;
  */
 final class HealthController
 {
-    public function __invoke(PushSender $push): JsonResponse
+    public function __invoke(PushSender $push, OtpSender $otp): JsonResponse
     {
         $published = Document::query()->where('is_published', true)->count();
         $readable = Document::query()->published()->readable()->count();
@@ -60,13 +61,21 @@ final class HealthController
                 // phone that happens to be open — worth knowing before blaming
                 // the app for silence.
                 'push' => ['configured' => $push->isConfigured()],
+                // Phone sign-in. False means /auth/otp/start answers 503 and the
+                // app offers email and Google — which it does silently, so an
+                // operator needs this line to tell "not set up" from "broken".
+                'whatsapp_otp' => [
+                    'configured' => $otp->isConfigured(),
+                    'transport' => $otp->transport(),
+                    'template' => (string) config('services.whatsapp.template', ''),
+                ],
             ],
         ]);
     }
 
     /**
-     * @return string|null  null on a checkout that has never been deployed by
-     *                      update.sh, which is itself useful information.
+     * @return string|null null on a checkout that has never been deployed by
+     *                     update.sh, which is itself useful information.
      */
     private function commit(): ?string
     {
@@ -76,11 +85,8 @@ final class HealthController
             return null;
         }
 
-        $commit = trim((string) @file_get_contents($path));
+        $commit = mb_trim((string) @file_get_contents($path));
 
         return $commit === '' ? null : mb_substr($commit, 0, 40);
     }
 }
-
-
-

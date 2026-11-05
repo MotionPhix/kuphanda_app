@@ -1,7 +1,7 @@
 name: kuphanda
 description: "Kuphanda — an offline-first document library and study manager for Malawian secondary schools (Forms 1–4, JCE and MSCE)."
 publish_to: 'none'
-version: 1.1.0+3
+version: 1.2.0+4
 
 environment:
   sdk: ^3.13.5
