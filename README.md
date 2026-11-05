@@ -281,8 +281,23 @@ purchase and the assignment still resolve.
 
 ## Publishing content
 
-The library team owns the catalogue; students never upload material. Publish a
-new immutable version from a PDF on the server:
+The library team owns the catalogue; students never upload material. Add a new
+document — record and first version in one step:
+
+```bash
+php artisan library:add /srv/library/form2-agriculture.pdf \
+  --title="Form 2 agriculture: crop rotation" \
+  --subject=agriculture --form=2 --kind=notes \
+  --description="Rotation plans for a one-hectare plot."
+```
+
+The id defaults to a slug of the title; pass `--id=` to choose one. The command
+validates the PDF, stores it through Media Library, publishes version 1, and then
+runs the same readiness check as `library:publish`, so a document cannot enter the
+catalogue without something to read. If any step fails the record is removed
+rather than left half-made.
+
+Publish a new immutable version of an existing document:
 
 ```bash
 php artisan library:publish sample-howto /srv/library/quick-start-v3.pdf \
@@ -319,9 +334,9 @@ kept, so publishing again restores access without learners re-marking anything.
 ## Tests and builds
 
 ```bash
-cd phanda_api && php artisan test        # 145 tests
+cd phanda_api && php artisan test        # 154 tests
 cd phanda_app && flutter analyze         # no issues
-cd phanda_app && flutter test            # 157 tests
+cd phanda_app && flutter test            # 159 tests
 cd phanda_app && flutter build windows --debug
 ```
 
