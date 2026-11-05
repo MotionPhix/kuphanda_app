@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../core/app_info.dart';
 import '../../core/format.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
@@ -298,7 +299,7 @@ class ProfileScreen extends StatelessWidget {
                               children: [
                                 Text('Kuphanda', style: theme.textTheme.titleSmall),
                                 Text(
-                                  'Version 1.0.0 · online library',
+                                  'Version ${AppInfo.version} · online library',
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),

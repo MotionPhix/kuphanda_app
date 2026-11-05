@@ -1,7 +1,7 @@
 name: kuphanda
 description: "Kuphanda — an offline-first document library and study manager for Malawian secondary schools (Forms 1–4, JCE and MSCE)."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.13.5
@@ -23,6 +23,7 @@ dependencies:
   flutter_local_notifications: ^22.3.3
   flutter_svg: ^2.3.2
   flutter_math_fork: ^0.7.4
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

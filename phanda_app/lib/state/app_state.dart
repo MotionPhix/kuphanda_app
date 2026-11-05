@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/app_info.dart';
 import '../data/api/api_client.dart';
 import '../data/api/api_config.dart';
 import '../data/api/api_models.dart';
@@ -1542,7 +1543,7 @@ class AppState extends ChangeNotifier {
             : defaultTargetPlatform == TargetPlatform.android
                 ? 'android'
                 : 'other',
-        appVersion: '1.0.0',
+        appVersion: AppInfo.version,
       );
     } catch (error) {
       // Push registration must never block the app; the token is retried on

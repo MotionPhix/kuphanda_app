@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'core/app_info.dart';
 import 'data/notifications/push_service.dart';
 import 'data/store/block_cache.dart';
 import 'data/store/document_files.dart';
@@ -19,6 +20,10 @@ Future<void> _onBackgroundMessage(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // The About panel and the push device registration both report this, so read
+  // it before anything can ask.
+  await AppInfo.load();
 
   if (PushService.isSupported) {
     FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
