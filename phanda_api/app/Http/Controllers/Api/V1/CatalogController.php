@@ -43,10 +43,26 @@ final class CatalogController extends ApiController
 
         if (! empty($validated['q'])) {
             $term = '%'.$validated['q'].'%';
-            $query->where(function ($builder) use ($term): void {
+            // Search has to answer the question a learner actually asks. "Show me
+            // the chemistry papers" used to match nothing unless the word happened
+            // to be in a title: subject, tags and the exam year are how the
+            // catalogue is organised, so they are searchable too. The app's
+            // offline search already worked this way, which made the online one
+            // feel broken by comparison.
+            $query->where(function ($builder) use ($term, $validated): void {
                 $builder->where('title', 'like', $term)
                     ->orWhere('description', 'like', $term)
-                    ->orWhere('author', 'like', $term);
+                    ->orWhere('author', 'like', $term)
+                    ->orWhere('tags', 'like', $term)
+                    ->orWhereHas('subject', function ($subject) use ($term): void {
+                        $subject->where('name', 'like', $term)
+                            ->orWhere('short_name', 'like', $term);
+                    });
+
+                if (ctype_digit((string) $validated['q'])) {
+                    $builder->orWhere('year', (int) $validated['q'])
+                        ->orWhere('paper_number', (int) $validated['q']);
+                }
             });
         }
 

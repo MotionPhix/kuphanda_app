@@ -137,3 +137,43 @@ it('restores the code-owned catalogue with library:sync', function (): void {
     expect($published->count())->toBeGreaterThanOrEqual(12)
         ->and($published->pluck('id'))->toContain('guide-bio-genetics', 'sample-howto');
 })->group('library');
+
+it('finds documents by subject, tag and year, not only by title', function (): void {
+    catalogueSubject();
+
+    Subject::query()->create([
+        'id' => 'biology',
+        'name' => 'Biology',
+        'short_name' => 'Biology',
+        'emoji' => '🧬',
+        'color' => '#2E7D4F',
+        'forms' => [3, 4],
+        'blurb' => 'Cells and genetics.',
+        'sort_order' => 2,
+    ]);
+
+    bareDocument('cells-paper', [
+        'subject_id' => 'biology',
+        'title' => 'Cell structure and transport',
+        'tags' => ['genetics', 'paper 2'],
+        'year' => 2024,
+        'paper_number' => 2,
+    ])->forceFill(['latest_version' => 1])->save();
+
+    bareDocument('maths-paper', ['title' => 'Algebra practice']);
+
+    Sanctum::actingAs(User::factory()->create());
+
+    $this->getJson('/api/v1/documents?q=Biology')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', 'cells-paper');
+
+    $this->getJson('/api/v1/documents?q=genetics')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', 'cells-paper');
+
+    $this->getJson('/api/v1/documents?q=2024')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', 'cells-paper');
+})->group('library');
