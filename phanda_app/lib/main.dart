@@ -10,7 +10,10 @@ import 'data/store/block_cache.dart';
 import 'data/store/document_files.dart';
 import 'data/store/state_store.dart';
 import 'data/store/web_document_files.dart';
-import 'data/store/web_state_store.dart';
+// Conditional: the real file imports dart:html, which does not exist off the
+// web, and importing it unconditionally breaks the Windows and Android builds.
+import 'data/store/web_state_store_stub.dart'
+    if (dart.library.html) 'data/store/web_state_store.dart';
 import 'state/app_state.dart';
 
 /// Runs in a background isolate when a data message arrives while the app is
