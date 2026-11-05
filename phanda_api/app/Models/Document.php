@@ -136,6 +136,18 @@ final class Document extends Model implements HasMedia
         return $this->hasMany(OfflineDocument::class);
     }
 
+    /** @return HasMany<DocumentPurchase, $this> */
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(DocumentPurchase::class);
+    }
+
+    /** @return HasMany<ClassroomAssignment, $this> */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(ClassroomAssignment::class);
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('files')
@@ -150,6 +162,26 @@ final class Document extends Model implements HasMedia
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true);
+    }
+
+    /**
+     * Published records a learner can actually open.
+     *
+     * The catalogue used to list any published row, so a record with a title and
+     * a price but no content appeared beside real papers. Listing is now gated on
+     * the same three ways a document can be read: a published version, structured
+     * blocks, or a guide whose sections ship inside the app.
+     */
+    public function scopeReadable(Builder $query): Builder
+    {
+        return $query->where(function (Builder $builder): void {
+            $builder->where('latest_version', '>', 0)
+                ->orWhereNotNull('guide_id')
+                ->orWhere(function (Builder $blocks): void {
+                    $blocks->whereNotNull('blocks')
+                        ->whereNotIn('blocks', ['', '[]', '{"blocks":[]}']);
+                });
+        });
     }
 
     public function isAvailable(User $user): bool

@@ -7,6 +7,7 @@ import 'package:kuphanda/core/theme.dart';
 import 'package:kuphanda/data/api/token_store.dart';
 import 'package:kuphanda/data/models/document.dart';
 import 'package:kuphanda/data/store/document_files.dart';
+import 'package:kuphanda/data/store/snapshot.dart';
 import 'package:kuphanda/data/store/state_store.dart';
 import 'package:kuphanda/features/document/document_detail_screen.dart';
 import 'package:kuphanda/features/library/library_screen.dart';
@@ -38,9 +39,9 @@ class _NoFiles implements DocumentFiles {
   Future<void> delete(DocumentAsset asset) async {}
 }
 
-Future<AppState> _state() async {
+Future<AppState> _state({AppSnapshot? snapshot}) async {
   final state = AppState(
-    store: MemoryStateStore(),
+    store: MemoryStateStore(snapshot),
     files: _NoFiles(),
     tokenStore: MemoryTokenStore(),
   );
@@ -75,17 +76,24 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(420, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final state = await _state();
-    final candidates = state.documents.where(
-      (document) =>
-          !state.hasRemoteFile(document.id) &&
-          document.guideId == null &&
-          !document.hasBlocks,
+    // The bundled catalogue no longer carries unreadable records, so the case
+    // this screen has to survive is a server row that arrived without a file or
+    // blocks — built here rather than borrowed from the seed.
+    final document = Document(
+      id: 'server-metadata-only',
+      title: 'MSCE Biology 2024 Paper 2',
+      subjectId: 'biology',
+      form: 4,
+      kind: DocumentKind.pastPaper,
+      description: 'A catalogue record whose file has not been published.',
+      pages: 24,
+      addedAt: DateTime(2026, 9, 1),
     );
-    expect(candidates, isNotEmpty,
-        reason: 'the seed catalogue should still contain a bare record');
 
-    final document = candidates.first;
+    final state = await _state(
+      snapshot: AppSnapshot(remoteDocuments: [document]),
+    );
+    expect(state.hasRemoteFile(document.id), isFalse);
     await tester.pumpWidget(
       _wrap(state, DocumentDetailScreen(documentId: document.id)),
     );

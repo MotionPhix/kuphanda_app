@@ -8,16 +8,16 @@ use App\Models\Document;
 use Illuminate\Database\Seeder;
 
 /**
- * Attaches one real structured document so the reflowable reader has something
- * to open. Idempotent: re-seeding does not overwrite editorial changes made
- * after the first import.
+ * Seeds the two transcribed examination papers.
+ *
+ * The other block documents are declared in LibrarySeeder, which owns the
+ * catalogue and attaches their content from the same files directory. Keeping
+ * the papers here separates two very different things: a catalogue entry Kuphanda
+ * wrote, and a paper that was transcribed from an external source and has to pass
+ * a marks audit before learners see it.
  */
 final class BlockDocumentSeeder extends Seeder
 {
-    private const TARGET = 'ref-msce-physics-mechanics';
-
-    private const FILE = 'blocks-mechanics.json';
-
     private const PAPER_ID = 'ref-msce-maths-2002-p1';
 
     private const PAPER_FILE = 'blocks-msce-maths-2002-p1.json';
@@ -36,53 +36,6 @@ final class BlockDocumentSeeder extends Seeder
         // `documents:publish` accepts its audit, so a parse regression cannot
         // slip into the catalogue through a seeder run.
         $this->storeAgriculturePaper();
-
-        $document = Document::query()->find(self::TARGET);
-
-        if ($document === null) {
-            $this->command?->warn('Block sample skipped: '.self::TARGET.' is missing.');
-
-            return;
-        }
-
-        if (! empty($document->blocks['blocks'])) {
-            return;
-        }
-
-
-        $path = database_path('seeders/files/'.self::FILE);
-        $raw = @file_get_contents($path);
-
-        if ($raw === false) {
-            $this->command?->warn('Block sample skipped: '.self::FILE.' is missing.');
-
-            return;
-        }
-
-        /** @var array<string, mixed> $json */
-        $json = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-
-        $blocks = $json['blocks'] ?? [];
-
-        if (! is_array($blocks) || $blocks === []) {
-            $this->command?->warn('Block sample skipped: no blocks in the file.');
-
-            return;
-        }
-
-        $document->forceFill([
-            'format' => 'hybrid',
-            'blocks' => [
-                'subtitle' => $json['subtitle'] ?? null,
-                'blocks' => $blocks,
-            ],
-        ])->save();
-
-        $this->command?->info(sprintf(
-            'Attached %d structured blocks to %s.',
-            count($blocks),
-            $document->id,
-        ));
     }
 
     /**
@@ -167,6 +120,11 @@ final class BlockDocumentSeeder extends Seeder
                 'price_mwk' => 0,
                 'author' => 'Mzuzu Diocese',
                 'language' => 'English',
+                // A draft by definition: the row exists so `documents:publish`
+                // has something to audit, and it stays out of the catalogue until
+                // that audit passes. Relying on the column default leaves it
+                // published, which is the opposite of what this method is for.
+                'is_published' => false,
             ],
         );
 

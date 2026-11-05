@@ -53,8 +53,18 @@
       "difficulty": 2,
       "text": "A car accelerates uniformly from rest to 20 m/s in 8.0 s.",
       "parts": [
-        { "type": "paragraph", "label": "(a)", "text": "Calculate the acceleration of the car." },
-        { "type": "paragraph", "label": "(b)", "text": "Calculate the distance travelled in this time." }
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Calculate the acceleration of the car.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Calculate the distance travelled in this time.",
+          "marks": 2
+        }
       ],
       "items": [
         "a = (v − u) / t = (20 − 0) / 8.0",
@@ -68,10 +78,26 @@
       "page": 2,
       "text": "Comparing the two quantities",
       "rows": [
-        ["Quantity", "Unit", "Vector?"],
-        ["Speed", "m/s", "No"],
-        ["Velocity", "m/s", "Yes"],
-        ["Acceleration", "m/s²", "Yes"]
+        [
+          "Quantity",
+          "Unit",
+          "Vector?"
+        ],
+        [
+          "Speed",
+          "m/s",
+          "No"
+        ],
+        [
+          "Velocity",
+          "m/s",
+          "Yes"
+        ],
+        [
+          "Acceleration",
+          "m/s²",
+          "Yes"
+        ]
       ]
     },
     {
@@ -92,8 +118,18 @@
       "difficulty": 3,
       "text": "A trolley of mass 2.0 kg moving at 3.0 m/s collides with a stationary trolley of mass 1.0 kg. They move off together.",
       "parts": [
-        { "type": "paragraph", "label": "(a)", "text": "State the principle of conservation of momentum." },
-        { "type": "paragraph", "label": "(b)", "text": "Calculate their common velocity after the collision." }
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "State the principle of conservation of momentum.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Calculate their common velocity after the collision.",
+          "marks": 3
+        }
       ],
       "items": [
         "Total momentum before = total momentum after",

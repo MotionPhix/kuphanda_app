@@ -1,0 +1,185 @@
+{
+  "title": "Form 4 mathematics: functions, circles and statistics",
+  "subtitle": "MSCE revision notes with worked examples",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Functions and their graphs"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "A function pairs every input with exactly one output. The notation f(x) = 2x + 3 means: take the input, double it, add three. To find f(4), replace every x with 4 and work out the arithmetic — f(4) = 11."
+    },
+    {
+      "type": "bullets",
+      "page": 1,
+      "items": [
+        "The domain is the set of allowed inputs; the range is the set of outputs actually produced.",
+        "A quadratic graph is a parabola: it opens upwards when the x² coefficient is positive.",
+        "The turning point of y = (x - h)² + k is at (h, k); read it straight from the completed square.",
+        "A graph crosses the y-axis where x = 0, and the x-axis where y = 0."
+      ]
+    },
+    {
+      "type": "question",
+      "page": 1,
+      "label": "Worked example 1",
+      "marks": 5,
+      "difficulty": 2,
+      "text": "A function is defined by f(x) = x² - 4x + 1.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Find f(3).",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Express f(x) in the form (x - h)² + k and state the minimum value.",
+          "marks": 3
+        }
+      ],
+      "items": [
+        "f(3) = 9 - 12 + 1 = -2.",
+        "x² - 4x + 1 = (x - 2)² - 4 + 1 = (x - 2)² - 3.",
+        "The minimum value is -3, reached when x = 2."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Circle theorems"
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "Circle questions are marked on the reason as well as the answer. Write the theorem you used in brackets after the value, for example: angle ABC = 40° (angle in a semicircle)."
+    },
+    {
+      "type": "table",
+      "page": 2,
+      "text": "The theorems that appear most often",
+      "rows": [
+        [
+          "Situation",
+          "Result",
+          "Reason to quote"
+        ],
+        [
+          "Angle in a semicircle",
+          "90°",
+          "Angle subtended by a diameter"
+        ],
+        [
+          "Angle at the centre",
+          "Twice the angle at the circumference",
+          "Same arc"
+        ],
+        [
+          "Cyclic quadrilateral",
+          "Opposite angles add to 180°",
+          "Opposite angles of a cyclic quadrilateral"
+        ],
+        [
+          "Tangent and radius",
+          "Meet at 90°",
+          "Tangent perpendicular to radius"
+        ],
+        [
+          "Two tangents from one point",
+          "Equal in length",
+          "Tangents from an external point"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 2,
+      "text": "If two angles in a cyclic quadrilateral are given as 2x and 3x, the equation is 2x + 3x = 180. Solve for x first, then substitute back — examiners award the method mark for the equation even when the arithmetic slips."
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Statistics: mean, median and grouped data"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "For raw data, the mean is the total divided by the count, and the median is the middle value once the data is in order. With grouped data you no longer know individual values, so you use the midpoint of each class and weight it by the frequency."
+    },
+    {
+      "type": "table",
+      "page": 3,
+      "text": "Marks scored by 40 learners",
+      "rows": [
+        [
+          "Marks",
+          "Midpoint",
+          "Frequency"
+        ],
+        [
+          "0 - 9",
+          "4.5",
+          "3"
+        ],
+        [
+          "10 - 19",
+          "14.5",
+          "7"
+        ],
+        [
+          "20 - 29",
+          "24.5",
+          "12"
+        ],
+        [
+          "30 - 39",
+          "34.5",
+          "11"
+        ],
+        [
+          "40 - 49",
+          "44.5",
+          "7"
+        ]
+      ]
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "Worked example 2",
+      "marks": 6,
+      "difficulty": 3,
+      "text": "Using the table above, estimate the mean mark of the 40 learners.",
+      "items": [
+        "Multiply each midpoint by its frequency: 13.5 + 101.5 + 294 + 379.5 + 311.5.",
+        "Total = 1100.",
+        "Mean = 1100 / 40 = 27.5 marks."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "The estimated mean from grouped data is only an estimate, because every value in a class is treated as if it sat at the midpoint. Say so if a question asks why the answer is approximate — that sentence is often worth a mark on its own."
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. What to practise before the exam"
+    },
+    {
+      "type": "bullets",
+      "page": 4,
+      "items": [
+        "Complete the square on five different quadratics, then sketch each one.",
+        "Do one circle-theorem question a day and write the reason for every line.",
+        "Recompute a grouped mean from a table without looking at the method first.",
+        "Check units and rounding: money to two decimal places, angles to one."
+      ]
+    }
+  ]
+}

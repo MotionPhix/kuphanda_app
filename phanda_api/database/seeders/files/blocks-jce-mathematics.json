@@ -1,0 +1,185 @@
+{
+  "title": "JCE mathematics: number, algebra and shape",
+  "subtitle": "Form 2 workbook — the topics that decide a JCE grade",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Fractions, decimals and percentages"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "The same quantity can be written three ways, and JCE questions test whether you can move between them without a calculator. Convert a fraction to a decimal by dividing; convert a decimal to a percentage by multiplying by 100. Learn the common ones by heart: one half is 0.5 or 50%, one quarter is 0.25 or 25%, one fifth is 0.2 or 20%."
+    },
+    {
+      "type": "table",
+      "page": 1,
+      "text": "Useful conversions",
+      "rows": [
+        [
+          "Fraction",
+          "Decimal",
+          "Percentage"
+        ],
+        [
+          "1/2",
+          "0.5",
+          "50%"
+        ],
+        [
+          "1/4",
+          "0.25",
+          "25%"
+        ],
+        [
+          "3/4",
+          "0.75",
+          "75%"
+        ],
+        [
+          "1/5",
+          "0.2",
+          "20%"
+        ],
+        [
+          "1/8",
+          "0.125",
+          "12.5%"
+        ]
+      ]
+    },
+    {
+      "type": "question",
+      "page": 1,
+      "label": "Worked example 1",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "A shop reduces the price of a bag of maize from MWK 24 000 by 15%.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Calculate the reduction.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "State the new price.",
+          "marks": 2
+        }
+      ],
+      "items": [
+        "15% of 24 000 = 0.15 x 24 000 = 3 600.",
+        "New price = 24 000 - 3 600 = MWK 20 400."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Algebra: simplifying and solving"
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "Collect like terms before doing anything else. In 5x + 3 - 2x + 7, the x terms give 3x and the numbers give 10, so the expression is 3x + 10. When solving an equation, whatever you do to one side you must do to the other, and undo addition before multiplication."
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "Expand brackets by multiplying every term inside: 3(x + 4) = 3x + 12.",
+        "Factorise by taking out the highest common factor: 6x + 9 = 3(2x + 3).",
+        "Check a solution by substituting it back into the original equation.",
+        "A negative sign in front of a bracket changes every sign inside: -(2x - 5) = -2x + 5."
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "Worked example 2",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "Solve 4(x - 3) = 2x + 6.",
+      "items": [
+        "Expand: 4x - 12 = 2x + 6.",
+        "Collect: 4x - 2x = 6 + 12, so 2x = 18.",
+        "x = 9.",
+        "Check: 4(9 - 3) = 24 and 2(9) + 6 = 24."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Shape, area and volume"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "Area questions usually come down to splitting a shape into rectangles and triangles. Volume is area of cross-section multiplied by length. Write the formula first, substitute, then calculate — the formula line is worth a mark even if the arithmetic goes wrong."
+    },
+    {
+      "type": "table",
+      "page": 3,
+      "text": "Formulas to know",
+      "rows": [
+        [
+          "Shape",
+          "Quantity",
+          "Formula"
+        ],
+        [
+          "Rectangle",
+          "Area",
+          "length x width"
+        ],
+        [
+          "Triangle",
+          "Area",
+          "1/2 x base x height"
+        ],
+        [
+          "Circle",
+          "Area",
+          "pi x r x r"
+        ],
+        [
+          "Cuboid",
+          "Volume",
+          "length x width x height"
+        ],
+        [
+          "Cylinder",
+          "Volume",
+          "pi x r x r x height"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "Use 3.14 for pi unless the question gives another value, and keep the units consistent: convert centimetres to metres before multiplying if the answer is asked in square metres."
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. Reading questions carefully"
+    },
+    {
+      "type": "callout",
+      "page": 4,
+      "text": "Underline what the question asks for. 'Calculate the cost' and 'calculate the change' are different answers, and 'give your answer to 2 decimal places' loses a mark when ignored."
+    },
+    {
+      "type": "bullets",
+      "page": 4,
+      "items": [
+        "Show every step: JCE awards method marks, not only the final answer.",
+        "Write the units in the answer line: MWK, cm, cm², litres.",
+        "If a question says 'hence', it expects you to use your previous answer.",
+        "Leave the last two minutes to check that every question has an answer written."
+      ]
+    }
+  ]
+}

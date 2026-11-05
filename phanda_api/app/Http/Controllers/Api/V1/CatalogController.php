@@ -35,6 +35,7 @@ final class CatalogController extends ApiController
 
         $query = Document::query()
             ->published()
+            ->readable()
             ->with(['subject', 'currentVersion'])
             ->orderByDesc('featured')
             ->orderByDesc('content_updated_at')

@@ -1,0 +1,147 @@
+{
+  "title": "Organic chemistry: from alkanes to esters",
+  "subtitle": "MSCE Chemistry guide — naming, reactions and the marks examiners look for",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. The homologous series"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "Organic chemistry is easier once you see it as families. Each homologous series has its own general formula, its own functional group and a pattern of reactions that repeats as the chain gets longer. Learn the pattern for the first member and the rest follow."
+    },
+    {
+      "type": "table",
+      "page": 1,
+      "text": "The four series that carry most of the marks",
+      "rows": [
+        [
+          "Series",
+          "General formula",
+          "Functional group",
+          "Example"
+        ],
+        [
+          "Alkane",
+          "CnH2n+2",
+          "C-C single bonds only",
+          "Methane, CH4"
+        ],
+        [
+          "Alkene",
+          "CnH2n",
+          "C=C double bond",
+          "Ethene, C2H4"
+        ],
+        [
+          "Alcohol",
+          "CnH2n+1OH",
+          "-OH",
+          "Ethanol, C2H5OH"
+        ],
+        [
+          "Carboxylic acid",
+          "CnH2n+1COOH",
+          "-COOH",
+          "Ethanoic acid, CH3COOH"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "A saturated compound has only single bonds between carbon atoms. An unsaturated compound contains at least one double or triple bond, which is why it can add more atoms."
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Naming: the IUPAC rules that carry marks"
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "Find the longest chain of carbon atoms; that gives the stem: meth-, eth-, prop-, but-.",
+        "Number the chain from the end that gives the functional group the lowest number.",
+        "Add the suffix for the family: -ane, -ene, -ol, -oic acid.",
+        "Name branches as alkyl groups with the number of the carbon they hang from, for example 2-methylbutane."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "A common loss of marks is numbering from the wrong end. In but-2-ene the double bond could be numbered 2 or 3 depending on direction, and only 2 is correct. Always check both directions before writing the name."
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Reactions you must be able to write"
+    },
+    {
+      "type": "bullets",
+      "page": 3,
+      "items": [
+        "Bromine water added to an alkene turns from orange-brown to colourless: the test for unsaturation.",
+        "Hydrogen adds across the double bond with a nickel catalyst to give the alkane.",
+        "Steam and an alkene with a phosphoric acid catalyst give an alcohol.",
+        "Ethanol oxidised by acidified potassium dichromate gives ethanoic acid; the orange dichromate turns green.",
+        "A carboxylic acid and an alcohol with a little concentrated sulphuric acid give an ester, which smells sweet."
+      ]
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "Worked example",
+      "marks": 6,
+      "difficulty": 3,
+      "text": "Compound X has the formula C3H6. It decolourises bromine water and reacts with steam to form compound Y.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Name compound X and state the test that identifies its family.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Name compound Y and write the equation for its formation.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Name the product formed when Y is oxidised with acidified potassium dichromate.",
+          "marks": 2
+        }
+      ],
+      "items": [
+        "X is propene. It decolourises bromine water, which shows a C=C double bond.",
+        "Y is propan-2-ol (or propan-1-ol, depending on the addition): C3H6 + H2O gives C3H7OH.",
+        "Oxidation gives propanone from propan-2-ol, or propanoic acid from propan-1-ol."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. Esters and the link to everyday life"
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "An ester forms when a carboxylic acid reacts with an alcohol. Ethanoic acid and ethanol give ethyl ethanoate, the smell of nail varnish remover and of some ripe fruit. The reaction is slow on its own, so a few drops of concentrated sulphuric acid are added as a catalyst."
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "The same chemistry explains why cooking oil and soap are related. Fats and oils are esters of long-chain carboxylic acids with glycerol. Boiling them with sodium hydroxide breaks the ester bond and gives soap plus glycerol — a reaction called saponification."
+    },
+    {
+      "type": "callout",
+      "page": 4,
+      "text": "When a question says 'name the type of reaction', the answer is a word, not an equation: addition, substitution, oxidation, esterification, polymerisation. Give the word first, then the equation."
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "title": "Genetics: inheritance, DNA and variation",
+  "subtitle": "MSCE Biology study guide — Form 4, written for Kuphanda",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Genes, alleles and chromosomes"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "A gene is a length of DNA that carries the instructions for one characteristic. Genes sit at fixed positions on chromosomes, and most characteristics are controlled by several genes working together. Because body cells are diploid, each gene is present twice — one copy on each chromosome of a pair, one inherited from the mother and one from the father."
+    },
+    {
+      "type": "bullets",
+      "page": 1,
+      "items": [
+        "Allele: one of the different forms of the same gene.",
+        "Genotype: the alleles an organism carries, written as pairs such as BB, Bb or bb.",
+        "Phenotype: the characteristic you can observe, such as black fur or white fur.",
+        "Homozygous: both alleles are the same. Heterozygous: the two alleles differ."
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "A dominant allele is written with a capital letter and shows its effect even when only one copy is present. A recessive allele is written in lower case and only shows when both copies are recessive."
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Monohybrid crosses"
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "A monohybrid cross follows one characteristic at a time. In Malawi the classic example is coat colour in mice: black (B) is dominant to white (b). A heterozygous black mouse is crossed with a white mouse, and the offspring are counted."
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "Worked example 1",
+      "marks": 6,
+      "difficulty": 2,
+      "text": "A heterozygous black mouse (Bb) is crossed with a white mouse (bb).",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Write down the genotypes of the two parents.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Use a Punnett square to show the possible offspring.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "State the expected ratio of black to white offspring.",
+          "marks": 2
+        }
+      ],
+      "items": [
+        "Parents: Bb (black) x bb (white).",
+        "Gametes: B and b from the first parent; b and b from the second.",
+        "Offspring genotypes: Bb, Bb, bb, bb.",
+        "Ratio: 2 black : 2 white, that is 1 : 1."
+      ]
+    },
+    {
+      "type": "table",
+      "page": 2,
+      "text": "Reading the result of a monohybrid cross",
+      "rows": [
+        [
+          "Cross",
+          "Offspring genotypes",
+          "Phenotype ratio"
+        ],
+        [
+          "BB x bb",
+          "All Bb",
+          "All black"
+        ],
+        [
+          "Bb x Bb",
+          "1 BB : 2 Bb : 1 bb",
+          "3 black : 1 white"
+        ],
+        [
+          "Bb x bb",
+          "1 Bb : 1 bb",
+          "1 black : 1 white"
+        ],
+        [
+          "bb x bb",
+          "All bb",
+          "All white"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "The 3 : 1 ratio appears whenever two heterozygotes are crossed, because only the bb quarter shows the recessive phenotype. The underlying genotype ratio is 1 : 2 : 1, and that ratio is the one to quote when a question asks about genotypes rather than appearance."
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. DNA and its replication"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "DNA is a double helix of two strands held together by base pairs. Adenine pairs with thymine, and guanine pairs with cytosine. The sequence of bases is the genetic code: every three bases code for one amino acid, and the order of amino acids decides the shape and function of the protein built."
+    },
+    {
+      "type": "bullets",
+      "page": 3,
+      "items": [
+        "Replication is semi-conservative: each new molecule keeps one original strand.",
+        "The two strands separate, and each acts as a template for a new strand.",
+        "Complementary base pairing is what makes an exact copy possible."
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 3,
+      "text": "A mutation is a change in the base sequence. Most mutations are neutral, some are harmful, and a few give an advantage. Sickle-cell anaemia is the standard Malawian example of a gene mutation with a clear effect on the phenotype."
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. Variation and selection"
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "Variation between individuals comes from genes, from the environment, or from both. Height and mass show continuous variation, controlled by many genes and affected by food and health. Blood group shows discontinuous variation, because it falls into a few distinct classes with nothing in between."
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "Practice question",
+      "marks": 5,
+      "difficulty": 3,
+      "text": "In a herd of cattle, 84 calves are born over three years. The coat colour gene has a red allele (R) and a white allele (W), and the heterozygote is roan, a mixture of red and white hairs.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Explain why this is an example of incomplete dominance.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Predict the ratio of red to roan to white calves from a cross between two roan animals.",
+          "marks": 3
+        }
+      ],
+      "items": [
+        "Neither allele hides the other in the heterozygote; both are expressed in the hair colour.",
+        "RW x RW gives 1 RR : 2 RW : 1 WW, that is 1 red : 2 roan : 1 white."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "Selective breeding uses this variation deliberately. Farmers keep animals with the traits they want — heavier goats, cattle that resist trypanosomiasis, maize that yields in a short rainy season — and breed from them. The risk is reduced genetic variation, which leaves a herd or a crop less able to survive a new disease."
+    }
+  ]
+}

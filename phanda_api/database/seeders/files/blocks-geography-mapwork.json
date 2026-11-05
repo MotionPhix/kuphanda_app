@@ -1,0 +1,138 @@
+{
+  "title": "Map work: scale, bearings and relief",
+  "subtitle": "MSCE Geography — the four map skills that carry the marks",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Scale and distance"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "A map scale turns centimetres on paper into kilometres on the ground. A scale of 1 : 50 000 means one centimetre on the map represents 50 000 centimetres, or half a kilometre, on the ground. Always convert to the unit the question asks for before you write the answer."
+    },
+    {
+      "type": "table",
+      "page": 1,
+      "text": "Converting a measured distance",
+      "rows": [
+        [
+          "Map distance",
+          "Scale",
+          "Ground distance"
+        ],
+        [
+          "4 cm",
+          "1 : 50 000",
+          "2 km"
+        ],
+        [
+          "7 cm",
+          "1 : 50 000",
+          "3.5 km"
+        ],
+        [
+          "3 cm",
+          "1 : 25 000",
+          "0.75 km"
+        ],
+        [
+          "5 cm",
+          "1 : 100 000",
+          "5 km"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "For a winding road, do not measure in a straight line. Lay a thread along the road, then straighten it against the ruler. The straight-line answer is only correct when the question says 'as the crow flies'."
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Bearings"
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "A bearing is an angle measured clockwise from north, written with three figures: 045°, 118°, 290°. To find the bearing of B from A, draw north at A, join A to B, and measure clockwise from the north line to that join."
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "The back bearing differs by 180°: add 180 if the bearing is below 180, subtract if it is above.",
+        "Bearings are always measured from the point named second in the question — 'from A' means the north line is at A.",
+        "A protractor placed on the wrong north line is the most common error in map work."
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "Worked example",
+      "marks": 4,
+      "difficulty": 2,
+      "text": "The bearing of a school from a trading centre is 072°.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "State the bearing of the trading centre from the school.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Describe the direction of the school from the trading centre in words.",
+          "marks": 2
+        }
+      ],
+      "items": [
+        "072 + 180 = 252°.",
+        "The school lies to the east-north-east of the trading centre."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Contours and relief"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "Contour lines join points of equal height. Where they are close together the land is steep; where they are far apart it is gently sloping. A river valley cuts a V into the contours, and the V points upstream — that is how you tell which way a stream flows."
+    },
+    {
+      "type": "bullets",
+      "page": 3,
+      "items": [
+        "Evenly spaced contours: a uniform slope, good for a road or a plantation.",
+        "Contours crowding into a V: a valley; the V points to higher ground.",
+        "Closed circles with hachures inside: a depression, not a hill.",
+        "A gap between two hills: a col or saddle, often where a path crosses."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. Cross-sections and intervisibility"
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "A cross-section is a side view drawn along a straight line between two points. Plot the height of each contour where it crosses the line, join the points with a smooth curve, and label both ends with their heights. Two points are intervisible if the straight line joining them stays above the ground between them; a ridge in the middle blocks the view."
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "In Malawi, map questions often use the escarpment above the Shire valley or the lakeshore plain. On those maps the steep scarp shows as tightly packed contours, and the plain as wide spacing — a quick way to check that your cross-section has the right shape before you spend time on the details."
+    },
+    {
+      "type": "callout",
+      "page": 4,
+      "text": "Label the vertical scale and the horizontal scale on every cross-section. A section without a vertical exaggeration cannot be marked as complete."
+    }
+  ]
+}

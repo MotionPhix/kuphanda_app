@@ -1,0 +1,116 @@
+{
+  "title": "MSCE Biology: examinable topics and how they are weighted",
+  "subtitle": "A study outline drawn from the national syllabus — use it to check coverage, not to replace the syllabus",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "How to use this outline"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "This is a checklist of the topics that carry marks in MSCE Biology, with a note on where each one usually appears. Tick a topic only when you can answer a past-paper question on it without notes. A topic you recognise but cannot write about is not yet covered."
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "The official syllabus remains the authority on content and assessment. This outline is a revision map written for Kuphanda, and it does not reproduce the syllabus document."
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "1. Cell biology"
+    },
+    {
+      "type": "table",
+      "page": 2,
+      "text": "Topics, what to be able to do, and where it appears",
+      "rows": [
+        ["Topic", "Be able to", "Usually examined"],
+        ["Cell structure", "Label plant and animal cells; state the function of each organelle", "Paper 1, short answers"],
+        ["Movement in and out of cells", "Explain diffusion, osmosis and active transport with examples", "Paper 1 and Paper 2"],
+        ["Enzymes", "Describe effect of temperature and pH on enzyme activity", "Paper 2, structured"],
+        ["Photosynthesis", "Write the equation; describe the effect of light, CO2 and temperature", "Paper 2, often with a graph"],
+        ["Respiration", "Compare aerobic and anaerobic respiration in yeast and muscle", "Paper 1 and Paper 2"]
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "2. Genetics and variation"
+    },
+    {
+      "type": "bullets",
+      "page": 3,
+      "items": [
+        "Define gene, allele, genotype, phenotype, dominant and recessive.",
+        "Complete a monohybrid cross, including a Punnett square, and state the ratio.",
+        "Describe the structure of DNA and the base-pairing rule.",
+        "Explain the difference between continuous and discontinuous variation, with examples.",
+        "Describe causes of mutation and give one named example with its effect."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Ecology and the environment"
+    },
+    {
+      "type": "table",
+      "page": 3,
+      "text": "Ecology topics",
+      "rows": [
+        ["Topic", "Be able to", "Local example"],
+        ["Food chains and webs", "Construct and interpret; explain energy loss between levels", "Maize - rat - snake"],
+        ["Nutrient cycles", "Describe the carbon and nitrogen cycles", "Legumes in rotation"],
+        ["Populations", "Describe factors affecting population size", "Fish in Lake Malawi"],
+        ["Conservation", "Explain causes and effects of deforestation and soil erosion", "Escarpment cultivation"]
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. Human biology"
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "Human systems are the largest single block of Paper 2. Expect one structured question on transport or gaseous exchange, and one on reproduction or the kidney. Learn the diagram, then learn the sequence: what enters, what is exchanged, what leaves."
+    },
+    {
+      "type": "bullets",
+      "page": 4,
+      "items": [
+        "Digestion: enzymes at each stage, and where each is produced.",
+        "Transport: heart structure, double circulation, blood components.",
+        "Gaseous exchange: alveoli structure and the effect of smoking.",
+        "Excretion: nephron structure and the effect of ADH.",
+        "Reproduction: menstrual cycle, fertilisation, placenta and birth."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 5,
+      "text": "5. Planning the last eight weeks"
+    },
+    {
+      "type": "table",
+      "page": 5,
+      "text": "A workable revision plan",
+      "rows": [
+        ["Weeks", "Focus", "Evidence you are ready"],
+        ["1 - 2", "Cell biology and enzymes", "Two Paper 1 sections at 80% or better"],
+        ["3 - 4", "Genetics and variation", "A full monohybrid question marked against a scheme"],
+        ["5 - 6", "Ecology and human biology", "One structured question per topic, timed"],
+        ["7", "Whole papers", "Two full papers under exam conditions"],
+        ["8", "Weak spots only", "A short test on each topic you got wrong"]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 5,
+      "text": "Mark your own work against a scheme before you look at the answers. The gap between what you wrote and what the scheme rewards is the most useful information you will get all week."
+    }
+  ]
+}

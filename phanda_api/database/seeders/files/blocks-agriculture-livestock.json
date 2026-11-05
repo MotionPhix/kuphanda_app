@@ -1,0 +1,184 @@
+{
+  "title": "Livestock production: housing, feeding and health",
+  "subtitle": "MSCE Agriculture — cattle, goats and poultry on a Malawian smallholding",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Choosing what to keep"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "The right livestock depends on land, feed and water. Cattle need grazing and a reliable water source; goats browse on shrubs and do well on poorer ground; local chickens scavenge and need very little capital. A smallholder who keeps all three spreads the risk, because a disease outbreak or a dry spell rarely hits every species equally hard."
+    },
+    {
+      "type": "table",
+      "page": 1,
+      "text": "Common livestock in Malawi",
+      "rows": [
+        [
+          "Animal",
+          "Main product",
+          "Typical local breed",
+          "Housing"
+        ],
+        [
+          "Cattle",
+          "Milk, draught, meat",
+          "Malawi Zebu",
+          "Kraal with a roof and a drain"
+        ],
+        [
+          "Goat",
+          "Meat, manure",
+          "Malawi local goat",
+          "Raised slatted house"
+        ],
+        [
+          "Local chicken",
+          "Eggs, meat",
+          "Malawi local",
+          "Simple coop, elevated"
+        ],
+        [
+          "Pig",
+          "Meat",
+          "Large White cross",
+          "Concrete-floored pen"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Housing"
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "Housing protects animals from rain, predators and theft, and makes it possible to collect manure. A cattle kraal needs a hard floor that drains, walls high enough to stop fighting between animals, and a roof over the feeding area. Goats need a raised slatted floor so droppings fall through and the animals stay dry — damp floors are where foot rot starts."
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "Allow about 2 square metres per goat and 4 to 5 square metres per head of cattle.",
+        "Face the open side away from the prevailing wind and rain.",
+        "Keep a foot bath at the entrance if foot rot has been a problem.",
+        "Store manure under cover: rain washes out the nitrogen you paid for in feed."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "3. Feeding"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "A ration has two parts. Roughage — grass, maize stover, legume hay — keeps the rumen working and should be available at all times. Concentrate — maize bran, cotton seed cake, sunflower cake — supplies the protein and energy an animal cannot get from poor pasture alone. Milk yield falls within days if the concentrate is cut, so feed the concentrate before milking, not after."
+    },
+    {
+      "type": "callout",
+      "page": 3,
+      "text": "Water is the cheapest feed and the one most often forgotten. A lactating cow drinks 40 to 60 litres a day. Without it, no ration will produce milk."
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "4. Health: the diseases that repeat in exams"
+    },
+    {
+      "type": "table",
+      "page": 4,
+      "text": "Disease, cause and control",
+      "rows": [
+        [
+          "Disease",
+          "Animal",
+          "Cause",
+          "Control"
+        ],
+        [
+          "East Coast fever",
+          "Cattle",
+          "Tick-borne protozoan",
+          "Dip or spray against ticks"
+        ],
+        [
+          "Foot and mouth",
+          "Cattle, goats, pigs",
+          "Virus",
+          "Vaccinate, report, isolate"
+        ],
+        [
+          "Newcastle disease",
+          "Chicken",
+          "Virus",
+          "Vaccinate chicks; keep visitors out"
+        ],
+        [
+          "Coccidiosis",
+          "Chicken",
+          "Protozoan in wet litter",
+          "Dry litter, coccidiostat in feed"
+        ],
+        [
+          "Anthrax",
+          "Cattle, goats",
+          "Bacterium in soil",
+          "Vaccinate; never open a suspect carcass"
+        ]
+      ]
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "Practice question",
+      "marks": 6,
+      "difficulty": 3,
+      "text": "A farmer keeps 20 local chickens in a coop with a leaking roof. Within two weeks, ten chicks become weak, stop eating and pass bloody droppings.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Suggest the most likely disease.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "State two management changes that would reduce the problem.",
+          "marks": 2
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Explain why the leaking roof matters.",
+          "marks": 2
+        }
+      ],
+      "items": [
+        "Coccidiosis is the likely disease: bloody droppings and weakness in young birds.",
+        "Repair the roof and replace wet litter with dry litter; add a coccidiostat to the feed.",
+        "Damp litter lets the parasite complete its life cycle and be swallowed by the birds."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 5,
+      "text": "5. Records and breeding"
+    },
+    {
+      "type": "paragraph",
+      "page": 5,
+      "text": "A notebook with four columns — date, animal, event, cost — is enough to run a small herd well. Records show which cow calves every year and which goat keeps losing kids, and they are the only way to know whether a change of feed actually paid."
+    },
+    {
+      "type": "paragraph",
+      "page": 5,
+      "text": "For breeding, choose replacements from mothers that calve regularly and produce enough milk, and avoid keeping a bull related to the whole herd. Inbreeding shows up as smaller, weaker offspring within a few generations, and it is difficult to reverse once it is in the herd."
+    }
+  ]
+}

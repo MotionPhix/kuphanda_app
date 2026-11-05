@@ -1,0 +1,99 @@
+{
+  "title": "Ndakatulo: mfundo, kapangidwe ndi kawerengedwe",
+  "subtitle": "Chitsogozo cha MSCE Chichewa — momwe tingawerenge ndakatulo mwachangu",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "1. Ndakatulo ndi chiyani?"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "Ndakatulo ndi uthenga wamaganizo omwe wolembedwa m'mizere yaifupi, ndipo mawu ake amasankhidwa mwapadera kuti apange chithunzi m'maganizo a wowerenga. Wolemba ndakatulo safotokoza zonse; amasiya zina kuti wowerenga azidziwa yekha."
+    },
+    {
+      "type": "bullets",
+      "page": 1,
+      "items": [
+        "Mutu wa ndakatulo umasonyeza nkhani yaikulu, koma si nthawi zonse umafotokoza za mkatimo.",
+        "Mizere imene imabwerezedwa (refrain) imatsindika maganizo a wolemba.",
+        "Mawu osankhidwa mwapadera amapanga fanizo, mafanizo ndi zifaniziro.",
+        "Ndakatulo imatha kukhala ya chikondi, ya chisoni, ya ulemu kapena ya chidzudzulo."
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "Pofunsa 'Kodi ndakatulo iyi ikutanthauza chiyani?', yankho silinena nkhani yonse. Sankhani mfundo yaikulu imodzi, ndipo tsimikizani ndi mizere iwiri kapena itatu kuchokera mu ndakatulo."
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "2. Kapangidwe ka ndakatulo"
+    },
+    {
+      "type": "table",
+      "page": 2,
+      "text": "Zinthu zomwe zimayang'aniridwa",
+      "rows": [
+        ["Chinthu", "Tanthauzo", "Chitsanzo"],
+        ["Mizere", "Chiwerengero cha mizere mu ndakatulo", "Mizere 12 kapena 16"],
+        ["Mutu", "Dzina la ndakatulo", "‘Mawa ndi lathu’"],
+        ["Mawu obwereza", "Mzere umene umabwerera", "‘Tiyeni tikambe’"],
+        ["Fanizo", "Kuyerekeza zinthu ziwiri", "Moyo ngati mtsinje"],
+        ["Chifaniziro", "Kupatsa chinthu makhalidwe a munthu", "Mphepo ikulira"]
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "3. Chitsanzo cha kawerengedwe"
+    },
+    {
+      "type": "paragraph",
+      "page": 2,
+      "text": "Werengani ndakatulo yotsatirayi, kenako yang'anani mmene mfundo ikulongosoledwa."
+    },
+    {
+      "type": "callout",
+      "page": 2,
+      "text": "Munda wanga ukufota, / Njala ikugogoda pakhomo; / Ana akulira m'mawa, / Koma mabuku akhale chakudya."
+    },
+    {
+      "type": "bullets",
+      "page": 3,
+      "items": [
+        "Mfundo yaikulu: umphawi umabweretsa mavuto koma maphunziro ndi chiyembekezo.",
+        "Fanizo: ‘njala ikugogoda pakhomo’ — njala ikuchitidwa ngati munthu amene akugogoda.",
+        "Chisoni: mawu akuti ‘akulira m'mawa’ akusonyeza kusowa kwa chakudya m'banja.",
+        "Chiyembekezo: mzere womaliza ukusonyeza kuti maphunziro ndi njira yothawa umphawi."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "4. Momwe tingayankhire mafunso a ndakatulo"
+    },
+    {
+      "type": "paragraph",
+      "page": 3,
+      "text": "Mafunso a ndakatulo amafuna kuti muzindikire mfundo, kenako mutchule umboni. Gwiritsani ntchito ndondomeko imeneyi: nenani mfundo, tchulani mzere, fotokozani momwe mzerowo ukuthandizira mfundo."
+    },
+    {
+      "type": "bullets",
+      "page": 4,
+      "items": [
+        "Werengani ndakatulo katatu: koyamba kuti mumvetsetse, kachiwiri kuti mupeze mfundo, kachitatu kuti mupeze umboni.",
+        "Sankhani mfundo ziwiri kapena zitatu zosiyana; musabwereze mfundo imodzi m'mawu osiyana.",
+        "Gwiritsani ntchito mawu achichewa omveka, osati mawu achingerezi.",
+        "Onetsetsani kuti mwafotokoza fanizo ndi chifaniziro chomwe mwasankha."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 4,
+      "text": "Pomaliza, kumbukirani kuti ndakatulo si nkhani ya m'magazini. Ngati mwayankha mofanana ndi kufotokoza nkhani, mwina simunatchule mawu a m'ndakatulo. Nthawi zonse bweretsani umboni kuchokera ku mizere yeniyeni."
+    }
+  ]
+}

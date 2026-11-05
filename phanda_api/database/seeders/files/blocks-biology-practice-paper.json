@@ -1,0 +1,201 @@
+{
+  "title": "Biology Paper 2 practice paper",
+  "subtitle": "Kuphanda mock paper — 100 marks, 2 hours. Written for practice; not a MANEB examination.",
+  "blocks": [
+    {
+      "type": "callout",
+      "page": 1,
+      "text": "Answer all questions. Write your answers in the spaces provided. The paper carries 100 marks and you are advised to spend 2 hours on it. Show your working where a calculation is needed."
+    },
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "Section A (60 marks)"
+    },
+    {
+      "type": "question",
+      "page": 1,
+      "label": "1.",
+      "marks": 15,
+      "difficulty": 2,
+      "text": "A student placed a piece of potato in distilled water and another piece of the same size in a strong sugar solution. Both were left for 30 minutes.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "State what happened to the mass of each piece of potato.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Explain each result in terms of water movement.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Name the process responsible and state two ways it differs from diffusion.",
+          "marks": 5
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "2.",
+      "marks": 15,
+      "difficulty": 3,
+      "text": "The graph shows the rate of photosynthesis of a water plant at different light intensities, at 20 degrees Celsius and at 30 degrees Celsius.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Describe the effect of light intensity on the rate up to the point where the graph levels off.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Explain why the graph levels off at high light intensity.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Suggest why the rate at 30 degrees is lower than at 20 degrees at high light intensity.",
+          "marks": 5
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 2,
+      "label": "3.",
+      "marks": 15,
+      "difficulty": 2,
+      "text": "In cattle, the allele for black coat (B) is dominant to the allele for red coat (b).",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "A heterozygous black bull is crossed with a red cow. Use a Punnett square to show the possible offspring.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "State the expected ratio of black to red offspring.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Explain why a black offspring cannot be described as pure-breeding without further testing.",
+          "marks": 5
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "4.",
+      "marks": 15,
+      "difficulty": 3,
+      "text": "The table shows the number of fish caught in a lake over five years while the number of fishing boats doubled.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Describe the trend in the catch over the five years.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Suggest two reasons for the trend, other than the number of boats.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Recommend two measures a fisheries department could take, and explain each.",
+          "marks": 5
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "Section B (40 marks)"
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "5.",
+      "marks": 20,
+      "difficulty": 4,
+      "text": "The diagram shows a section through the human heart.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Name the four chambers and the two main vessels entering the heart.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Describe the path of blood from the vena cava to the aorta.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Explain why the wall of the left ventricle is thicker than that of the right.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(d)",
+          "text": "State two ways the structure of a vein differs from that of an artery, and relate each to its function.",
+          "marks": 5
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "page": 5,
+      "label": "6.",
+      "marks": 20,
+      "difficulty": 4,
+      "text": "A farmer clears a slope beside a river to grow maize. Within three seasons the maize yield falls and the river becomes muddy after every storm.",
+      "parts": [
+        {
+          "type": "paragraph",
+          "label": "(a)",
+          "text": "Explain how clearing the slope led to soil erosion.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(b)",
+          "text": "Describe two effects of the muddy river on organisms living in it.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(c)",
+          "text": "Suggest three soil-conservation measures the farmer could use, and explain how each works.",
+          "marks": 5
+        },
+        {
+          "type": "paragraph",
+          "label": "(d)",
+          "text": "Explain why the yield continued to fall even after the farmer applied more fertiliser.",
+          "marks": 5
+        }
+      ]
+    }
+  ]
+}

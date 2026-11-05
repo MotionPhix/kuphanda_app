@@ -18,15 +18,28 @@ use Illuminate\Support\Facades\Storage;
  */
 final class LibrarySeeder extends Seeder
 {
+    /**
+     * Records that carried a title, a page count and a price but no content.
+     * They are removed on every seed so an existing database is cleaned too.
+     *
+     * @var list<string>
+     */
+    private const RETIRED = [
+        'ref-msce-biology-2023-paper2',
+    ];
+
     public function run(): void
     {
         foreach ($this->subjects() as $subject) {
             Subject::query()->updateOrCreate(['id' => $subject['id']], $subject);
         }
 
+        $this->retirePlaceholders();
+
         foreach ($this->documents() as $data) {
             $versions = $data['versions'] ?? [];
-            unset($data['versions']);
+            $blocksFile = $data['blocks_file'] ?? null;
+            unset($data['versions'], $data['blocks_file']);
 
             $document = Document::query()->updateOrCreate(['id' => $data['id']], $data);
 
@@ -35,11 +48,82 @@ final class LibrarySeeder extends Seeder
                 $latest = $this->publishVersion($document, $version);
             }
 
+            if ($blocksFile !== null) {
+                $this->attachBlocks($document, $blocksFile);
+            }
+
             $document->forceFill([
                 'latest_version' => $latest?->version ?? 0,
-                'content_updated_at' => $latest?->published_at,
+                'content_updated_at' => $latest?->published_at
+                    ?? $document->content_updated_at
+                    ?? Carbon::now(),
             ])->save();
         }
+    }
+
+    /**
+     * Removes records that promised content but never carried any. They are
+     * deleted, not merely unpublished: a learner who searches for "MSCE Biology
+     * 2023" should not find a row whose only action is a dead button.
+     *
+     * A record somebody has already acted on — bought, marked offline, or set as
+     * class work — is kept and unpublished instead, so no purchase or assignment
+     * is silently destroyed.
+     */
+    private function retirePlaceholders(): void
+    {
+        foreach (self::RETIRED as $id) {
+            $document = Document::query()->find($id);
+
+            if ($document === null) {
+                continue;
+            }
+
+            $inUse = $document->purchases()->exists()
+                || $document->offlineMarks()->exists()
+                || $document->assignments()->exists();
+
+            if ($inUse) {
+                $document->forceFill(['is_published' => false])->save();
+                $this->command?->warn('Unpublished retired placeholder '.$id.' (it is in use).');
+
+                continue;
+            }
+
+            $document->delete();
+            $this->command?->info('Removed placeholder '.$id.'.');
+        }
+    }
+
+    /** Attaches the structured content a reflowable document is read from. */
+    private function attachBlocks(Document $document, string $file): void
+    {
+        $path = database_path('seeders/files/'.$file);
+        $raw = @file_get_contents($path);
+
+        if ($raw === false) {
+            $this->command?->warn('No blocks attached to '.$document->id.': '.$file.' is missing.');
+
+            return;
+        }
+
+        /** @var array<string, mixed> $json */
+        $json = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        $blocks = $json['blocks'] ?? [];
+
+        if (! is_array($blocks) || $blocks === []) {
+            $this->command?->warn('No blocks attached to '.$document->id.': '.$file.' has none.');
+
+            return;
+        }
+
+        $document->forceFill([
+            'format' => $document->id === 'ref-msce-physics-mechanics' ? 'hybrid' : 'blocks',
+            'blocks' => [
+                'subtitle' => $json['subtitle'] ?? null,
+                'blocks' => $blocks,
+            ],
+        ])->save();
     }
 
     /**
@@ -94,6 +178,13 @@ final class LibrarySeeder extends Seeder
     }
 
     /**
+     * The catalogue Kuphanda owns and can actually serve.
+     *
+     * Every entry here is readable: it either carries structured blocks, ships a
+     * published PDF, or is a guide whose sections ship inside the app. A record
+     * without content is not a catalogue entry — it is a dead button, and the
+     * readiness audit refuses to publish one.
+     *
      * @return array<int, array<string, mixed>>
      */
     private function documents(): array
@@ -105,7 +196,7 @@ final class LibrarySeeder extends Seeder
                 'title' => 'How to use Kuphanda',
                 'form' => 1,
                 'kind' => 'guide',
-                'description' => 'A short guide to finding papers, subscribing, downloading for offline reading and keeping notes.',
+                'description' => 'Finding papers, subscribing, downloading for offline reading and keeping notes — the four things a new learner needs in the first week.',
                 'pages' => 4,
                 'access_tier' => 'free',
                 'author' => 'Kuphanda',
@@ -124,7 +215,7 @@ final class LibrarySeeder extends Seeder
                 'title' => 'Weekly study planner',
                 'form' => 4,
                 'kind' => 'other',
-                'description' => 'A printable week plan with a 40-minute study block, marking routine and weekly review questions.',
+                'description' => 'A printable week plan built around a 40-minute study block, with a marking routine and a weekly review page.',
                 'pages' => 2,
                 'access_tier' => 'free',
                 'author' => 'Kuphanda',
@@ -135,111 +226,154 @@ final class LibrarySeeder extends Seeder
                 ],
             ],
             [
-                'id' => 'ref-msce-biology-2023-paper2',
-                'subject_id' => 'biology',
-                'title' => 'MSCE Biology 2023 — Paper 2 with worked solutions',
-                'form' => 4,
-                'kind' => 'pastPaper',
-                'description' => 'Complete Paper 2 with structured answers and examiner-style commentary for every question.',
-                'pages' => 24,
-                'year' => 2023,
-                'paper_number' => 2,
-                'session' => 'November',
-                'total_marks' => 100,
-                'duration_minutes' => 150,
-                'access_tier' => 'free',
-                'author' => 'Kuphanda Library',
-                'featured' => true,
-                'tags' => ['worked solutions', 'paper 2'],
-            ],
-            [
-                'id' => 'ref-jce-mathematics-toolkit',
-                'subject_id' => 'mathematics',
-                'title' => 'JCE Mathematics — full toolkit',
-                'form' => 2,
-                'kind' => 'notes',
-                'description' => 'Every JCE topic in one workbook, with 300 practice problems and worked answers.',
-                'pages' => 96,
-                'access_tier' => 'free',
-                'author' => 'T. Banda',
-                'tags' => ['workbook', 'practice'],
-            ],
-            [
-                'id' => 'ref-msce-chemistry-organic',
-                'subject_id' => 'chemistry',
-                'title' => 'MSCE Chemistry — Organic chemistry masterclass',
-                'form' => 4,
-                'kind' => 'guide',
-                'description' => 'Alkanes to esters, IUPAC naming and every reaction pathway needed for Paper 2.',
-                'pages' => 58,
-                'access_tier' => 'weekly',
-                'price_mwk' => 2500,
-                'author' => 'Dr. C. Phiri',
-                'tags' => ['organic chemistry'],
-            ],
-            [
                 'id' => 'ref-msce-physics-mechanics',
                 'subject_id' => 'physics',
-                'title' => 'MSCE Physics — Mechanics workbook',
                 'form' => 4,
                 'kind' => 'notes',
-                'description' => 'Vectors, motion, forces and momentum, with marking points called out.',
-                'pages' => 72,
+                'title' => 'Mechanics: motion, force and momentum',
+                'description' => 'Motion graphs, worked examples on acceleration and a momentum collision, with the marking points called out. Structured for the reflowable reader.',
+                'pages' => 3,
                 'access_tier' => 'daily',
                 'price_mwk' => 1500,
                 'author' => 'E. Mwale',
-                'tags' => ['mechanics'],
-            ],
-            [
-                'id' => 'ref-chichewa-ndakatulo',
-                'subject_id' => 'chichewa',
-                'title' => 'Chichewa — Ndakatulo essay technique',
-                'form' => 4,
-                'kind' => 'guide',
-                'description' => 'How to unpack any ndakatulo in under eight minutes, with three fully worked essays.',
-                'pages' => 32,
-                'access_tier' => 'free',
-                'author' => 'M. Nyirenda',
-                'language' => 'Chichewa',
-                'featured' => true,
-                'tags' => ['ndakatulo'],
-            ],
-            [
-                'id' => 'notes-mathematics-f4',
-                'subject_id' => 'mathematics',
-                'title' => 'Mathematics — Form 4 study notes',
-                'form' => 4,
-                'kind' => 'notes',
-                'description' => 'Form 4 mathematics organised term by term for the MSCE syllabus, with worked examples.',
-                'pages' => 44,
-                'access_tier' => 'free',
-                'author' => 'Kuphanda Library',
-                'tags' => ['notes', 'form 4'],
-            ],
-            [
-                'id' => 'syllabus-biology',
-                'subject_id' => 'biology',
-                'title' => 'MSCE Biology syllabus',
-                'form' => 4,
-                'kind' => 'syllabus',
-                'description' => 'The examinable syllabus: topics, learning outcomes and suggested time allocation.',
-                'pages' => 20,
-                'access_tier' => 'free',
-                'author' => 'Malawi curriculum reference',
-                'tags' => ['syllabus'],
+                'language' => 'English',
+                'blocks_file' => 'blocks-mechanics.json',
+                'tags' => ['mechanics', 'workbook'],
             ],
             [
                 'id' => 'guide-bio-genetics',
                 'subject_id' => 'biology',
-                'title' => 'Genetics — MSCE study guide',
                 'form' => 4,
                 'kind' => 'studyGuide',
-                'description' => 'Mendelian inheritance, monohybrid crosses, sex linkage and mutation, with exam-style practice.',
+                'title' => 'Genetics: inheritance, DNA and variation',
+                'description' => 'Alleles and genotypes, monohybrid crosses with worked Punnett squares, DNA replication and the two kinds of variation. Written for MSCE Paper 2.',
                 'pages' => 4,
                 'access_tier' => 'free',
                 'author' => 'Kuphanda Curriculum Team',
-                'guide_id' => 'bio-genetics',
-                'tags' => ['study guide'],
+                'language' => 'English',
+                'blocks_file' => 'blocks-biology-genetics.json',
+                'featured' => true,
+                'tags' => ['genetics', 'paper 2'],
+            ],
+            [
+                'id' => 'ref-msce-chemistry-organic',
+                'subject_id' => 'chemistry',
+                'form' => 4,
+                'kind' => 'guide',
+                'title' => 'Organic chemistry: from alkanes to esters',
+                'description' => 'The four homologous series, IUPAC naming, the reactions that carry marks and the test for unsaturation, with a worked exam question.',
+                'pages' => 4,
+                'access_tier' => 'weekly',
+                'price_mwk' => 2500,
+                'author' => 'Dr. C. Phiri',
+                'language' => 'English',
+                'blocks_file' => 'blocks-chemistry-organic.json',
+                'tags' => ['organic chemistry', 'paper 2'],
+            ],
+            [
+                'id' => 'notes-mathematics-f4',
+                'subject_id' => 'mathematics',
+                'form' => 4,
+                'kind' => 'notes',
+                'title' => 'Form 4 mathematics: functions, circles and statistics',
+                'description' => 'Completing the square, the circle theorems with the reasons to quote, and estimating a mean from grouped data. Worked examples throughout.',
+                'pages' => 4,
+                'access_tier' => 'free',
+                'author' => 'Kuphanda Library',
+                'language' => 'English',
+                'blocks_file' => 'blocks-mathematics-f4.json',
+                'tags' => ['notes', 'form 4'],
+            ],
+            [
+                'id' => 'ref-chichewa-ndakatulo',
+                'subject_id' => 'chichewa',
+                'form' => 4,
+                'kind' => 'guide',
+                'title' => 'Ndakatulo: mfundo, kapangidwe ndi kawerengedwe',
+                'description' => 'Momwe tingawerenge ndakatulo mwachangu: mfundo yaikulu, fanizo, chifaniziro, ndi mmene tingayankhire mafunso a MSCE.',
+                'pages' => 4,
+                'access_tier' => 'free',
+                'author' => 'M. Nyirenda',
+                'language' => 'Chichewa',
+                'blocks_file' => 'blocks-chichewa-ndakatulo.json',
+                'featured' => true,
+                'tags' => ['ndakatulo', 'chichewa'],
+            ],
+            [
+                'id' => 'ref-msce-geography-mapwork',
+                'subject_id' => 'geography',
+                'form' => 4,
+                'kind' => 'notes',
+                'title' => 'Map work: scale, bearings and relief',
+                'description' => 'Scale conversions, three-figure bearings and back bearings, reading contours, and drawing a cross-section that can actually be marked.',
+                'pages' => 4,
+                'access_tier' => 'free',
+                'author' => 'Kuphanda Library',
+                'language' => 'English',
+                'blocks_file' => 'blocks-geography-mapwork.json',
+                'tags' => ['map work', 'paper 2'],
+            ],
+            [
+                'id' => 'ref-agriculture-livestock',
+                'subject_id' => 'agriculture',
+                'form' => 4,
+                'kind' => 'guide',
+                'title' => 'Livestock production: housing, feeding and health',
+                'description' => 'Cattle, goats and poultry on a smallholding: housing dimensions, roughage and concentrate, and the five diseases that repeat in exams.',
+                'pages' => 5,
+                'access_tier' => 'weekly',
+                'price_mwk' => 2000,
+                'author' => 'R. Kachale',
+                'language' => 'English',
+                'blocks_file' => 'blocks-agriculture-livestock.json',
+                'tags' => ['livestock', 'disease'],
+            ],
+            [
+                'id' => 'ref-jce-mathematics-toolkit',
+                'subject_id' => 'mathematics',
+                'form' => 2,
+                'kind' => 'notes',
+                'title' => 'JCE mathematics: number, algebra and shape',
+                'description' => 'Fractions to percentages, expanding and solving, and the area and volume formulas — the three areas that decide a JCE grade, with worked examples.',
+                'pages' => 4,
+                'access_tier' => 'free',
+                'author' => 'T. Banda',
+                'language' => 'English',
+                'blocks_file' => 'blocks-jce-mathematics.json',
+                'tags' => ['workbook', 'practice'],
+            ],
+            [
+                'id' => 'syllabus-biology',
+                'subject_id' => 'biology',
+                'form' => 4,
+                'kind' => 'syllabus',
+                'title' => 'MSCE Biology: examinable topics and how they are weighted',
+                'description' => 'A revision map of the examinable topics with the paper each one appears in, plus an eight-week plan. A checklist, not a copy of the syllabus.',
+                'pages' => 5,
+                'access_tier' => 'free',
+                'author' => 'Kuphanda Curriculum Team',
+                'language' => 'English',
+                'blocks_file' => 'blocks-biology-syllabus.json',
+                'tags' => ['syllabus', 'revision'],
+            ],
+            [
+                'id' => 'ref-msce-biology-practice-p2',
+                'subject_id' => 'biology',
+                'form' => 4,
+                'kind' => 'pastPaper',
+                'title' => 'Biology Paper 2 practice paper',
+                'description' => 'A Kuphanda mock paper: 100 marks over six structured questions on osmosis, photosynthesis, genetics, populations and human systems.',
+                'pages' => 5,
+                'year' => 2026,
+                'paper_number' => 2,
+                'session' => 'November',
+                'total_marks' => 100,
+                'duration_minutes' => 120,
+                'access_tier' => 'free',
+                'author' => 'Kuphanda Curriculum Team',
+                'language' => 'English',
+                'blocks_file' => 'blocks-biology-practice-paper.json',
+                'tags' => ['practice paper', 'paper 2'],
             ],
         ];
     }
