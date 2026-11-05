@@ -45,11 +45,18 @@ if [ ! -f "$APP_DIR/.env" ]; then
 
   MAIL_USERNAME=""
   MAIL_PASSWORD=""
+  MAIL_HOST="sandbox.smtp.mailtrap.io"
+  MAIL_MAILER="log"
   if [ -f "$APP_DIR/deploy/mail.credentials" ]; then
     # shellcheck disable=SC1091
     . "$APP_DIR/deploy/mail.credentials"
+    MAIL_MAILER="smtp"
   else
-    echo "WARN: deploy/mail.credentials missing — mail will not send until it is added"
+    # No credentials means no SMTP host we can reach. Pointing the mailer at a
+    # sandbox that refuses connections made every sign-up wait 23 seconds for a
+    # timeout and then answer 500, after the account had already been created.
+    # Writing to the log keeps sign-up instant until real credentials arrive.
+    echo "WARN: deploy/mail.credentials missing — writing mail to storage/logs/laravel.log"
   fi
 
   cat > "$APP_DIR/.env" <<ENVEOF
@@ -84,8 +91,8 @@ FILESYSTEM_DISK=public
 MEDIA_DISK=public
 QUEUE_CONNECTION=database
 CACHE_STORE=database
-MAIL_MAILER=smtp
-MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_MAILER=$MAIL_MAILER
+MAIL_HOST=$MAIL_HOST
 MAIL_PORT=2525
 MAIL_USERNAME=$MAIL_USERNAME
 MAIL_PASSWORD=$MAIL_PASSWORD
@@ -93,6 +100,10 @@ MAIL_SCHEME=null
 MAIL_FROM_ADDRESS="no-reply@kuphanda.com"
 MAIL_FROM_NAME="\${APP_NAME}"
 VITE_APP_NAME="\${APP_NAME}"
+# The Web client from the Firebase project, which is the audience the app sends
+# when it signs in with Google. Without it /auth/google answers 503 and the
+# phone reports a failure that no amount of retrying can fix.
+GOOGLE_CLIENT_ID=239327365893-1725f6in8f6nnmc85836eqhrets9hfes.apps.googleusercontent.com
 ENVEOF
   chmod 600 "$APP_DIR/.env"
   echo ".env written ($(wc -c < "$APP_DIR/.env") bytes)"
@@ -112,6 +123,14 @@ fi
 
 say "migrating"
 php artisan migrate --force 2>&1 | tail -15
+
+# The catalogue is code-owned: its records live in the seeders, so a deploy that
+# skips this leaves a server running new code against an old library. `--prune`
+# removes records with nothing behind them, which is what the empty placeholder
+# rows were. Records a learner bought, marked offline or was assigned are
+# unpublished instead of deleted.
+say "syncing the catalogue"
+php artisan library:sync --prune 2>&1 | tail -12
 
 say "permissions"
 chmod -R u+rwX storage bootstrap/cache
@@ -161,3 +180,4 @@ probe GET  "$APP_URL_/api/v1/plans"
 probe POST "$APP_URL_/api/v1/login"
 
 say "done — $(date -u '+%Y-%m-%d %H:%M:%SZ')"
+

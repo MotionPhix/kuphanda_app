@@ -172,6 +172,33 @@ flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8000/api/v1
 
 Android emulator: `--dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1`.
 
+### Deploying
+
+On the host, from the checkout:
+
+```bash
+cd /home/kuphanda/kuphanda
+git pull origin main
+bash phanda_api/deploy/deploy.sh
+```
+
+The script is idempotent: composer, migrations, `library:sync --prune`, storage
+link, document root, config cache, then a smoke test that expects `401` from a
+guarded route and `422` from an empty login.
+
+An install created before these changes keeps its existing `.env`, so two values
+have to be corrected by hand once — otherwise Google sign-in answers `503` and
+sign-up waits 23 seconds for an SMTP host that is not there:
+
+```ini
+GOOGLE_CLIENT_ID=239327365893-1725f6in8f6nnmc85836eqhrets9hfes.apps.googleusercontent.com
+MAIL_MAILER=log   # until deploy/mail.credentials points at a relay that works
+```
+
+Follow with `php artisan config:clear && php artisan config:cache`, then read
+`/api/v1/health`: `google_sign_in` should be `true` and `mail_transport` should
+no longer be `smtp`.
+
 ### Checking what a server is actually running
 
 A pull is not a deploy: PHP can serve cached bytecode, the checkout can be the
