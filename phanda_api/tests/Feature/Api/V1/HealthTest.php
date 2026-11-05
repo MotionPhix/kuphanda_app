@@ -55,7 +55,10 @@ it('reports the catalogue and the integrations without authentication', function
         ->assertJsonPath('catalogue.readable', 1)
         ->assertJsonPath('catalogue.unreadable', 1)
         ->assertJsonPath('features.google_sign_in', false)
-        ->assertJsonStructure(['time', 'features' => ['mail_transport']]);
+        // No service account in the test environment, so class notifications
+        // can only reach a phone that is already open. Saying so is the point.
+        ->assertJsonPath('features.push.configured', false)
+        ->assertJsonStructure(['time', 'features' => ['mail_transport', 'push']]);
 });
 
 it('reports google sign-in as configured once a client id is present', function (): void {

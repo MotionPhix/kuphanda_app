@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Document;
+use App\Contracts\PushSender;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -22,7 +23,7 @@ use Illuminate\Http\JsonResponse;
  */
 final class HealthController
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(PushSender $push): JsonResponse
     {
         $published = Document::query()->where('is_published', true)->count();
         $readable = Document::query()->published()->readable()->count();
@@ -50,6 +51,11 @@ final class HealthController
                 'google_sign_in' => filled(config('services.google.client_id')),
                 // "log" means mail is discarded: sign-up works, no email arrives.
                 'mail_transport' => config('mail.default'),
+                // Class notifications are pushed through FCM. With no service
+                // account this is false and notifications only ever reach a
+                // phone that happens to be open — worth knowing before blaming
+                // the app for silence.
+                'push' => ['configured' => $push->isConfigured()],
             ],
         ]);
     }
@@ -71,3 +77,5 @@ final class HealthController
         return $commit === '' ? null : mb_substr($commit, 0, 40);
     }
 }
+
+
