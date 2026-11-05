@@ -633,7 +633,14 @@ class ApiClient {
     // A failure on the server's own side is not the learner's to read. Laravel
     // answers "Server Error" with debug off, which tells them nothing and reads
     // like a bug in the app; say what happened and what to do about it instead.
-    final serverMessage = status >= 500 ? null : _meaningfulMessage(parsed['message']);
+    // The exception is 502/503/504: those are the codes a deployment uses to say
+    // something deliberate, such as "Google sign-in is not configured", and
+    // replacing that with "the library had a problem" hides the one sentence that
+    // tells an operator what to fix. A 500 stays generic: its body is a stack
+    // trace waiting to become a support ticket.
+    final serviceSentence = status == 502 || status == 503 || status == 504;
+    final serverMessage =
+        status >= 500 && !serviceSentence ? null : _meaningfulMessage(parsed['message']);
 
     final message = fieldError ?? serverMessage ?? switch (status) {
       401 => 'Your session has expired. Sign in again.',
@@ -663,6 +670,9 @@ class ApiClient {
       'whoops, looks like something went wrong.',
       'the given data was invalid.',
       'unauthenticated.',
+      'service unavailable',
+      'bad gateway',
+      'gateway timeout',
     };
 
     return bland.contains(trimmed.toLowerCase()) ? null : trimmed;

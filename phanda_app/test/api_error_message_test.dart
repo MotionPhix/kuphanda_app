@@ -63,4 +63,31 @@ void main() {
       throwsA(isA<ApiException>().having((e) => e.message, 'message', 'That class is full.')),
     );
   });
+
+  test('a configuration sentence on a 503 reaches the learner', () async {
+    final client = _clientReturning(503, {'message': 'Google sign-in is not configured.'});
+
+    await expectLater(
+      client.fetchClassrooms(),
+      throwsA(
+        isA<ApiException>()
+            .having((e) => e.message, 'message', 'Google sign-in is not configured.'),
+      ),
+    );
+  });
+
+  test('a bare 503 still reads as a problem on the server side', () async {
+    final client = _clientReturning(503, {'message': 'Service Unavailable'});
+
+    await expectLater(
+      client.fetchClassrooms(),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.message,
+          'message',
+          'The library had a problem on its side. Try again in a moment.',
+        ),
+      ),
+    );
+  });
 }
