@@ -30,6 +30,11 @@ final class HealthController
         return response()->json([
             'status' => 'ok',
             'time' => now()->toIso8601String(),
+            // The commit the running code was checked out at, written by
+            // deploy/update.sh. Without it "did the pull land?" is guesswork:
+            // the file says what is on disk, this says what was recorded at
+            // deploy time, and a disagreement is the answer.
+            'commit' => $this->commit(),
             'catalogue' => [
                 'published' => $published,
                 'readable' => $readable,
@@ -47,5 +52,22 @@ final class HealthController
                 'mail_transport' => config('mail.default'),
             ],
         ]);
+    }
+
+    /**
+     * @return string|null  null on a checkout that has never been deployed by
+     *                      update.sh, which is itself useful information.
+     */
+    private function commit(): ?string
+    {
+        $path = storage_path('app/current-commit');
+
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $commit = trim((string) @file_get_contents($path));
+
+        return $commit === '' ? null : mb_substr($commit, 0, 40);
     }
 }

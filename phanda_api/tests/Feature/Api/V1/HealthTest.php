@@ -65,3 +65,18 @@ it('reports google sign-in as configured once a client id is present', function 
         ->assertOk()
         ->assertJsonPath('features.google_sign_in', true);
 });
+
+it('reports the commit recorded at deploy time', function (): void {
+    $path = storage_path('app/current-commit');
+    @unlink($path);
+
+    $this->getJson('/api/v1/health')->assertOk()->assertJsonPath('commit', null);
+
+    file_put_contents($path, "4ddb1ea\n");
+
+    try {
+        $this->getJson('/api/v1/health')->assertOk()->assertJsonPath('commit', '4ddb1ea');
+    } finally {
+        @unlink($path);
+    }
+})->group('health');
