@@ -69,6 +69,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _useGoogle() async {
+    // The button stays visible on every platform — hiding it read as the option
+    // having been taken away. Where the plugin does not exist (Windows), the tap
+    // says so instead of doing nothing.
+    if (!GoogleSignInService.isSupported) {
+      showSnack(
+        context,
+        'Google sign-in is available in the Android app and in the browser. '
+        'Here, use the email and password your school gave you.',
+        error: true,
+      );
+      return;
+    }
+
     setState(() => _googleBusy = true);
     final state = AppScope.read(context);
     try {
@@ -280,37 +293,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onPressed: _googleBusy ? null : _signInWithEmail,
             child: const Text('Sign in with email'),
           ),
-          // google_sign_in has no Windows implementation, and on that platform
-          // the button previously did nothing at all — no spinner, no message.
-          if (GoogleSignInService.isSupported) ...[
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: _googleBusy ? null : _useGoogle,
-              icon: _googleBusy
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text(
-                      'G',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-              label: const Text('Continue with Google'),
-            ),
-          ] else
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: Text(
-                'Google sign-in works in the Android app and in the browser. '
-                'On this computer, sign in with the email and password your '
-                'school gave you.',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
-                ),
-              ),
-            ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _googleBusy ? null : _useGoogle,
+            icon: _googleBusy
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('G', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: const Text('Continue with Google'),
+          ),
           const SizedBox(height: 20),
           Text(
             'Next you will add your name, school and form.',

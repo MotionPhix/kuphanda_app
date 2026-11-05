@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:kuphanda/app.dart';
-import 'package:kuphanda/data/auth/google_sign_in_service.dart';
 import 'package:kuphanda/data/api/api_client.dart';
 import 'package:kuphanda/data/api/api_models.dart';
 import 'package:kuphanda/data/api/token_store.dart';
@@ -258,17 +257,7 @@ void main() {
     // there is no form to fill in — only the two ways to sign in.
     expect(find.text('Sign in to continue'), findsOneWidget);
     expect(find.text('Sign in with email'), findsOneWidget);
-    // The test VM reports Windows, like the desktop build, and google_sign_in
-    // has no Windows implementation — so the button is replaced by a sentence.
-    if (GoogleSignInService.isSupported) {
-      expect(find.text('Continue with Google'), findsOneWidget);
-    } else {
-      expect(find.text('Continue with Google'), findsNothing);
-      expect(
-        find.textContaining('Google sign-in works in the Android app'),
-        findsOneWidget,
-      );
-    }
+    expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Who should we call you?'), findsNothing);
     expect(find.text('Continue'), findsNothing);
 
@@ -278,9 +267,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
-    if (GoogleSignInService.isSupported) {
-      expect(find.text('Use Google instead'), findsOneWidget);
-    }
+    expect(find.text('Use Google instead'), findsOneWidget);
   });
 
   testWidgets('signing in on the gate moves on to the details step',
@@ -355,6 +342,7 @@ void main() {
     expect(find.text('Continue'), findsOneWidget);
   });
 }
+
 
 
 

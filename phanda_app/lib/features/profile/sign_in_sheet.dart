@@ -157,6 +157,15 @@ class _SignInSheetState extends State<_SignInSheet> {
   }
 
   Future<void> _signInWithGoogle() async {
+    if (!GoogleSignInService.isSupported) {
+      setState(
+        () => _error =
+            'Google sign-in is available in the Android app and in the browser. '
+            'Here, use your email and password.',
+      );
+      return;
+    }
+
     try {
       final token = await GoogleSignInService().idToken();
       await widget.state.signInWithGoogle(token);
@@ -323,13 +332,11 @@ class _SignInSheetState extends State<_SignInSheet> {
             ),
           const SizedBox(height: 4),
           // Google stays available: it is how a learner signs in without an
-          // email account at all.
-          // Hidden where the plugin has no implementation (Windows), because
-          // the tap used to produce nothing at all.
-          if (GoogleSignInService.isSupported)
-            TextButton.icon(
-              onPressed: _busy ? null : _signInWithGoogle,
-              icon: const Icon(Icons.account_circle_outlined, size: 18),
+          // email account at all. Where the plugin does not exist (Windows) the
+          // tap explains that rather than the option disappearing.
+          TextButton.icon(
+            onPressed: _busy ? null : _signInWithGoogle,
+            icon: const Icon(Icons.account_circle_outlined, size: 18),
             label: const Text('Use Google instead'),
           ),
           TextButton(
@@ -350,3 +357,4 @@ class _SignInSheetState extends State<_SignInSheet> {
     );
   }
 }
+
