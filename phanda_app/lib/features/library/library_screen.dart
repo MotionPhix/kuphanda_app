@@ -10,6 +10,7 @@ import '../../core/widgets/document_card.dart';
 import '../../data/library_query.dart';
 import '../../data/models/document.dart';
 import '../../data/models/subject.dart';
+import '../../data/sync/offline_budget.dart';
 import '../documents/import_document.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -65,6 +66,42 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return CustomScrollView(
       slivers: [
+        if (state.offlineEvictionNotice != null)
+          SliverToBoxAdapter(
+            child: ResponsivePage(
+              padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 0),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.storage_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        state.offlineEvictionNotice!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: state.dismissOfflineEvictionNotice,
+                      tooltip: 'Dismiss',
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         SliverToBoxAdapter(
           child: ResponsivePage(
             padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 0),
@@ -76,7 +113,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   title: 'Library',
                   subtitle:
                       '${plural(state.documents.length, 'document')} · '
-                      '${state.offlineDocuments.length} on this device',
+                      '${state.offlineDocuments.length} on this device'
+                      // Downloads share a fixed budget, so the number that fills up
+                      // belongs next to the count that uses it.
+                      '${state.offlineBytesUsed == 0 ? '' : ' · ${formatBytes(state.offlineBytesUsed)} of ${formatBytes(state.offlineBudgetBytes)}'}',
                   actions: [
                     // The only upload in the app: a paper of the learner's own,
                     // named in a form. Nothing is ever attached to our records.
@@ -471,6 +511,12 @@ class _LibraryFilterSheetState extends State<LibraryFilterSheet> {
                   ),
                 ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Downloads share ${formatBytes(OfflineBudget.defaultBudgetBytes)} on this device. '
+            'When that fills, the documents you opened longest ago are removed first.',
+            style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 22),
           Text('Access', style: theme.textTheme.titleSmall),

@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/app_info.dart';
+import '../core/format.dart';
 import '../data/api/api_client.dart';
 import '../data/api/api_config.dart';
 import '../data/api/api_models.dart';
@@ -212,6 +213,19 @@ class AppState extends ChangeNotifier {
       .fold<int>(0, (total, asset) => total + asset.sizeBytes);
 
   int get offlineBudgetBytes => OfflineBudget.defaultBudgetBytes;
+
+  /// Set when a download pushed older copies out of the budget, so the library can
+  /// say why something disappeared. Cleared by [dismissOfflineEvictionNotice].
+  String? _offlineEvictionNotice;
+
+  String? get offlineEvictionNotice => _offlineEvictionNotice;
+
+  void dismissOfflineEvictionNotice() {
+    if (_offlineEvictionNotice == null) return;
+
+    _offlineEvictionNotice = null;
+    notifyListeners();
+  }
   int get pendingRemovalCount => _snapshot.pendingRemovals.length;
 
   String? get pendingPaymentTxRef => _snapshot.pendingPaymentTxRef;
@@ -2283,6 +2297,25 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+
+    noteOfflineEviction(evicted.length);
+  }
+
+  /// Records that copies were dropped to make room, so the library can say why
+  /// something disappeared. Public because the download path and the tests describe
+  /// the same event.
+  void noteOfflineEviction(int count) {
+    if (count <= 0) return;
+
+    // Eviction is the one part of the budget rule the learner did not ask for, so it
+    // is said out loud rather than left to be noticed.
+    _offlineEvictionNotice = count == 1
+        ? 'One older download was removed to make room. Downloads share '
+            '${formatBytes(offlineBudgetBytes)} on this device.'
+        : '$count older downloads were removed to make room. Downloads share '
+            '${formatBytes(offlineBudgetBytes)} on this device.';
+
+    notifyListeners();
   }
 
   Future<void> _removeLocalOnly(String documentId) async {
