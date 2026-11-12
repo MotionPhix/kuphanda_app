@@ -24,6 +24,7 @@ import '../data/store/block_cache.dart';
 import '../data/store/document_files.dart';
 import '../data/store/snapshot.dart';
 import '../data/store/state_store.dart';
+import '../data/sync/offline_budget.dart';
 import '../data/sync/offline_plan.dart';
 
 /// Result of a class action, shaped so the UI never has to catch exceptions
@@ -204,6 +205,13 @@ class AppState extends ChangeNotifier {
 
   DateTime? get lastSyncAt => _snapshot.lastSyncAt;
   int get offlineMarkCount => _snapshot.offlineMarked.length;
+
+  /// Bytes held by downloaded copies on this device.
+  int get offlineBytesUsed => _snapshot.assets.values
+      .where((asset) => asset.remote)
+      .fold<int>(0, (total, asset) => total + asset.sizeBytes);
+
+  int get offlineBudgetBytes => OfflineBudget.defaultBudgetBytes;
   int get pendingRemovalCount => _snapshot.pendingRemovals.length;
 
   String? get pendingPaymentTxRef => _snapshot.pendingPaymentTxRef;
@@ -2194,6 +2202,15 @@ class AppState extends ChangeNotifier {
         );
       }
 
+      // Make room before writing the new bytes rather than after: the budget is per
+      // device, and briefly holding both copies is exactly the overflow it exists to
+      // prevent.
+      try {
+        await _enforceOfflineBudget(incomingBytes: bytes.length, incomingId: id);
+      } on OfflineBudgetExceeded catch (error) {
+        throw ApiException(error.message);
+      }
+
       final previous = _snapshot.assets[id];
       final asset = await _files.storeBytes(
         documentId: id,
@@ -2226,6 +2243,45 @@ class AppState extends ChangeNotifier {
       _downloading.remove(id);
       _downloadProgress.remove(id);
       notifyListeners();
+    }
+  }
+
+  /// Drops the copies least recently read until [incomingBytes] fits the budget.
+  ///
+  /// Recency is the later of "saved" and "last read", so a paper downloaded months
+  /// ago but opened yesterday outlives one saved yesterday and never opened.
+  ///
+  /// The server-side removal is best-effort and queued on a network failure, for the
+  /// same reason any other removal is: the library must not keep offering to download
+  /// something this device has already dropped.
+  Future<void> _enforceOfflineBudget({
+    required int incomingBytes,
+    required String incomingId,
+  }) async {
+    final evicted = OfflineBudget.chooseEvictions(
+      assets: _snapshot.assets.values.where(
+        (asset) => asset.remote && asset.documentId != incomingId,
+      ),
+      incomingBytes: incomingBytes,
+      lastTouched: (asset) {
+        final readAt = _snapshot.progress[asset.documentId]?.lastReadAt;
+
+        return readAt != null && readAt.isAfter(asset.addedAt) ? readAt : asset.addedAt;
+      },
+    );
+
+    for (final asset in evicted) {
+      await _removeLocalOnly(asset.documentId);
+
+      if (!isSignedIn) continue;
+
+      try {
+        await _api!.removeOffline(asset.documentId);
+      } on ApiException catch (error) {
+        if (error.isNetworkError && !_snapshot.pendingRemovals.contains(asset.documentId)) {
+          _snapshot.pendingRemovals.add(asset.documentId);
+        }
+      }
     }
   }
 
