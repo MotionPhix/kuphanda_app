@@ -8,13 +8,23 @@ import '../api/api_models.dart';
 
 /// Obtains a Google ID token for the API to verify.
 ///
-/// The OAuth client is supplied at build time:
+/// The OAuth client can be overridden at build time:
 /// `--dart-define=GOOGLE_SERVER_CLIENT_ID=...apps.googleusercontent.com`.
+///
+/// It also has a real default, because a release build that omitted the flag
+/// used to compile fine and then disable the button at runtime with a toast -
+/// three shipped builds had no working Google sign-in and nothing failed until
+/// a learner tapped it. This client ID is public (it travels in the APK either
+/// way), so shipping it as the default is safer than depending on a build
+/// command being remembered.
+///
 /// Android also needs a matching OAuth client for the app package and signing
 /// certificate in the Google Cloud console.
 class GoogleSignInService {
   static const String _serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '239327365893-1725f6in8f6nnmc85836eqhrets9hfes.apps.googleusercontent.com',
   );
 
   static bool _initialised = false;
