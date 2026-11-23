@@ -23,6 +23,10 @@ final class DatabaseSeeder extends Seeder
         $this->call(PlanSeeder::class);
         $this->call(BlockDocumentSeeder::class);
 
+        // Runs last: it replaces the PDF guide that LibrarySeeder creates, so a
+        // fresh database never ships the pre-sign-in instructions.
+        $this->call(KuphandaGuideSeeder::class);
+
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
