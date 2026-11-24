@@ -134,7 +134,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                   ),
                                   Pill(
                                     label:
-                                        'Form ${document.form} · ${document.qualification}',
+                                        '${document.formLabel} · ${document.qualification}',
                                     compact: true,
                                   ),
                                   if (state.priceFor(document.id) > 0 && locked)
@@ -1181,7 +1181,7 @@ class _Overview extends StatelessWidget {
               KeyValueRow(label: 'Subject', value: subject.name),
               KeyValueRow(
                 label: 'Form / level',
-                value: 'Form ${document.form} · ${document.qualification}',
+                value: '${document.formLabel} · ${document.qualification}',
               ),
               KeyValueRow(label: 'Type', value: document.kind.label),
               if (document.year != null)

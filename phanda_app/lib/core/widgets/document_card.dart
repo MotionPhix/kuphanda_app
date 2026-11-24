@@ -109,7 +109,7 @@ class DocumentCover extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'F${document.form}',
+                              document.formBadge,
                               // A two-character marker on a 138dp cover: scaled
                               // up it pushed the row past the card edge, and it
                               // carries no sentence to read.

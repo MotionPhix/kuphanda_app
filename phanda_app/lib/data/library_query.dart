@@ -111,7 +111,13 @@ class LibraryQuery {
 
       if (onlyFeatured && !document.featured) return false;
       if (subjectIds.isNotEmpty && !subjectIds.contains(document.subjectId)) return false;
-      if (forms.isNotEmpty && !forms.contains(document.form)) return false;
+      // A general document applies to every form, so a form filter must
+      // never hide it.
+      if (forms.isNotEmpty &&
+          !document.appliesToAllForms &&
+          !forms.contains(document.form)) {
+        return false;
+      }
       if (kinds.isNotEmpty && !kinds.contains(document.kind)) return false;
       if (access == AccessFilter.free && document.accessTier != AccessTier.free) {
         return false;

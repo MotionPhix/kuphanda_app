@@ -18,8 +18,8 @@ use Illuminate\Database\Seeder;
  *
  * It is now seven short screens with the same block vocabulary as the
  * transcribed paper, so it uses the structured reader, wraps at any width and
- * keeps the pager. Text is deliberately plain: this is read by a Form 1 learner
- * on a 5-inch screen, not by a developer.
+ * keeps the pager. Text is deliberately plain: this is read by a first-time
+ * learner on a 5-inch screen, not by a developer.
  *
  * Idempotent: re-running replaces the blocks and drops any stale PDF versions,
  * media and offline marks that pointed at them.
@@ -50,6 +50,10 @@ final class KuphandaGuideSeeder extends Seeder
                 'blocks' => $this->blocks(),
             ],
             'pages' => 7,
+            // Written for whoever opens the app, not for one year group. The row
+            // arrived from the original catalogue carrying the Form 1 it was
+            // filed under, which read as "this guide is for Form 1s".
+            'form' => Document::FORM_ALL,
             'latest_version' => 0,
             'is_published' => true,
             'access_tier' => 'free',

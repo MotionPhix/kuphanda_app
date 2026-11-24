@@ -82,7 +82,16 @@ class Document {
   final String subjectId;
 
   /// 1–4. Forms 1–2 are junior (JCE), Forms 3–4 senior (MSCE).
+  ///
+  /// [allForms] for a document written for everyone — the how-to guide — which
+  /// must not read as "this is for Form 1s" nor disappear when the library is
+  /// filtered to one form.
   final int form;
+
+  /// The form value the API uses for a document that belongs to no single form.
+  static const int allForms = 0;
+
+  bool get appliesToAllForms => form == allForms;
   final DocumentKind kind;
   final String description;
   final int pages;
@@ -139,7 +148,14 @@ class Document {
   /// Whether the API holds a structured version of this document.
   final bool hasBlocks;
 
-  String get qualification => Subject.qualificationForForm(form);
+  String get qualification =>
+      appliesToAllForms ? 'General' : Subject.qualificationForForm(form);
+
+  /// How the form is named in running text: "Form 3" or "All forms".
+  String get formLabel => appliesToAllForms ? 'All forms' : 'Form $form';
+
+  /// The form as a badge: "F3", or "ALL" when the document is for everyone.
+  String get formBadge => appliesToAllForms ? 'ALL' : 'F$form';
 
   String get examLabel {
     if (kind != DocumentKind.pastPaper && kind != DocumentKind.markingScheme) {

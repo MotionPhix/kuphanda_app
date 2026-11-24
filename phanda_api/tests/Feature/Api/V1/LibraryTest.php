@@ -88,6 +88,24 @@ it('lists published documents with filters', function (): void {
         ->assertJsonPath('data.0.title', 'Biology paper');
 });
 
+it('keeps a general document in a form-filtered catalogue', function (): void {
+    libraryDocument(['title' => 'Form 1 paper', 'form' => 1]);
+    libraryDocument(['title' => 'Form 2 paper', 'form' => 2]);
+    // The how-to guide is written for whoever opens the app, and carries
+    // Document::FORM_ALL rather than a year group.
+    libraryDocument(['title' => 'How to use Kuphanda', 'form' => Document::FORM_ALL, 'kind' => 'guide']);
+
+    $response = $this->getJson('/api/v1/documents?form=2')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    $titles = collect($response->json('data'))->pluck('title')->all();
+
+    expect($titles)->toContain('Form 2 paper')
+        ->toContain('How to use Kuphanda')
+        ->not->toContain('Form 1 paper');
+});
+
 it('marks a document for offline reading', function (): void {
     $document = libraryDocument();
 

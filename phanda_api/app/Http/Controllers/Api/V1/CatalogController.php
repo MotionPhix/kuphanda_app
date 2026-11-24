@@ -10,6 +10,7 @@ use App\Http\Resources\SubjectResource;
 use App\Models\Document;
 use App\Models\Subject;
 use App\Services\EntitlementService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -71,7 +72,12 @@ final class CatalogController extends ApiController
         }
 
         if (! empty($validated['form'])) {
-            $query->where('form', (int) $validated['form']);
+            // A general document (the how-to guide) applies to every form, so a
+            // form filter must not hide it from the learner who asked for Form 3.
+            $form = (int) $validated['form'];
+            $query->where(static function (Builder $shape) use ($form): void {
+                $shape->where('form', $form)->orWhere('form', Document::FORM_ALL);
+            });
         }
 
         if (! empty($validated['kind'])) {

@@ -499,7 +499,8 @@ class AppState extends ChangeNotifier {
 
   List<LibraryEntry> entriesForForm(int form, {int limit = 10}) {
     return entries
-        .where((entry) => entry.document.form == form)
+        .where((entry) =>
+            entry.document.appliesToAllForms || entry.document.form == form)
         .take(limit)
         .toList();
   }
@@ -508,7 +509,10 @@ class AppState extends ChangeNotifier {
     final subjects = profile.subjects.map((subject) => subject.id).toSet();
     final list = entries.where((entry) {
       if (entry.locked) return false;
-      if (entry.document.form != profile.form) return false;
+      if (!entry.document.appliesToAllForms &&
+          entry.document.form != profile.form) {
+        return false;
+      }
       return subjects.isEmpty || subjects.contains(entry.document.subjectId);
     }).toList();
     list.sort((a, b) => b.document.rating.compareTo(a.document.rating));

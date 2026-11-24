@@ -23,7 +23,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property string $id
  * @property string $subject_id
  * @property string $title
- * @property int $form
+ * @property int $form A school form, or self::FORM_ALL for a document that is not tied to one.
  * @property string $kind
  * @property string|null $description
  * @property int $pages
@@ -76,6 +76,17 @@ final class Document extends Model implements HasMedia
 {
     use HasFactory;
     use InteractsWithMedia;
+
+    /**
+     * The form value of a document that belongs to no single form.
+     *
+     * `documents.form` is a tinyint with no null, and every reader treats a form
+     * as 1–4. The how-to guide is written for whoever opens the app - a Form 1
+     * learner, a Form 4 learner, a teacher - so it needs a value that means "all
+     * of them". Zero is outside the 1–4 range, sorts before real forms, and is
+     * carried through the API and the app as this constant rather than a bare 0.
+     */
+    public const FORM_ALL = 0;
 
     public $incrementing = false;
 
