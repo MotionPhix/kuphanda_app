@@ -31,5 +31,17 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+
+        <!--
+            Integrations that are configured on a developer machine must read as
+            unconfigured here. Without these the health test passed or failed
+            depending on whose .env the suite happened to load: with Firebase keys
+            present locally, "push.configured" was true and the test that documents
+            "no service account in the test environment" failed.
+        -->
+        <env name="FIREBASE_PROJECT_ID" value=""/>
+        <env name="FIREBASE_CREDENTIALS" value=""/>
+        <env name="WHATSAPP_PHONE_NUMBER_ID" value=""/>
+        <env name="WHATSAPP_ACCESS_TOKEN" value=""/>
     </php>
 </phpunit>
