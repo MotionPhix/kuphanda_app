@@ -1,7 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/widgets/math_text.dart';
 import '../../data/models/block_document.dart';
@@ -493,9 +499,10 @@ class _EmbeddedFigure extends StatelessWidget {
     }
 
     final asset = data['asset'] as String?;
+    final remote = (data['url'] as String? ?? '').trim();
     final caption = (data['alt'] ?? data['caption']) as String?;
 
-    if (asset == null || asset.isEmpty) {
+    if ((asset == null || asset.isEmpty) && remote.isEmpty) {
       return _FigurePlaceholder(label: caption ?? 'Figure not included');
     }
 
@@ -506,10 +513,9 @@ class _EmbeddedFigure extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           child: ColoredBox(
             color: Colors.white,
-            child: _FigureAsset(
-              asset: asset,
-              caption: caption,
-            ),
+            child: remote.isNotEmpty
+                ? _RemoteFigure(url: remote, caption: caption)
+                : _FigureAsset(asset: asset!, caption: caption),
           ),
         ),
         if (caption != null)
@@ -540,6 +546,7 @@ class _FigureBlock extends StatelessWidget {
         ? block.text
         : (figure['alt'] as String? ?? '');
     final asset = figure['asset'] as String?;
+    final url = (figure['url'] as String? ?? '').trim();
 
     // A diagram given as numbers - points and a circle, or pie slices - is drawn
     // rather than loaded. This used to be honoured only for a figure attached to
@@ -557,14 +564,25 @@ class _FigureBlock extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             child: drawn
                 ? _EmbeddedFigure(data: figure)
-                : asset == null
-                    ? _FigurePlaceholder(label: caption)
-                    : Image.asset(
-                        asset,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) =>
-                            _FigurePlaceholder(label: caption),
-                      ),
+                : url.isNotEmpty
+                    ? _RemoteFigure(url: url, caption: caption)
+                    : asset == null || asset.isEmpty
+                        // A block with no source and no caption would otherwise
+                        // draw an unlabelled grey rectangle.
+                        ? _FigurePlaceholder(
+                            label: caption.isEmpty
+                                ? 'Figure not included'
+                                : caption,
+                          )
+                        : Image.asset(
+                            asset,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => _FigurePlaceholder(
+                              label: caption.isEmpty
+                                  ? 'Figure not available'
+                                  : caption,
+                            ),
+                          ),
           ),
           if (caption.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -902,6 +920,176 @@ class _TableEdgeFade extends StatelessWidget {
 ///
 /// SVG is the preferred form: geometry stays sharp at any density and takes the
 /// theme's colours, where a scan is pinned to the pixels it was cropped from.
+/// A figure served by the API rather than baked into the APK.
+///
+/// Bundled assets are the only source a figure could take before this, which
+/// meant a diagram could not be corrected without a store release. This resolves
+/// a URL once, keeps the bytes on disk so the figure still appears offline after
+/// the first read, and paints them exactly like a bundled asset.
+///
+/// The cache is capped rather than unbounded: a diagram is tens of kilobytes, but
+/// a paper with forty of them should not be able to fill a learner's storage.
+class _RemoteFigure extends StatefulWidget {
+  const _RemoteFigure({required this.url, this.caption});
+
+  final String url;
+  final String? caption;
+
+  @override
+  State<_RemoteFigure> createState() => _RemoteFigureState();
+}
+
+class _RemoteFigureState extends State<_RemoteFigure> {
+  static const int _cacheBudgetBytes = 24 * 1024 * 1024;
+  static const Duration _timeout = Duration(seconds: 20);
+
+  late Future<Uint8List?> _bytes = _resolve();
+
+  @override
+  void didUpdateWidget(covariant _RemoteFigure oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      setState(() => _bytes = _resolve());
+    }
+  }
+
+  Future<Uint8List?> _resolve() async {
+    try {
+      final file = await _cacheFile(widget.url);
+
+      if (file != null && await file.exists()) {
+        final cached = await file.readAsBytes();
+        if (cached.isNotEmpty) {
+          // Touch the mtime so eviction drops what has not been read recently.
+          unawaited(file.setLastModified(DateTime.now()));
+          return cached;
+        }
+      }
+
+      final response = await http
+          .get(Uri.parse(widget.url))
+          .timeout(_timeout);
+
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        return null;
+      }
+
+      if (file != null) {
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(response.bodyBytes, flush: true);
+        unawaited(_prune(file.parent));
+      }
+
+      return response.bodyBytes;
+    } catch (_) {
+      // No network, a dead host, a corrupt cache: all of them mean "no figure",
+      // never an exception in the middle of a page.
+      return null;
+    }
+  }
+
+  Future<File?> _cacheFile(String url) async {
+    try {
+      final directory = await getApplicationSupportDirectory();
+      final name = _cacheKey(url) + (url.toLowerCase().split('?').first.endsWith('.svg') ? '.svg' : '.img');
+      return File('${directory.path}${Platform.pathSeparator}figures${Platform.pathSeparator}$name');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// FNV-1a over the URL: deterministic across runs (unlike hashCode, which is
+  /// not stable between launches) and short enough to be a filename.
+  static String _cacheKey(String url) {
+    var hash = 0xcbf29ce484222325;
+    for (final byte in utf8.encode(url)) {
+      hash ^= byte;
+      hash = (hash * 0x100000001b3) & 0xFFFFFFFFFFFFFFFF;
+    }
+
+    return hash.toRadixString(16).padLeft(16, '0');
+  }
+
+  /// Keeps the figure cache inside its budget, oldest-read first.
+  static Future<void> _prune(Directory directory) async {
+    try {
+      final files = await directory
+          .list()
+          .where((entry) => entry is File)
+          .cast<File>()
+          .toList();
+
+      final stats = <MapEntry<File, DateTime>>[];
+      var total = 0;
+      for (final file in files) {
+        final stat = await file.stat();
+        total += stat.size;
+        stats.add(MapEntry(file, stat.modified));
+      }
+
+      if (total <= _cacheBudgetBytes) return;
+
+      stats.sort((a, b) => a.value.compareTo(b.value));
+      for (final entry in stats) {
+        if (total <= _cacheBudgetBytes) break;
+        final stat = await entry.key.stat();
+        total -= stat.size;
+        await entry.key.delete();
+      }
+    } catch (_) {
+      // Pruning is housekeeping; failing it must not fail the page.
+    }
+  }
+
+  static bool _looksLikeVector(Uint8List bytes) {
+    final head = utf8.decode(
+      bytes.take(400).toList(),
+      allowMalformed: true,
+    ).toLowerCase();
+
+    return head.contains('<svg');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: _bytes,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return _FigurePlaceholder(label: widget.caption ?? 'Figure loading');
+        }
+
+        final bytes = snapshot.data;
+        if (bytes == null || bytes.isEmpty) {
+          return _FigurePlaceholder(
+            label: widget.caption ?? 'Figure not available',
+          );
+        }
+
+        if (_looksLikeVector(bytes)) {
+          return SizedBox(
+            width: double.infinity,
+            height: 220,
+            child: SvgPicture.string(
+              utf8.decode(bytes, allowMalformed: true),
+              fit: BoxFit.contain,
+            ),
+          );
+        }
+
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+          errorBuilder: (_, _, _) => _FigurePlaceholder(
+            label: widget.caption ?? 'Figure not available',
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _FigureAsset extends StatelessWidget {
   const _FigureAsset({required this.asset, this.caption});
 
