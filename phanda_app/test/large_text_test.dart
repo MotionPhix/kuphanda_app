@@ -21,7 +21,6 @@ import 'package:kuphanda/features/billing/subscription_screen.dart';
 import 'package:kuphanda/features/classes/classes_screen.dart';
 import 'package:kuphanda/features/document/document_detail_screen.dart';
 import 'package:kuphanda/features/library/library_screen.dart';
-import 'package:kuphanda/features/documents/my_documents_screen.dart';
 import 'package:kuphanda/features/notifications/notifications_screen.dart';
 import 'package:kuphanda/features/progress/progress_screen.dart';
 import 'package:kuphanda/features/reader/block_document_view.dart';
@@ -288,11 +287,11 @@ void main() {
     expect(errors, isEmpty, reason: _describe(errors));
   });
 
-  testWidgets('my documents survives 1.3x text', (tester) async {
+  testWidgets('the library survives 1.3x text', (tester) async {
     final errors = await _pumpPhone(
       tester,
       1.3,
-      home: const Scaffold(body: MyDocumentsScreen()),
+      home: const Scaffold(body: LibraryScreen()),
     );
 
     expect(errors, isEmpty, reason: _describe(errors));

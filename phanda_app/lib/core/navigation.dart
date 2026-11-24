@@ -39,3 +39,11 @@ Future<void> openClass(BuildContext context, String classId) {
     MaterialPageRoute<void>(builder: (_) => ClassDetailScreen(classId: classId)),
   );
 }
+
+/// The shell's destinations by name.
+///
+/// Screens used to ask for one by index, which meant deleting a tab silently
+/// pointed "Add your own paper" at a different screen. The teacher list is also
+/// a different order from the learner's, so the same number already meant two
+/// different things.
+enum AppTab { home, library, classes, progress }

@@ -5,7 +5,6 @@ import '../../core/navigation.dart';
 import '../../core/responsive.dart';
 import '../../data/models/profile.dart';
 import '../classes/classes_screen.dart';
-import '../documents/my_documents_screen.dart';
 import '../home/home_screen.dart';
 import '../library/library_screen.dart';
 import '../progress/progress_screen.dart';
@@ -15,6 +14,7 @@ import 'app_sidebar.dart';
 /// One destination in the shell: the screen, its label and the group it sits in.
 class _Destination {
   const _Destination(
+    this.tab,
     this.label,
     this.section,
     this.icon,
@@ -22,6 +22,7 @@ class _Destination {
     this.screen,
   );
 
+  final AppTab tab;
   final String label;
   final String section;
   final IconData icon;
@@ -44,6 +45,21 @@ class _AppShellState extends State<AppShell> {
     setState(() => _index = index);
   }
 
+  /// Jump to a destination by name.
+  ///
+  /// Screens used to pass an index, which broke quietly the moment a tab was
+  /// removed — "Add your own paper" would have opened Classes — and already
+  /// meant two different screens for the two roles, because the teacher list is
+  /// ordered differently from the learner's.
+  void _go(AppTab tab) {
+    final destinations = _destinationsFor(AppScope.of(context).profile);
+    final index = destinations.indexWhere(
+      (destination) => destination.tab == tab,
+    );
+
+    if (index >= 0) _goTo(index);
+  }
+
   /// Learners and teachers open the same app to do different jobs. The learner
   /// reads; the teacher runs classes. Their shells lead with that, and neither
   /// is shown the other's screens.
@@ -53,13 +69,15 @@ class _AppShellState extends State<AppShell> {
     if (isTeacher) {
       return [
         _Destination(
+          AppTab.home,
           'Home',
           'Teaching',
           Icons.home_outlined,
           Icons.home_rounded,
-          TeacherHomeScreen(onNavigate: _goTo),
+          TeacherHomeScreen(onNavigate: _go),
         ),
         _Destination(
+          AppTab.classes,
           'Classes',
           'Teaching',
           Icons.groups_outlined,
@@ -67,34 +85,30 @@ class _AppShellState extends State<AppShell> {
           const ClassesScreen(),
         ),
         _Destination(
+          AppTab.library,
           'Library',
           'Library',
           Icons.local_library_outlined,
           Icons.local_library_rounded,
           const LibraryScreen(),
         ),
-        _Destination(
-          'Files',
-          'Library',
-          Icons.folder_copy_outlined,
-          Icons.folder_copy_rounded,
-          const MyDocumentsScreen(),
-        ),
       ];
     }
 
     return [
       _Destination(
+        AppTab.home,
         'Home',
         'Study',
         Icons.home_outlined,
         Icons.home_rounded,
         HomeScreen(
-          onNavigate: _goTo,
+          onNavigate: _go,
           onOpenProfile: () => openProfile(context),
         ),
       ),
       _Destination(
+        AppTab.library,
         'Library',
         'Study',
         Icons.local_library_outlined,
@@ -102,13 +116,7 @@ class _AppShellState extends State<AppShell> {
         const LibraryScreen(),
       ),
       _Destination(
-        'Files',
-        'Study',
-        Icons.folder_copy_outlined,
-        Icons.folder_copy_rounded,
-        const MyDocumentsScreen(),
-      ),
-      _Destination(
+        AppTab.classes,
         'Classes',
         'Study',
         Icons.groups_outlined,
@@ -116,6 +124,7 @@ class _AppShellState extends State<AppShell> {
         const ClassesScreen(),
       ),
       _Destination(
+        AppTab.progress,
         'Progress',
         'Study',
         Icons.insights_outlined,
@@ -164,7 +173,7 @@ class _AppShellState extends State<AppShell> {
     if (size == ScreenSize.compact) {
       return Scaffold(
         body: SafeArea(bottom: false, child: content),
-        // The five destinations share 72dp each. At 1.3x text "Progress" broke
+        // The rail gives each destination 72dp. At 1.3x text "Progress" broke
         // across two lines and spilled out of the bar, so the chrome is clamped
         // while the content keeps the reader's full text size.
         bottomNavigationBar: MediaQuery.withClampedTextScaling(

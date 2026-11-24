@@ -19,7 +19,7 @@ class TeacherHomeScreen extends StatefulWidget {
   const TeacherHomeScreen({super.key, required this.onNavigate});
 
   /// Index into the teacher shell: 0 home, 1 classes, 2 library, 3 files.
-  final ValueChanged<int> onNavigate;
+  final ValueChanged<AppTab> onNavigate;
 
   @override
   State<TeacherHomeScreen> createState() => _TeacherHomeScreenState();
@@ -92,7 +92,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                     : 'Your classes, and the reading you set.',
                 actions: [
                   FilledButton.icon(
-                    onPressed: () => onNavigate(1),
+                    onPressed: () => onNavigate(AppTab.classes),
                     icon: const Icon(Icons.add_rounded, size: 17),
                     label: const Text('Create a class'),
                   ),
@@ -149,7 +149,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               SectionHeader(
                 title: 'Your classes',
                 actionLabel: classes.isEmpty ? null : 'All classes',
-                onAction: classes.isEmpty ? null : () => onNavigate(1),
+                onAction: classes.isEmpty ? null : () => onNavigate(AppTab.classes),
               ),
               const SizedBox(height: 10),
               if (classes.isEmpty)
@@ -160,7 +160,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                       'Create a class, read its six-character code out to the room, and set the '
                       'papers you want read. Codes work without email.',
                   actionLabel: 'Go to Classes',
-                  onAction: () => onNavigate(1),
+                  onAction: () => onNavigate(AppTab.classes),
                 )
               else
                 for (final group in classes.take(3)) ...[

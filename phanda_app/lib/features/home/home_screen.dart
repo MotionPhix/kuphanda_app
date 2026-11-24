@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
     required this.onOpenProfile,
   });
 
-  final ValueChanged<int> onNavigate;
+  final ValueChanged<AppTab> onNavigate;
   final VoidCallback onOpenProfile;
 
   @override
@@ -61,9 +61,9 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _QuickActions(
-                onBrowse: () => onNavigate(1),
-                onImport: () => onNavigate(2),
-                onClasses: () => onNavigate(3),
+                onBrowse: () => onNavigate(AppTab.library),
+                onImport: () => onNavigate(AppTab.library),
+                onClasses: () => onNavigate(AppTab.classes),
               ),
               if (state.notifications.isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -87,7 +87,7 @@ class HomeScreen extends StatelessWidget {
                         title: 'Continue reading',
                         subtitle: 'Pick up where you stopped',
                         actionLabel: 'My documents',
-                        onAction: () => onNavigate(2),
+                        onAction: () => onNavigate(AppTab.library),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -113,7 +113,7 @@ class HomeScreen extends StatelessWidget {
                       subtitle:
                           'Chosen for ${state.profile.examTarget} ${state.profile.examYear}',
                       actionLabel: 'Library',
-                      onAction: () => onNavigate(1),
+                      onAction: () => onNavigate(AppTab.library),
                     ),
                     const SizedBox(height: 12),
                     if (recommended.isEmpty)
@@ -146,7 +146,7 @@ class HomeScreen extends StatelessWidget {
                       title: 'Study guides',
                       subtitle: 'Objectives, key ideas and common mistakes',
                       actionLabel: 'All guides',
-                      onAction: () => onNavigate(1),
+                      onAction: () => onNavigate(AppTab.library),
                     ),
                     const SizedBox(height: 12),
                     if (guides.isEmpty)
@@ -181,7 +181,7 @@ class HomeScreen extends StatelessWidget {
                     SectionHeader(
                       title: 'Due soon',
                       actionLabel: 'Classes',
-                      onAction: () => onNavigate(3),
+                      onAction: () => onNavigate(AppTab.classes),
                     ),
                     const SizedBox(height: 10),
                     if (dueSoon.isEmpty)
@@ -191,7 +191,7 @@ class HomeScreen extends StatelessWidget {
                         message:
                             'Assignments from your classes will appear here.',
                         actionLabel: 'Join a class',
-                        onAction: () => onNavigate(3),
+                        onAction: () => onNavigate(AppTab.classes),
                         compact: true,
                       )
                     else
@@ -207,7 +207,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 18),
                     _WeeklyCard(
                       state: state,
-                      onOpenProgress: () => onNavigate(4),
+                      onOpenProgress: () => onNavigate(AppTab.progress),
                     ),
                   ],
                 ),
