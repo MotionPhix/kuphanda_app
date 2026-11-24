@@ -617,50 +617,282 @@ class _FigurePlaceholder extends StatelessWidget {
   }
 }
 
-class _TableBlock extends StatelessWidget {
+class _TableBlock extends StatefulWidget {
   const _TableBlock({required this.block});
 
   final DocumentBlock block;
 
   @override
+  State<_TableBlock> createState() => _TableBlockState();
+}
+
+/// A table that scrolls sideways instead of squeezing itself into the card.
+///
+/// The old one was a plain `Table` with flexible columns: on a 360pt screen the
+/// five columns of a data question were compressed until every cell wrapped to
+/// three or four lines, headers broke mid-word, and the whole block read as
+/// noise. Widths here are measured from the content instead — a header is never
+/// broken, short values ("48 000", "January") get exactly the width they need,
+/// and a long sentence is allowed a readable 260pt before it wraps. Whatever
+/// does not fit scrolls horizontally, inside the card's own border, so the card
+/// still looks like one object.
+class _TableBlockState extends State<_TableBlock> {
+  static const double _cellPadding = 24;
+  static const double _minColumn = 88;
+  static const double _maxProseColumn = 260;
+
+  final ScrollController _controller = ScrollController();
+
+  bool _canScroll = false;
+  bool _atEnd = true;
+  bool _atStart = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_syncEdges);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncEdges());
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_syncEdges);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _syncEdges() {
+    if (!mounted || !_controller.hasClients) return;
+
+    final position = _controller.position;
+    final canScroll = position.maxScrollExtent > 0.5;
+    final atStart = position.pixels <= 0.5;
+    final atEnd = position.pixels >= position.maxScrollExtent - 0.5;
+
+    if (canScroll == _canScroll && atStart == _atStart && atEnd == _atEnd) {
+      return;
+    }
+
+    setState(() {
+      _canScroll = canScroll;
+      _atStart = atStart;
+      _atEnd = atEnd;
+    });
+  }
+
+  /// Width of [text] laid out on one line, so a header is never broken.
+  double _measure(String text, TextStyle? style, TextScaler scaler) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+
+    return painter.width;
+  }
+
+  List<double> _columnWidths(
+    List<List<String>> rows,
+    TextStyle? headerStyle,
+    TextStyle? bodyStyle,
+    TextScaler scaler,
+  ) {
+    final columns = rows.first.length;
+
+    return List<double>.generate(columns, (index) {
+      final header = index < rows.first.length ? rows.first[index] : '';
+      final headerWidth = _measure(header, headerStyle, scaler) + _cellPadding;
+
+      var widestBody = _minColumn;
+      for (var r = 1; r < rows.length; r++) {
+        final cell = index < rows[r].length ? rows[r][index] : '';
+        final width = _measure(cell, bodyStyle, scaler) + _cellPadding;
+        if (width > widestBody) widestBody = width;
+      }
+
+      // The header sets the floor: it must not wrap or clip. Body prose is
+      // capped so one long sentence cannot make the row metres wide — it wraps
+      // inside a column that is still comfortably readable.
+      final bodyWidth = widestBody > _maxProseColumn ? _maxProseColumn : widestBody;
+
+      final width = headerWidth > bodyWidth ? headerWidth : bodyWidth;
+      return width < _minColumn ? _minColumn : width;
+    });
+  }
+
+  List<List<String>> _normalise(List<List<String>> rows) {
+    final columns = rows.map((row) => row.length).reduce(
+          (a, b) => a > b ? a : b,
+        );
+
+    return [
+      for (final row in rows)
+        [
+          for (var i = 0; i < columns; i++) i < row.length ? row[i] : '',
+        ],
+    ];
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final rows = block.rows;
+    final scheme = theme.colorScheme;
+    final scaler = MediaQuery.textScalerOf(context);
 
-    if (rows.isEmpty) return const SizedBox.shrink();
+    if (widget.block.rows.isEmpty) return const SizedBox.shrink();
+
+    final rows = _normalise(widget.block.rows);
+    final headerStyle = theme.textTheme.bodySmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.1,
+    );
+    // Tabular figures so a column of amounts lines up digit for digit: "48 000"
+    // and "36 000" share a baseline and a width, which proportional numerals do
+    // not. This is the whole reason a money column is readable at a glance.
+    final bodyStyle = theme.textTheme.bodySmall?.copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    final widths = _columnWidths(rows, headerStyle, bodyStyle, scaler);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: Table(
-        border: TableBorder.all(
-          color: theme.colorScheme.outlineVariant,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var r = 0; r < rows.length; r++)
-            TableRow(
-              decoration: r == 0
-                  ? BoxDecoration(color: theme.colorScheme.surfaceContainerHigh)
-                  : null,
-              children: [
-                for (final cell in rows[r])
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    controller: _controller,
+                    scrollDirection: Axis.horizontal,
+                    // The page itself scrolls vertically; without this the
+                    // table would steal the drag from the reader on a phone.
+                    physics: const ClampingScrollPhysics(),
+                    child: Table(
+                      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                      columnWidths: {
+                        for (var i = 0; i < widths.length; i++)
+                          i: FixedColumnWidth(widths[i]),
+                      },
+                      border: TableBorder(
+                        horizontalInside: BorderSide(
+                          color: scheme.outlineVariant.withValues(alpha: 0.6),
+                        ),
+                        verticalInside: BorderSide(
+                          color: scheme.outlineVariant.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      children: [
+                        for (var r = 0; r < rows.length; r++)
+                          TableRow(
+                            decoration: r == 0
+                                ? BoxDecoration(color: scheme.surfaceContainerHigh)
+                                : r.isOdd
+                                    ? BoxDecoration(
+                                        color: scheme.surfaceContainerLowest,
+                                      )
+                                    : null,
+                            children: [
+                              for (var c = 0; c < rows[r].length; c++)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  child: Text(
+                                    rows[r][c],
+                                    style: r == 0 ? headerStyle : bodyStyle,
+                                    // A header stays on one line because its
+                                    // column was measured to fit it; body prose
+                                    // may wrap inside its own column.
+                                    softWrap: r == 0 ? false : true,
+                                    maxLines: r == 0 ? 1 : null,
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
                     ),
+                  ),
+                  if (_canScroll && !_atStart)
+                    const Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: _TableEdgeFade(alignment: Alignment.centerLeft),
+                    ),
+                  if (_canScroll && !_atEnd)
+                    const Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: _TableEdgeFade(alignment: Alignment.centerRight),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (_canScroll && !_atEnd)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.swipe_left_outlined,
+                    size: 13,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  // Flexible, because the hint sits on a 360pt screen with a
+                  // card margin either side: at large text sizes the sentence is
+                  // wider than the row and overflowed it.
+                  Flexible(
                     child: Text(
-                      cell,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight:
-                            r == 0 ? FontWeight.w700 : FontWeight.w400,
+                      'Swipe the table to see every column',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Softens the edge the table continues past, so a cut-off column reads as
+/// "there is more" rather than "the text was clipped".
+class _TableEdgeFade extends StatelessWidget {
+  const _TableEdgeFade({required this.alignment});
+
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
+
+    return IgnorePointer(
+      child: Container(
+        width: 28,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: alignment,
+            end: alignment == Alignment.centerLeft
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            colors: [surface.withValues(alpha: 0.92), surface.withValues(alpha: 0)],
+          ),
+        ),
       ),
     );
   }
