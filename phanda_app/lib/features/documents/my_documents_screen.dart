@@ -7,8 +7,8 @@ import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/document_card.dart';
-import '../../data/models/document.dart';
 import '../../state/app_state.dart';
+import 'file_menu.dart';
 import 'import_document.dart';
 import 'sync_card.dart';
 
@@ -132,11 +132,11 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                   DocumentTile(
                     entry: entry,
                     onTap: () => openDocument(context, entry.document.id),
-                    trailing: _FileMenu(
+                    trailing: FileMenu(
                       entry: entry,
-                      onRemove: () => _removeFile(context, state, entry),
+                      onRemove: () => removeFileFromDevice(context, state, entry),
                       onDelete: entry.document.personal
-                          ? () => _deleteDocument(context, state, entry)
+                          ? () => deleteDocumentFromDevice(context, state, entry)
                           : null,
                     ),
                   ),
@@ -150,32 +150,6 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     );
   }
 
-  Future<void> _removeFile(BuildContext context, AppState state, LibraryEntry entry) async {
-    final confirmed = await confirmAction(
-      context,
-      title: 'Remove from this device?',
-      message: '“${entry.document.title}” stays in your library and your progress is kept. '
-          'Add the file again whenever you want it on this phone.',
-      confirmLabel: 'Remove file',
-    );
-    if (confirmed) {
-      await state.removeFile(entry.document.id);
-      if (context.mounted) showSnack(context, 'File removed. Progress kept.');
-    }
-  }
-
-  Future<void> _deleteDocument(BuildContext context, AppState state, LibraryEntry entry) async {
-    final confirmed = await confirmAction(
-      context,
-      title: 'Delete this document?',
-      message: 'The file, its progress and your notes are deleted from this phone.',
-      confirmLabel: 'Delete',
-    );
-    if (confirmed) {
-      await state.deletePersonalDocument(entry.document.id);
-      if (context.mounted) showSnack(context, 'Document deleted.');
-    }
-  }
 }
 
 class _StorageCard extends StatelessWidget {
@@ -232,32 +206,3 @@ class _StorageCard extends StatelessWidget {
     );
   }
 }
-
-class _FileMenu extends StatelessWidget {
-  const _FileMenu({required this.entry, required this.onRemove, this.onDelete});
-
-  final LibraryEntry entry;
-  final VoidCallback onRemove;
-  final VoidCallback? onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final asset = entry.asset;
-    if (!entry.onDevice) return const SizedBox.shrink();
-
-    return PopupMenuButton<String>(
-      tooltip: 'Document options',
-      icon: const Icon(Icons.more_vert_rounded, size: 18),
-      onSelected: (value) {
-        if (value == 'remove') onRemove();
-        if (value == 'delete') onDelete?.call();
-      },
-      itemBuilder: (context) => [
-        if (!(asset?.isBundled ?? false))
-          const PopupMenuItem(value: 'remove', child: Text('Remove file from device')),
-        if (onDelete != null) const PopupMenuItem(value: 'delete', child: Text('Delete document')),
-      ],
-    );
-  }
-}
-

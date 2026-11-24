@@ -11,7 +11,9 @@ import '../../data/library_query.dart';
 import '../../data/models/document.dart';
 import '../../data/models/subject.dart';
 import '../../data/sync/offline_budget.dart';
+import '../documents/file_menu.dart';
 import '../documents/import_document.dart';
+import '../documents/sync_card.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -66,7 +68,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return CustomScrollView(
       slivers: [
-        if (state.offlineEvictionNotice != null)
+        if (!state.isSignedIn)
+        SliverToBoxAdapter(
+          child: ResponsivePage(
+            padding: EdgeInsets.fromLTRB(gutter, 0, gutter, 4),
+            child: Column(
+              children: [
+                SyncCard(
+                  state: state,
+                  onSignIn: () => openSubscription(context),
+                ),
+                const SizedBox(height: 4),
+              ],
+            ),
+          ),
+        ),
+      if (state.offlineEvictionNotice != null)
           SliverToBoxAdapter(
             child: ResponsivePage(
               padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 0),
@@ -362,6 +379,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 return DocumentTile(
                   entry: entry,
                   onTap: () => openDocument(context, entry.document.id),
+                  // Managing downloads from the list, rather than opening each
+                  // document to drop it, used to be a Files-screen privilege.
+                  trailing: FileMenu(
+                    entry: entry,
+                    onRemove: () => removeFileFromDevice(context, state, entry),
+                    onDelete: entry.document.personal
+                        ? () => deleteDocumentFromDevice(context, state, entry)
+                        : null,
+                  ),
                 );
               },
             ),
