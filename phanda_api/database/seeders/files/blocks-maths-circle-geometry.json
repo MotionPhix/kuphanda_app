@@ -1,0 +1,116 @@
+{
+  "title": "Circle geometry: what the diagram is telling you",
+  "subtitle": "A Kuphanda revision guide for MSCE Mathematics",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "Why the diagram decides the method"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "In circle geometry the marks are not in the wording, they are in the drawing. Two questions can read almost the same and need completely different theorems, because one diagram shows a diameter and the other does not. Before you write anything, mark the centre, mark every point that touches the circle, and look for a straight line that passes through the centre."
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "label": "Start here",
+      "text": "A line from the centre to a point on the circle is a radius. Every radius has the same length, so any triangle with two radii in it is isosceles — and that alone gives you two equal base angles."
+    },
+    {
+      "type": "figure",
+      "page": 1,
+      "text": "Figure 1: a chord AB with radii OA and OB, and the angle at the centre marked.",
+      "figure": {
+        "points": {
+          "O": [110, 110],
+          "A": [52, 152],
+          "B": [168, 152],
+          "C": [110, 32]
+        },
+        "circle": { "center": [110, 110], "radius": 78 },
+        "lines": [["O", "A"], ["O", "B"], ["A", "B"], ["O", "C"]],
+        "angles": [
+          { "points": ["A", "O", "B"], "label": "2x" },
+          { "points": ["O", "A", "B"], "label": "x" },
+          { "points": ["A", "B", "O"], "label": "x" }
+        ],
+        "alt": "Circle centre O with chord AB and radii OA and OB"
+      }
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "Angle at the centre is twice the angle at the circumference standing on the same arc.",
+        "Angle in a semicircle is 90°, because the arc is the whole half-circle.",
+        "A tangent is perpendicular to the radius at the point of contact.",
+        "Angles in the same segment are equal; opposite angles of a cyclic quadrilateral add to 180°."
+      ]
+    },
+    {
+      "type": "table",
+      "page": 2,
+      "text": "Table 1: what to write down for each rule.",
+      "rows": [
+        ["What you see", "Rule", "What you write"],
+        ["Two radii forming a triangle", "Radii are equal", "OA = OB, so triangle AOB is isosceles"],
+        ["Angle at centre above a chord", "Centre angle = 2 × circumference angle", "Angle AOB = 2 × angle ACB"],
+        ["Triangle with the diameter as one side", "Angle in a semicircle", "Angle ACB = 90°"],
+        ["Line touching the circle once", "Tangent ⊥ radius", "Angle between tangent and radius = 90°"]
+      ]
+    },
+    {
+      "type": "divider",
+      "page": 2
+    },
+    {
+      "type": "heading",
+      "page": 3,
+      "text": "Worked example"
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "1",
+      "marks": 6,
+      "text": "In Figure 1, O is the centre of the circle and A, B and C lie on the circumference. Angle AOB = 2x and angle OAB = x.",
+      "parts": [
+        { "label": "(a)", "text": "Explain why angle OBA is also x.", "marks": 2 },
+        { "label": "(b)", "text": "Find angle ACB in terms of x.", "marks": 2 },
+        { "label": "(c)", "text": "Hence find the value of x.", "marks": 2 }
+      ],
+      "items": [
+        "OA = OB because both are radii, so triangle AOB is isosceles and the base angles are equal: angle OBA = angle OAB = x.",
+        "The angle at the centre is twice the angle at the circumference on the same arc, so angle AOB = 2 × angle ACB, giving angle ACB = x.",
+        "Angles of triangle AOB add to 180°: 2x + x + x = 180°, so 4x = 180° and x = 45°."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "Practice"
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "2",
+      "marks": 5,
+      "text": "A tangent touches a circle of radius 9 cm at the point T. P is a point on the tangent such that PT = 12 cm. O is the centre of the circle.",
+      "parts": [
+        { "label": "(a)", "text": "State the size of angle OTP, giving a reason.", "marks": 2 },
+        { "label": "(b)", "text": "Calculate the distance OP.", "marks": 3 }
+      ],
+      "items": [
+        "(a) Angle OTP = 90°, because a tangent is perpendicular to the radius at the point of contact.",
+        "(b) Triangle OTP is right-angled at T, so OP² = OT² + PT² = 9² + 12² = 81 + 144 = 225, and OP = 15 cm."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 5,
+      "text": "If you can name the rule before you start calculating, you have usually earned the first mark already. Examiners award it for the reason, not only for the number."
+    }
+  ]
+}

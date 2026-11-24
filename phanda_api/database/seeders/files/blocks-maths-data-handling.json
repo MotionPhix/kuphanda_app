@@ -1,0 +1,125 @@
+{
+  "title": "Reading data questions: tables, totals and percentages",
+  "subtitle": "A Kuphanda revision guide for MSCE Mathematics",
+  "blocks": [
+    {
+      "type": "heading",
+      "page": 1,
+      "text": "The table is the question"
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "Data questions look easy until the marks are lost on a total that does not add up, or a percentage taken of the wrong number. Almost every error in this topic comes from reading the table carelessly rather than from the arithmetic itself. Read the row headings, the column headings, and the units before you touch a calculator."
+    },
+    {
+      "type": "paragraph",
+      "page": 1,
+      "text": "Table 1: monthly sales at a school tuck shop, in Malawi kwacha."
+    },
+    {
+      "type": "table",
+      "page": 1,
+      "rows": [
+        ["Month", "Snacks (MWK)", "Drinks (MWK)", "Stationery (MWK)"],
+        ["January", "48 000", "36 000", "12 000"],
+        ["February", "52 000", "40 000", "8 000"],
+        ["March", "45 000", "39 000", "16 000"],
+        ["Total", "145 000", "115 000", "36 000"]
+      ]
+    },
+    {
+      "type": "callout",
+      "page": 1,
+      "label": "Check the total first",
+      "text": "If a total row is given, add one column in your head before you answer anything. If your sum disagrees with the printed total, the printed total is what the next part of the question depends on."
+    },
+    {
+      "type": "bullets",
+      "page": 2,
+      "items": [
+        "Percentage of a total: divide the part by the total, then multiply by 100.",
+        "Percentage change: divide the change by the original amount, not the new one.",
+        "Mean of grouped data: multiply each value by its frequency, add, then divide by the total frequency.",
+        "Always write the unit — MWK, kg, litres — or the answer reads as a bare number."
+      ]
+    },
+    {
+      "type": "divider",
+      "page": 2
+    },
+    {
+      "type": "heading",
+      "page": 2,
+      "text": "Worked example"
+    },
+    {
+      "type": "question",
+      "page": 3,
+      "label": "1",
+      "marks": 7,
+      "text": "The tuck shop records in Table 1 show sales for the first three months of the year.",
+      "table": {
+        "rows": [
+          ["Month", "Snacks (MWK)", "Drinks (MWK)", "Stationery (MWK)"],
+          ["January", "48 000", "36 000", "12 000"],
+          ["February", "52 000", "40 000", "8 000"],
+          ["March", "45 000", "39 000", "16 000"],
+          ["Total", "145 000", "115 000", "36 000"]
+        ]
+      },
+      "parts": [
+        { "label": "(a)", "text": "Calculate the total sales for the three months.", "marks": 2 },
+        { "label": "(b)", "text": "What percentage of the total sales came from drinks? Give your answer to one decimal place.", "marks": 3 },
+        { "label": "(c)", "text": "Stationery sales rose from January to March. Calculate the percentage increase.", "marks": 2 }
+      ],
+      "items": [
+        "(a) 145 000 + 115 000 + 36 000 = 296 000 MWK.",
+        "(b) 115 000 ÷ 296 000 × 100 = 38.85…, so 38.9% to one decimal place.",
+        "(c) The increase is 16 000 − 12 000 = 4 000. As a percentage of January: 4 000 ÷ 12 000 × 100 = 33.3%."
+      ]
+    },
+    {
+      "type": "heading",
+      "page": 4,
+      "text": "Practice"
+    },
+    {
+      "type": "question",
+      "page": 4,
+      "label": "2",
+      "marks": 6,
+      "text": "A class of 40 learners recorded how many books they read in a term.",
+      "table": {
+        "rows": [
+          ["Books read", "0", "1", "2", "3", "4"],
+          ["Number of learners", "4", "10", "14", "8", "4"]
+        ]
+      },
+      "parts": [
+        { "label": "(a)", "text": "Show that the total number of learners is 40.", "marks": 1 },
+        { "label": "(b)", "text": "Calculate the mean number of books read per learner.", "marks": 3 },
+        { "label": "(c)", "text": "What percentage of the class read 3 or more books?", "marks": 2 }
+      ],
+      "items": [
+        "(a) 4 + 10 + 14 + 8 + 4 = 40 learners.",
+        "(b) Total books = (0×4) + (1×10) + (2×14) + (3×8) + (4×4) = 0 + 10 + 28 + 24 + 16 = 78. Mean = 78 ÷ 40 = 1.95 books.",
+        "(c) 8 + 4 = 12 learners read 3 or more. 12 ÷ 40 × 100 = 30%."
+      ]
+    },
+    {
+      "type": "answer",
+      "page": 5,
+      "items": [
+        "A mean may be a decimal — 1.95 books is a correct mean even though nobody read 1.95 books.",
+        "For percentage change the original amount always goes underneath. Dividing by the new amount is the most common mistake in this topic.",
+        "If a question says 'hence', it wants your previous answer, not a fresh start."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "page": 5,
+      "text": "Mark your own work against the table, not against the final number: most marks in data questions are for the intermediate value, so a wrong final answer with correct working still scores."
+    }
+  ]
+}

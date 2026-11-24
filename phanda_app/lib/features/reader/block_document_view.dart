@@ -541,6 +541,13 @@ class _FigureBlock extends StatelessWidget {
         : (figure['alt'] as String? ?? '');
     final asset = figure['asset'] as String?;
 
+    // A diagram given as numbers - points and a circle, or pie slices - is drawn
+    // rather than loaded. This used to be honoured only for a figure attached to
+    // a question, so the same figure used as a block of its own fell through to
+    // "Figure not included" and the learner lost the diagram the text refers to.
+    final drawn = figure['slices'] is List ||
+        (figure['points'] is Map && figure['circle'] is Map);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -548,13 +555,16 @@ class _FigureBlock extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: asset == null
-                ? _FigurePlaceholder(label: caption)
-                : Image.asset(
-                    asset,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => _FigurePlaceholder(label: caption),
-                  ),
+            child: drawn
+                ? _EmbeddedFigure(data: figure)
+                : asset == null
+                    ? _FigurePlaceholder(label: caption)
+                    : Image.asset(
+                        asset,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) =>
+                            _FigurePlaceholder(label: caption),
+                      ),
           ),
           if (caption.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -875,8 +885,14 @@ class _GeometryPainter extends CustomPainter {
   }
 
   void _label(Canvas canvas, String text, Offset at, Offset center, double scale) {
-    final outward = at - (Offset(center.dx, center.dy));
-    final normalised = outward.distance == 0 ? Offset.zero : outward / outward.distance;
+    final outward = at - Offset(center.dx, center.dy);
+    // The centre of a circle has no outward direction to push the label along,
+    // so it used to be painted straight onto the point and read as a smudge
+    // under the radii converging there. Labels read bottom-right of the dot by
+    // convention, which is also where no radius is drawn.
+    final normalised = outward.distance < 0.5
+        ? const Offset(0.7071, 0.7071)
+        : outward / outward.distance;
     final position = at + normalised * 15;
     final painter = TextPainter(
       text: TextSpan(

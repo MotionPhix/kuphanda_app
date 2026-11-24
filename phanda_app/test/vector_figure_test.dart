@@ -87,4 +87,52 @@ void main() {
     expect(find.byType(SvgPicture), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('a figure given as points is drawn even as its own block',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final document = BlockDocument(
+      title: 'Circle figure check',
+      blocks: const [
+        DocumentBlock(
+          type: 'figure',
+          page: 1,
+          raw: {
+            'text': 'Figure 1: chord AB with radii OA and OB.',
+            'figure': {
+              'points': {
+                'O': [110, 110],
+                'A': [52, 152],
+                'B': [168, 152],
+              },
+              'circle': {
+                'center': [110, 110],
+                'radius': 78,
+              },
+              'lines': [
+                ['O', 'A'],
+                ['O', 'B'],
+                ['A', 'B'],
+              ],
+              'alt': 'Circle centre O with chord AB',
+            },
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: BlockDocumentView(document: document))),
+    );
+    await tester.pumpAndSettle();
+
+    // A standalone figure used to be asset-only, so a drawn diagram fell through
+    // to the placeholder and the question referred to a picture nobody could see.
+    expect(find.text('Figure not included'), findsNothing);
+    expect(find.textContaining('Figure 1: chord AB'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
