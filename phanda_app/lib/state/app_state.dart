@@ -343,6 +343,7 @@ class AppState extends ChangeNotifier {
     var migrated = _releaseRetiredSampleProfile(snapshot);
     migrated = _clearDemoStudyHistory(snapshot) || migrated;
     migrated = _clearDemoClasses(snapshot) || migrated;
+    migrated = _dropRetiredBundledAssets(snapshot) || migrated;
 
     // Bundled files are always available, even if an older snapshot predates
     // them. Imported files survive because they are keyed by document id.
@@ -668,12 +669,36 @@ class AppState extends ChangeNotifier {
 
     if (seeded.isEmpty) return false;
 
-    snapshot.classes.removeWhere((group) => seeded.contains(group.id));
-    snapshot.assignments.removeWhere(
-      (assignment) => seeded.contains(assignment.classId),
-    );
-    return true;
-  }
+     snapshot.classes.removeWhere((group) => seeded.contains(group.id));
+     snapshot.assignments.removeWhere(
+       (assignment) => seeded.contains(assignment.classId),
+     );
+     return true;
+   }
+
+   /// Drops bundled file records whose asset the build no longer ships.
+   ///
+   /// The how-to guide used to arrive as a PDF in the APK. It is now served as
+   /// blocks, and the asset list is empty - but an upgraded install still held
+   /// the old record, so the guide's detail page kept advertising
+   /// `kuphanda-quick-start.pdf · 3 KB` for a file that is no longer there. Only
+   /// bundled records are considered: a downloaded or imported file is the
+   /// learner's own and is keyed by the same id.
+   bool _dropRetiredBundledAssets(AppSnapshot snapshot) {
+     final shipped = kBundledAssets.map((asset) => asset.documentId).toSet();
+     final retired = snapshot.assets.entries
+         .where((entry) => entry.value.isBundled && !shipped.contains(entry.key))
+         .map((entry) => entry.key)
+         .toList();
+
+     if (retired.isEmpty) return false;
+
+     for (final documentId in retired) {
+       snapshot.assets.remove(documentId);
+     }
+     return true;
+   }
+
 
   /// Deletes the study history an earlier build seeded so the chart would not
   /// look empty. It claimed minutes nobody studied — on the device it read
