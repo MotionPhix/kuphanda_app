@@ -5,11 +5,14 @@ import 'curriculum_seed.dart';
 /// The bundled catalogue — the first-run and signed-out library.
 ///
 /// A bundled record has to be readable on the device with no server, so this
-/// list contains exactly two kinds of document:
+/// list carries study guides only: their sections ship in `curriculum_seed.dart`
+/// and are opened by [Document.guideId].
 ///
-///  * study guides, whose sections ship in `curriculum_seed.dart` and are opened
-///    by [Document.guideId], and
-///  * the two guides that ship as PDF assets in `kBundledAssets`.
+/// The two sample PDFs that used to ship here (the how-to guide and a planner)
+/// are gone. The guide now comes from the server as a structured block document,
+/// and a bundled copy meant first-run learners kept reading instructions written
+/// before sign-in existed — the one document explaining the app was the only one
+/// that could not reflow.
 ///
 /// It deliberately does not carry the wider catalogue the API serves. A bundled
 /// record for a paper whose file lives on the server would appear in the library
@@ -47,63 +50,8 @@ List<Document> buildCatalogue({DateTime? now}) {
     );
   }
 
-  // 2. The two documents that ship with a real PDF, mapped in `kBundledAssets`.
-  documents.add(
-    Document(
-      id: 'sample-howto',
-      title: 'How to use Kuphanda',
-      subjectId: 'english',
-      form: 1,
-      kind: DocumentKind.guide,
-      description:
-          'A short guide to finding papers, subscribing, downloading for offline reading and '
-          'keeping notes. Ships with the app and is readable immediately.',
-      pages: 2,
-      rating: 4.9,
-      ratingCount: 12,
-      addedAt: today.subtract(const Duration(days: 30)),
-      author: 'Kuphanda',
-      tags: ['getting started'],
-    ),
-  );
-  documents.add(
-    Document(
-      id: 'sample-planner',
-      title: 'Weekly study planner',
-      subjectId: 'mathematics',
-      form: 4,
-      kind: DocumentKind.other,
-      description:
-          'A printable week plan with a 40-minute study block, a marking routine and weekly '
-          'review questions. Copy it into your exercise book or write on the PDF.',
-      pages: 2,
-      rating: 4.8,
-      ratingCount: 9,
-      addedAt: today.subtract(const Duration(days: 25)),
-      author: 'Kuphanda',
-      tags: ['planner', 'revision'],
-    ),
-  );
-
   documents.sort((a, b) => b.addedAt.compareTo(a.addedAt));
   return documents;
 }
 
-final List<DocumentAsset> kBundledAssets = <DocumentAsset>[
-  DocumentAsset(
-    documentId: 'sample-howto',
-    fileName: 'kuphanda-quick-start.pdf',
-    sizeBytes: 2612,
-    addedAt: DateTime(2026, 9, 1),
-    assetPath: 'assets/samples/kuphanda-quick-start.pdf',
-    pageCount: 2,
-  ),
-  DocumentAsset(
-    documentId: 'sample-planner',
-    fileName: 'weekly-study-planner.pdf',
-    sizeBytes: 2460,
-    addedAt: DateTime(2026, 9, 1),
-    assetPath: 'assets/samples/weekly-study-planner.pdf',
-    pageCount: 2,
-  ),
-];
+final List<DocumentAsset> kBundledAssets = const <DocumentAsset>[];
