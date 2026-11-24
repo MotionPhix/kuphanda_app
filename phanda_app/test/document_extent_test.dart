@@ -37,6 +37,14 @@ void main() {
     expect(_paper(blockMarks: null).extentLabel, '24 questions');
   });
 
+  test('a counted zero is unknown marks, not a paper worth nothing', () {
+    // The essay bank's questions carry no marks, so the counted sum is 0 and the
+    // column default is 0 too. Both mean "not recorded", and "0 marks" on the
+    // card reads as a broken record.
+    expect(_paper(blockMarks: 0, totalMarks: 0).extentLabel, '24 questions');
+    expect(_paper(blockMarks: 0, totalMarks: 0).displayMarks, isNull);
+  });
+
   test('a PDF is still described by pages', () {
     expect(_paper(hasBlocks: false, questions: null, blockMarks: null).extentLabel, '6 pages');
   });

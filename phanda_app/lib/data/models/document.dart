@@ -126,7 +126,21 @@ class Document {
 
   /// Marks to quote: the declared total when the record has one, otherwise the
   /// sum counted from the blocks.
-  int? get displayMarks => totalMarks ?? (hasBlocks ? blockMarks : null);
+  ///
+  /// A counted total of zero means the source recorded no marks at all — a
+  /// revision bank of essay questions, say — not that the paper is worth
+  /// nothing. Quoting "0 marks" there reads as a broken record.
+  int? get displayMarks {
+    // Zero counts as absent from either source: the column defaults to 0 when a
+    // paper is imported without marks, so 0 is "unknown", never a real total.
+    final declared = totalMarks;
+    if (declared != null && declared > 0) return declared;
+
+    final counted = blockMarks;
+    if (counted != null && counted > 0) return counted;
+
+    return null;
+  }
 
   /// How much there is to do, in the units a learner counts in.
   ///
